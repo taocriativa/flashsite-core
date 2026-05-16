@@ -1,13 +1,12 @@
 <?php
 /**
  * Plugin Name: FlashSite Core
- * Plugin URI: https://example.com/flashsite-core
- * Description: Núcleo operacional modular da FlashSite para provisionamento e gestão de sites WordPress.
- * Version: 2.2.0
+ * Plugin URI: https://www.flashsite.pt
+ * Description: Núcleo operacional modular da Flash Site para provisionamento e gestão de sites WordPress.
+ * Version: 2.3.0
  * Requires at least: 6.4
  * Requires PHP: 8.1
- * Author: FlashSite
- * Author URI: https://example.com
+ * Author: Flash Site
  * Text Domain: flashsite-core
  * Domain Path: /languages
  */
@@ -15,8 +14,8 @@ declare(strict_types=1);
 
 if (! defined('ABSPATH')) { exit; }
 
-define('FLASHSITE_CORE_VERSION', '2.2.0');
-define('FLASHSITE_DATA_VERSION', '2.2.0');
+define('FLASHSITE_CORE_VERSION', '2.3.0');
+define('FLASHSITE_DATA_VERSION', '2.3.0');
 define('FLASHSITE_CORE_FILE', __FILE__);
 define('FLASHSITE_CORE_BASENAME', plugin_basename(__FILE__));
 define('FLASHSITE_CORE_PATH', plugin_dir_path(__FILE__));
