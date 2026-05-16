@@ -5,7 +5,7 @@ namespace FlashSite\Core\Core;
 
 final class UpdateChecker
 {
-    private const ENDPOINT     = 'https://raw.githubusercontent.com/flashsite-pt/flashsite-core/main/update-server/flashsite-core.json';
+    private const ENDPOINT     = 'https://raw.githubusercontent.com/taocriativa/flashsite-core/main/update-server/flashsite-core.json';
     private const TRANSIENT    = 'flashsite_core_update_data';
     private const CHECK_EVERY  = 43200; // 12 h
 
