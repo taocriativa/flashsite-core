@@ -1,0 +1,1154 @@
+/**
+ * FlashSite Admin — Shared Design System CSS
+ * Version: 4.0.0
+ * Design System: v4.0 — Dark Sidebar · Warm Canvas · Orange Leads
+ * Scope: .flashsite-admin (body-level class applied via PHP)
+ *
+ * Token prefix: --fs-*
+ * Component classes: .fs-* (layout, cards, notices, badges, motion)
+ *                    .fsd-btn (buttons — replaces WP native .button)
+ *                    .fsd-description (help text — replaces WP native .description)
+ *
+ * WCAG AA compliance: all interactive colour pairs verified ≥ 4.5:1
+ * Author: TAO Studio AG · @Kati (design) · @Davi (implementation)
+ */
+
+/* ─────────────────────────────────────────────────────
+   1. GOOGLE FONTS
+   ───────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300..800&display=swap');
+
+
+/* ─────────────────────────────────────────────────────
+   2. DESIGN TOKENS (:root)
+   ───────────────────────────────────────────────────── */
+
+:root {
+  /* ── Sidebar — Grafite Escuro ── */
+  --fs-sidebar-bg:             #1C1C1E;
+  --fs-sidebar-nav-inactive:   #8A8A8E;
+  --fs-sidebar-separator:      #2E2E30;
+  --fs-sidebar-nav-active-bg:  #2E2E30;
+  --fs-sidebar-text:           #FFFFFF;
+
+  /* ── Laranja — Acento Principal (lidera) ── */
+  --fs-orange-700: #A3641F;  /* botões interativos — WCAG AA 4.77:1 ✅ */
+  --fs-orange-500: #C97D2E;  /* badges, bordas decorativas, indicadores */
+  --fs-orange-200: #F0D5B0;  /* focus ring de botão, borda de badge laranja */
+  --fs-orange-50:  #FDF6EC;  /* fundo de card/badge com acento laranja */
+
+  /* ── Roxo — Acento Complementar (apoia) ── */
+  --fs-purple-700: #7B2FBE;  /* hover em elementos roxos */
+  --fs-purple-500: #9B4DD6;  /* navegação activa, toggles ON, focus rings */
+  --fs-purple-100: #EDE5F9;  /* fundo de estados seleccionados */
+  --fs-purple-50:  #F7F2FD;  /* hover suave em items de lista */
+
+  /* ── Canvas — Areia Quente ── */
+  --fs-canvas:         #F8F7F5;
+  --fs-surface:        #FFFFFF;
+  --fs-surface-border: #E8E6E2;
+  --fs-sunken:         #F0EEE9;
+  --fs-border-strong:  #D4D0C8;
+
+  /* ── Texto — Neutrals ── */
+  --fs-text-primary:   #1C1C1E;
+  --fs-text-secondary: #48484A;
+  --fs-text-tertiary:  #8A8A8E;
+
+  /* ── Estados Semânticos ── */
+  --fs-success:    #16A34A;
+  --fs-success-bg: #F0FDF4;
+  --fs-warning:    #D97706;
+  --fs-warning-bg: #FFFBEB;
+  --fs-error:      #DC2626;
+  --fs-error-bg:   #FEF2F2;
+  --fs-info:       #2563EB;
+  --fs-info-bg:    #EFF6FF;
+
+  /* ── Módulos ── */
+  --fs-module-core:   #9B4DD6;  /* roxo */
+  --fs-module-design: #0D9488;  /* teal */
+  --fs-module-crm:    #D97706;  /* âmbar — igual a --fs-warning por intenção; contextos distintos */
+
+  /* ── Tipografia — Família ── */
+  --fs-font-display: 'Plus Jakarta Sans', system-ui, sans-serif;  /* Phase 1: unified to body font */
+  --fs-font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
+
+  /* ── Tipografia — Tamanhos funcionais ── */
+  --fs-text-xs:   12px;
+  --fs-text-sm:   13px;
+  --fs-text-base: 15px;
+  --fs-text-lg:   18px;
+  --fs-text-xl:   22px;
+  --fs-text-2xl:  28px;
+
+  /* ── Tipografia — Tokens semânticos de heading ── */
+  --fs-heading-1-size:        24px;   /* Phase 1 */
+  --fs-heading-1-weight:      600;
+  --fs-heading-1-line-height: 1.25;
+  --fs-heading-1-font:        var(--fs-font-body);
+  --fs-heading-2-size:        18px;   /* Phase 1 */
+  --fs-heading-2-weight:      600;
+  --fs-heading-2-line-height: 1.35;
+  --fs-heading-2-font:        var(--fs-font-body);
+  --fs-heading-3-size:        18px;
+  --fs-heading-3-weight:      600;
+  --fs-heading-3-line-height: 1.35;
+  --fs-heading-3-font:        var(--fs-font-body);
+
+  /* ── Raios ── */
+  --fs-radius-sm:   6px;
+  --fs-radius-md:   8px;
+  --fs-radius-lg:   12px;
+  --fs-radius-pill: 100px;
+
+  /* ── Sombras ── */
+  --fs-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --fs-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --fs-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --fs-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10);
+
+  /* ── Espaçamento ── */
+  --fs-space-1:  4px;
+  --fs-space-2:  8px;
+  --fs-space-3:  12px;
+  --fs-space-4:  16px;
+  --fs-space-6:  24px;
+  --fs-space-8:  32px;
+  --fs-space-12: 48px;
+}
+
+
+/* ─────────────────────────────────────────────────────
+   3. MOTION — KEYFRAMES
+   ───────────────────────────────────────────────────── */
+
+@keyframes fs-fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fs-slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fs-spin {
+  to { transform: rotate(360deg); }
+}
+
+
+/* ─────────────────────────────────────────────────────
+   4. BASE — SCOPED UNDER .flashsite-admin
+   ───────────────────────────────────────────────────── */
+
+.flashsite-admin {
+  font-family: var(--fs-font-body);
+  color: var(--fs-text-primary);
+  background-color: var(--fs-canvas);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Canvas wrap — areia quente com textura de ruído sutil */
+.flashsite-admin .fs-wrap,
+.flashsite-admin-wrap {
+  background-color: var(--fs-canvas);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+  min-height: 100vh;
+  padding: var(--fs-space-8);
+  box-sizing: border-box;
+}
+
+@media (max-width: 782px) {
+  .flashsite-admin .fs-wrap,
+  .flashsite-admin-wrap {
+    padding: var(--fs-space-4);
+  }
+}
+
+.flashsite-admin .fs-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ── Headings ── */
+.flashsite-admin h1,
+.flashsite-admin .fs-heading-1 {
+  font-family: var(--fs-heading-1-font);
+  font-size: var(--fs-heading-1-size);
+  font-weight: var(--fs-heading-1-weight);
+  line-height: var(--fs-heading-1-line-height);
+  color: var(--fs-text-primary);
+  margin: 0 0 var(--fs-space-6);
+}
+
+.flashsite-admin h2,
+.flashsite-admin .fs-heading-2 {
+  font-family: var(--fs-heading-2-font);
+  font-size: var(--fs-heading-2-size);
+  font-weight: var(--fs-heading-2-weight);
+  line-height: var(--fs-heading-2-line-height);
+  color: var(--fs-text-primary);
+  margin: 0 0 var(--fs-space-4);
+}
+
+.flashsite-admin h3,
+.flashsite-admin .fs-heading-3 {
+  font-family: var(--fs-heading-3-font);
+  font-size: var(--fs-heading-3-size);
+  font-weight: var(--fs-heading-3-weight);
+  line-height: var(--fs-heading-3-line-height);
+  color: var(--fs-text-primary);
+  margin: 0 0 var(--fs-space-3);
+}
+
+/* ── Body text ── */
+.flashsite-admin p,
+.flashsite-admin .fs-text {
+  font-family: var(--fs-font-body);
+  font-size: var(--fs-text-base);
+  line-height: 1.6;
+  color: var(--fs-text-secondary);
+  margin: 0 0 var(--fs-space-4);
+}
+
+.flashsite-admin .fs-text-sm {
+  font-size: var(--fs-text-sm);
+  line-height: 1.4;
+}
+
+.flashsite-admin .fs-text-xs {
+  font-size: var(--fs-text-xs);
+  line-height: 1.5;
+  color: var(--fs-text-tertiary);
+}
+
+
+/* ─────────────────────────────────────────────────────
+   5. SIDEBAR — GRAFITE ESCURO
+   ───────────────────────────────────────────────────── */
+
+/* Applied when .flashsite-admin is on <body> — these target the WP sidebar */
+.flashsite-admin #adminmenu,
+.flashsite-admin #adminmenuback,
+.flashsite-admin #adminmenuwrap {
+  background: var(--fs-sidebar-bg);
+}
+
+.flashsite-admin #adminmenu a,
+.flashsite-admin #adminmenu .wp-menu-name {
+  font-family: var(--fs-font-body);
+  color: var(--fs-sidebar-nav-inactive);
+}
+
+.flashsite-admin #adminmenu .wp-has-current-submenu .wp-menu-name,
+.flashsite-admin #adminmenu .current .wp-menu-name,
+.flashsite-admin #adminmenu .menu-top:hover .wp-menu-name {
+  color: var(--fs-sidebar-text);
+}
+
+.flashsite-admin #adminmenu .wp-has-current-submenu,
+.flashsite-admin #adminmenu .current {
+  background: var(--fs-sidebar-nav-active-bg);
+}
+
+.flashsite-admin #adminmenu li.wp-menu-separator {
+  background: var(--fs-sidebar-separator);
+}
+
+/* FlashSite logo above sidebar menu */
+.flashsite-admin .fs-sidebar-logo {
+  display: block;
+  padding: var(--fs-space-4) var(--fs-space-4) var(--fs-space-3);
+  border-bottom: 1px solid var(--fs-sidebar-separator);
+  margin-bottom: var(--fs-space-2);
+}
+
+.flashsite-admin .fs-sidebar-logo img,
+.flashsite-admin .fs-sidebar-logo svg {
+  display: block;
+  height: 28px;
+  width: auto;
+}
+
+
+/* ─────────────────────────────────────────────────────
+   6. BUTTONS — .fsd-btn
+   Replaces WP native .button — fully scoped, no leakage
+   ───────────────────────────────────────────────────── */
+
+.flashsite-admin .fsd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--fs-space-2);
+  padding: 10px 20px;
+  font-family: var(--fs-font-body);
+  font-size: var(--fs-text-sm);
+  font-weight: 500;
+  line-height: 1;
+  border-radius: var(--fs-radius-md);
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+  box-sizing: border-box;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.flashsite-admin .fsd-btn:focus-visible {
+  outline: none;
+}
+
+/* ── Primary (CTA — laranja interativo) ── */
+.flashsite-admin .fsd-btn,
+.flashsite-admin .fsd-btn--primary {
+  background: var(--fs-orange-700);
+  color: #FFFFFF;
+  border: none;
+}
+
+.flashsite-admin .fsd-btn:hover,
+.flashsite-admin .fsd-btn--primary:hover {
+  background: #7A4A17;
+  color: #FFFFFF;
+}
+
+.flashsite-admin .fsd-btn:focus-visible,
+.flashsite-admin .fsd-btn--primary:focus-visible {
+  background: var(--fs-orange-700);
+  box-shadow: 0 0 0 3px var(--fs-orange-200);
+  outline-offset: 2px;
+}
+
+.flashsite-admin .fsd-btn:disabled,
+.flashsite-admin .fsd-btn--primary:disabled,
+.flashsite-admin .fsd-btn[aria-disabled="true"],
+.flashsite-admin .fsd-btn--primary[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Loading state */
+.flashsite-admin .fsd-btn.is-loading,
+.flashsite-admin .fsd-btn--primary.is-loading {
+  background: #7A4A17;
+  pointer-events: none;
+}
+
+.flashsite-admin .fsd-btn.is-loading::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #FFFFFF;
+  border-radius: 50%;
+  animation: fs-spin 600ms linear infinite;
+  margin-right: var(--fs-space-2);
+}
+
+/* ── Secondary (outline) ── */
+.flashsite-admin .fsd-btn--secondary {
+  background: transparent;
+  color: var(--fs-orange-700);
+  border: 1.5px solid var(--fs-orange-500);
+}
+
+.flashsite-admin .fsd-btn--secondary:hover {
+  background: var(--fs-orange-50);
+  border-color: var(--fs-orange-700);
+  color: #7A4A17;
+}
+
+.flashsite-admin .fsd-btn--secondary:focus-visible {
+  background: var(--fs-orange-50);
+  border-color: var(--fs-orange-700);
+  box-shadow: 0 0 0 3px var(--fs-orange-200);
+}
+
+.flashsite-admin .fsd-btn--secondary:disabled,
+.flashsite-admin .fsd-btn--secondary[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+  border-color: var(--fs-border-strong);
+  color: var(--fs-text-tertiary);
+}
+
+/* ── Ghost ── */
+.flashsite-admin .fsd-btn--ghost {
+  background: transparent;
+  color: var(--fs-text-secondary);
+  border: none;
+  padding: 10px 16px;
+}
+
+.flashsite-admin .fsd-btn--ghost:hover {
+  background: var(--fs-sunken);
+  color: var(--fs-text-primary);
+}
+
+.flashsite-admin .fsd-btn--ghost:focus-visible {
+  background: var(--fs-sunken);
+  box-shadow: 0 0 0 3px var(--fs-border-strong);
+}
+
+.flashsite-admin .fsd-btn--ghost:disabled,
+.flashsite-admin .fsd-btn--ghost[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+  color: var(--fs-text-tertiary);
+}
+
+/* ── Destructive ── */
+.flashsite-admin .fsd-btn--destructive {
+  background: var(--fs-error);
+  color: #FFFFFF;
+  border: none;
+}
+
+.flashsite-admin .fsd-btn--destructive:hover {
+  background: #B91C1C;
+  color: #FFFFFF;
+}
+
+.flashsite-admin .fsd-btn--destructive:focus-visible {
+  background: var(--fs-error);
+  box-shadow: 0 0 0 3px #FCA5A5;
+}
+
+.flashsite-admin .fsd-btn--destructive:disabled,
+.flashsite-admin .fsd-btn--destructive[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── Button group ── */
+.flashsite-admin .fsd-btn-group {
+  display: inline-flex;
+  gap: var(--fs-space-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ── Size modifiers ── */
+.flashsite-admin .fsd-btn--sm {
+  padding: 7px 14px;
+  font-size: var(--fs-text-xs);
+}
+
+.flashsite-admin .fsd-btn--lg {
+  padding: 13px 28px;
+  font-size: var(--fs-text-base);
+}
+
+/* ── Button with border-radius for preset bars ── */
+.flashsite-admin .fsd-preset-bar .fsd-btn {
+  border-radius: var(--fs-radius-pill);
+  padding: 0 14px;
+  min-height: 36px;
+}
+
+
+/* ─────────────────────────────────────────────────────
+   7. CARDS E PAINÉIS
+   ───────────────────────────────────────────────────── */
+
+.flashsite-admin .fs-card {
+  background: var(--fs-surface);
+  border: 1px solid var(--fs-surface-border);
+  border-radius: var(--fs-radius-lg);
+  padding: var(--fs-space-6);
+  box-shadow: var(--fs-shadow-sm);
+  box-sizing: border-box;
+  /* Staggered page-load animation — first card */
+  animation: fs-fadeSlideUp 280ms ease-out both;
+}
+
+.flashsite-admin .fs-card:nth-child(2) { animation-delay: 60ms; }
+.flashsite-admin .fs-card:nth-child(3) { animation-delay: 120ms; }
+.flashsite-admin .fs-card:nth-child(4) { animation-delay: 180ms; }
+
+/* Active / highlighted card (campanha activa, opção seleccionada) */
+.flashsite-admin .fs-card--active {
+  border: 2px solid var(--fs-orange-500);
+  box-shadow: 0 4px 12px rgba(201, 125, 46, 0.12);
+}
+
+/* Section panel — no shadow, subtle border */
+.flashsite-admin .fs-card--section {
+  background: var(--fs-canvas);
+  border: 1px solid var(--fs-surface-border);
+  border-radius: var(--fs-radius-md);
+  padding: 20px;
+  box-shadow: none;
+}
+
+/* Card grid layout */
+.flashsite-admin .fs-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--fs-space-6);
+}
+
+/* Card header */
+.flashsite-admin .fs-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--fs-space-3);
+  margin-bottom: var(--fs-space-4);
+  padding-bottom: var(--fs-space-4);
+  border-bottom: 1px solid var(--fs-surface-border);
+}
+
+.flashsite-admin .fs-card__title {
+  font-family: var(--fs-font-body);
+  font-size: var(--fs-heading-3-size);
+  font-weight: var(--fs-heading-3-weight);
+  line-height: var(--fs-heading-3-line-height);
+  color: var(--fs-text-primary);
+  margin: 0;
+}
+
+.flashsite-admin .fs-card__actions {
+  display: flex;
+  gap: var(--fs-space-2);
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Module head (large section header with description) */
+.flashsite-admin .fs-module-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--fs-space-4);
+  margin-bottom: var(--fs-space-8);
+}
+
+.flashsite-admin .fs-module-head__icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--fs-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flashsite-admin .fs-module-head__content {
+  flex: 1;
+}
+
+.flashsite-admin .fs-module-head__content h1 {
+  margin-bottom: var(--fs-space-1);
+}
+
+/* Description text (replaces WP .description) */
+.flashsite-admin .fsd-description {
+  margin: 0;
+  color: var(--fs-text-secondary);
+  font-size: var(--fs-text-sm);
+  line-height: 1.55;
+  max-width: 68ch;
+  font-family: var(--fs-font-body);
+}
+
+.flashsite-admin .fsd-description--sm {
+  font-size: var(--fs-text-xs);
+  color: var(--fs-text-secondary);
+}
+
+
+/* ─────────────────────────────────────────────────────
+   8. FORMULÁRIOS
+   ───────────────────────────────────────────────────── */
+
+/* ── Field wrapper ── */
+.flashsite-admin .fs-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fs-space-1);
+  margin-bottom: var(--fs-space-4);
+}
+
+/* ── Label ── */
+.flashsite-admin .fs-label,
+.flashsite-admin label.fs-label {
+  font-family: var(--fs-font-body);
+  font-size: var(--fs-text-sm);
+  font-weight: 500;
+  color: var(--fs-text-secondary);
+  line-height: 1.4;
+  display: block;
+  margin-bottom: var(--fs-space-1);
+}
+
+.flashsite-admin .fs-label--required::after {
+  content: ' *';
+  color: var(--fs-error);
+}
+
+/* ── Input / Textarea / Select ── */
+.flashsite-admin .fs-input,
+.flashsite-admin input[type="text"].fs-input,
+.flashsite-admin input[type="email"].fs-input,
+.flashsite-admin input[type="url"].fs-input,
+.flashsite-admin input[type="number"].fs-input,
+.flashsite-admin input[type="password"].fs-input,
+.flashsite-admin input[type="search"].fs-input,
+.flashsite-admin textarea.fs-input,
+.flashsite-admin select.fs-select {
+  display: block;
+  width: 100%;
+  background: var(--fs-surface);
+  border: 1.5px solid var(--fs-border-strong);
+  border-radius: var(--fs-radius-md);
+  padding: 10px 14px;
+  font-family: var(--fs-font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--fs-text-primary);
+  box-shadow: var(--fs-shadow-xs);
+  box-sizing: border-box;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.flashsite-admin .fs-input::placeholder,
+.flashsite-admin textarea.fs-input::placeholder {
+  color: var(--fs-text-tertiary);
+  font-size: 14px;
+}
+
+/* Focus — roxo apoia */
+.flashsite-admin .fs-input:focus,
+.flashsite-admin textarea.fs-input:focus,
+.flashsite-admin select.fs-select:focus {
+  border-color: var(--fs-purple-500);
+  box-shadow: 0 0 0 3px rgba(155, 77, 214, 0.15);
+  outline: none;
+}
+
+/* Error state */
+.flashsite-admin .fs-input.is-error,
+.flashsite-admin .fs-field.is-error .fs-input {
+  border-color: var(--fs-error);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+/* Disabled state */
+.flashsite-admin .fs-input:disabled,
+.flashsite-admin textarea.fs-input:disabled,
+.flashsite-admin select.fs-select:disabled {
+  background: var(--fs-sunken);
+  border-color: var(--fs-surface-border);
+  color: var(--fs-text-tertiary);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Textarea */
+.flashsite-admin textarea.fs-input {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Select — custom chevron */
+.flashsite-admin select.fs-select {
+  padding-right: 36px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2348484A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+  cursor: pointer;
+}
+
+/* ── Help text / Field description — replaces WP .description ── */
+.flashsite-admin .fs-help-text,
+.flashsite-admin .fsd-description.fs-help-text {
+  font-size: var(--fs-text-sm);
+  color: var(--fs-text-secondary); /* #48484A — 8.52:1 ✅ WCAG AA */
+  line-height: 1.5;
+  margin-top: var(--fs-space-1);
+}
+
+.flashsite-admin .fs-error-text {
+  font-size: var(--fs-text-sm);
+  color: var(--fs-error);
+  line-height: 1.5;
+  margin-top: var(--fs-space-1);
+  display: flex;
+  align-items: center;
+  gap: var(--fs-space-1);
+}
+
+/* ── Toggle / Switch ── */
+.flashsite-admin .fs-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--fs-space-3);
+  cursor: pointer;
+  user-select: none;
+}
+
+.flashsite-admin .fs-toggle__track {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  background: var(--fs-border-strong);
+  border-radius: var(--fs-radius-pill);
+  transition: background 150ms ease-out;
+  flex-shrink: 0;
+}
+
+.flashsite-admin .fs-toggle__track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: #FFFFFF;
+  border-radius: 50%;
+  box-shadow: var(--fs-shadow-xs);
+  transition: transform 150ms ease-out;
+}
+
+.flashsite-admin input[type="checkbox"].fs-toggle__input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+}
+
+/* Toggle ON — roxo apoia */
+.flashsite-admin input[type="checkbox"].fs-toggle__input:checked + .fs-toggle__track {
+  background: var(--fs-purple-500);
+}
+
+.flashsite-admin input[type="checkbox"].fs-toggle__input:checked + .fs-toggle__track::after {
+  transform: translateX(20px);
+}
+
+.flashsite-admin input[type="checkbox"].fs-toggle__input:focus-visible + .fs-toggle__track {
+  box-shadow: 0 0 0 3px rgba(155, 77, 214, 0.25);
+}
+
+.flashsite-admin .fs-toggle__label {
+  font-size: var(--fs-text-sm);
+  font-weight: 500;
+  color: var(--fs-text-secondary);
+  line-height: 1;
+}
+
+/* Form row (label + control in horizontal layout) */
+.flashsite-admin .fs-form-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--fs-space-6);
+  margin-bottom: var(--fs-space-6);
+}
+
+.flashsite-admin .fs-form-row .fs-label {
+  min-width: 160px;
+  padding-top: 11px;
+  flex-shrink: 0;
+}
+
+.flashsite-admin .fs-form-row .fs-field-control {
+  flex: 1;
+}
+
+@media (max-width: 600px) {
+  .flashsite-admin .fs-form-row {
+    flex-direction: column;
+    gap: var(--fs-space-2);
+  }
+
+  .flashsite-admin .fs-form-row .fs-label {
+    padding-top: 0;
+    min-width: unset;
+  }
+}
+
+
+/* ─────────────────────────────────────────────────────
+   9. BADGES E STATUS
+   ───────────────────────────────────────────────────── */
+
+.flashsite-admin .fs-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--fs-radius-pill);
+  font-family: var(--fs-font-body);
+  font-size: var(--fs-text-xs);
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+/* Dot indicator inside badge */
+.flashsite-admin .fs-badge::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.flashsite-admin .fs-badge--no-dot::before {
+  display: none;
+}
+
+/* Active / Publicado — ~5.5:1 ✅ */
+.flashsite-admin .fs-badge--active {
+  background: #F0FDF4;
+  color: #166534;
+  border-color: #86EFAC;
+}
+
+/* Draft / Rascunho — ~7.0:1 ✅ */
+.flashsite-admin .fs-badge--draft {
+  background: #FFFBEB;
+  color: #92400E;
+  border-color: #FDE68A;
+}
+
+/* Inactive / Inactivo — 8.52:1 ✅ */
+.flashsite-admin .fs-badge--inactive {
+  background: var(--fs-sunken);
+  color: var(--fs-text-secondary);
+  border-color: var(--fs-border-strong);
+}
+
+/* Pendente — 4.75:1 ✅ */
+.flashsite-admin .fs-badge--pending {
+  background: #EFF6FF;
+  color: #2563EB;
+  border-color: #BFDBFE;
+}
+
+/* Erro — ~5.8:1 ✅ */
+.flashsite-admin .fs-badge--error {
+  background: #FEF2F2;
+  color: #991B1B;
+  border-color: #FECACA;
+}
+
+/* Pro / Premium — 5.74:1 ✅ */
+.flashsite-admin .fs-badge--pro {
+  background: var(--fs-purple-100);
+  color: var(--fs-purple-700);
+  border-color: #C4B5FD;
+}
+
+/* Module — Core */
+.flashsite-admin .fs-badge--module-core {
+  background: var(--fs-purple-100);
+  color: #7B2FBE;
+  border-color: #C4B5FD;
+}
+
+/* Module — Design (orange per Phase 1 spec) — 4.77:1 ✅ */
+.flashsite-admin .fs-badge--module-design {
+  background: var(--fs-orange-50);
+  color: var(--fs-orange-700);
+  border-color: var(--fs-orange-200);
+}
+
+/* Module — CRM (amber) — ~7.0:1 ✅ */
+.flashsite-admin .fs-badge--module-crm {
+  background: #FFFBEB;
+  color: #92400E;
+  border-color: #FDE68A;
+}
+
+/* Campaign Active badge — orange (4.77:1 ✅) */
+.flashsite-admin .fs-badge--campaign {
+  background: var(--fs-orange-50);
+  color: var(--fs-orange-700);
+  border-color: var(--fs-orange-200);
+}
+
+
+/* ─────────────────────────────────────────────────────
+   10. FEEDBACK NOTICES
+   ───────────────────────────────────────────────────── */
+
+.flashsite-admin .fs-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--fs-space-3);
+  padding: 14px 16px;
+  border-radius: var(--fs-radius-md);
+  font-family: var(--fs-font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  animation: fs-slideDown 200ms ease-out;
+  box-sizing: border-box;
+}
+
+.flashsite-admin .fs-notice + .fs-notice {
+  margin-top: var(--fs-space-3);
+}
+
+.flashsite-admin .fs-notice__icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+}
+
+.flashsite-admin .fs-notice__content {
+  flex: 1;
+}
+
+.flashsite-admin .fs-notice__title {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+/* ── Sucesso ── */
+.flashsite-admin .fs-notice--success {
+  background: var(--fs-success-bg);
+  border-left: 4px solid var(--fs-success);
+  color: #15803D;
+}
+
+/* ── Erro ── */
+.flashsite-admin .fs-notice--error {
+  background: var(--fs-error-bg);
+  border-left: 4px solid var(--fs-error);
+  color: #B91C1C;
+}
+
+/* ── Aviso ── */
+.flashsite-admin .fs-notice--warning {
+  background: var(--fs-warning-bg);
+  border-left: 4px solid var(--fs-warning);
+  color: #92400E;
+}
+
+/* ── Info ── */
+.flashsite-admin .fs-notice--info {
+  background: var(--fs-info-bg);
+  border-left: 4px solid var(--fs-info);
+  color: #1E40AF;
+}
+
+/* Dismiss button inside notice */
+.flashsite-admin .fs-notice__dismiss {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: currentColor;
+  opacity: 0.6;
+  line-height: 1;
+  font-size: 18px;
+  transition: opacity 120ms ease;
+}
+
+.flashsite-admin .fs-notice__dismiss:hover {
+  opacity: 1;
+}
+
+
+/* ─────────────────────────────────────────────────────
+   11. MODULE ACCENTS — SIDEBAR ACTIVE INDICATORS
+   ───────────────────────────────────────────────────── */
+
+/* Section active indicator — left border accent */
+.flashsite-admin .fs-section-active {
+  border-left: 3px solid;
+  padding-left: var(--fs-space-3);
+}
+
+.flashsite-admin .fs-section-active--core   { border-color: var(--fs-module-core); }
+.flashsite-admin .fs-section-active--design { border-color: var(--fs-module-design); }
+.flashsite-admin .fs-section-active--crm    { border-color: var(--fs-module-crm); }
+
+/* Module icon colours */
+.flashsite-admin .fs-icon--core   { color: var(--fs-module-core); }
+.flashsite-admin .fs-icon--design { color: var(--fs-module-design); }
+.flashsite-admin .fs-icon--crm    { color: var(--fs-module-crm); }
+
+/* Module icon backgrounds */
+.flashsite-admin .fs-module-icon--core   { background: var(--fs-purple-100); color: var(--fs-module-core); }
+.flashsite-admin .fs-module-icon--design { background: #F0FDFA;              color: var(--fs-module-design); }
+.flashsite-admin .fs-module-icon--crm    { background: var(--fs-warning-bg); color: var(--fs-module-crm); }
+
+
+/* ─────────────────────────────────────────────────────
+   12. TABLES
+   ───────────────────────────────────────────────────── */
+
+.flashsite-admin .fs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--fs-font-body);
+  font-size: var(--fs-text-sm);
+}
+
+.flashsite-admin .fs-table th {
+  text-align: left;
+  font-weight: 600;
+  font-size: var(--fs-text-xs);
+  color: var(--fs-text-tertiary);
+  padding: var(--fs-space-2) var(--fs-space-4);
+  border-bottom: 1px solid var(--fs-surface-border);
+  white-space: nowrap;
+}
+
+.flashsite-admin .fs-table td {
+  padding: var(--fs-space-3) var(--fs-space-4);
+  border-bottom: 1px solid var(--fs-surface-border);
+  color: var(--fs-text-primary);
+  vertical-align: middle;
+}
+
+.flashsite-admin .fs-table tr:last-child td {
+  border-bottom: none;
+}
+
+.flashsite-admin .fs-table tr:hover td {
+  background: var(--fs-sunken);
+}
+
+
+/* ─────────────────────────────────────────────────────
+   13. DIVIDERS + UTILITY
+   ───────────────────────────────────────────────────── */
+
+.flashsite-admin .fs-divider {
+  border: none;
+  border-top: 1px solid var(--fs-surface-border);
+  margin: var(--fs-space-6) 0;
+}
+
+.flashsite-admin .fs-divider--strong {
+  border-color: var(--fs-border-strong);
+}
+
+/* Monospace for keys / snippets */
+.flashsite-admin .fs-mono,
+.flashsite-admin code.fs-mono {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+  font-size: var(--fs-text-sm);
+  background: var(--fs-sunken);
+  border: 1px solid var(--fs-surface-border);
+  border-radius: var(--fs-radius-sm);
+  padding: 2px 6px;
+}
+
+/* Skeleton loader placeholder */
+.flashsite-admin .fs-skeleton {
+  background: linear-gradient(90deg, var(--fs-sunken) 25%, var(--fs-surface-border) 50%, var(--fs-sunken) 75%);
+  background-size: 200% 100%;
+  border-radius: var(--fs-radius-sm);
+  animation: fs-shimmer 1.5s infinite;
+}
+
+@keyframes fs-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Visually hidden (screen-reader only) */
+.flashsite-admin .fs-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+
+/* ─────────────────────────────────────────────────────
+   14. RESPONSIVE OVERRIDES
+   ───────────────────────────────────────────────────── */
+
+@media (max-width: 782px) {
+  .flashsite-admin h1,
+  .flashsite-admin .fs-heading-1 {
+    font-size: 24px;
+  }
+
+  .flashsite-admin h2,
+  .flashsite-admin .fs-heading-2 {
+    font-size: 20px;
+  }
+
+  .flashsite-admin .fs-card {
+    padding: var(--fs-space-4);
+  }
+
+  .flashsite-admin .fs-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .flashsite-admin .fs-module-head {
+    flex-direction: column;
+    gap: var(--fs-space-3);
+  }
+
+  .flashsite-admin .fsd-btn-group {
+    width: 100%;
+  }
+
+  .flashsite-admin .fsd-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .flashsite-admin .fs-card,
+  .flashsite-admin .fs-notice,
+  .flashsite-admin .fsd-btn,
+  .flashsite-admin .fs-toggle__track,
+  .flashsite-admin .fs-toggle__track::after,
+  .flashsite-admin .fs-input,
+  .flashsite-admin textarea.fs-input,
+  .flashsite-admin select.fs-select {
+    animation: none;
+    transition: none;
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "flashsite/flashsite-core",
+  "description": "FlashSite Core hardened operational plugin for WordPress.",
+  "type": "wordpress-plugin",
+  "license": "proprietary",
+  "require": {
+    "php": "^8.1"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^10.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "FlashSite\\Core\\": "src/"
+    }
+  },
+  "scripts": {
+    "test": "php tests/run.php",
+    "test:phpunit": "phpunit --configuration phpunit.xml"
+  }
+}
