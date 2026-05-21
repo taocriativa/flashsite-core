@@ -98,6 +98,8 @@ final class Assets
         // podem gerar screen IDs diferentes. Qualquer página admin.php?page=flashsite-*
         // deve receber o design system base do painel FlashSite.
         if ($this->isFlashSiteAdminPage()) {
+            // Necessário para wp.media() funcionar nos campos de logo e imagem.
+            wp_enqueue_media();
             wp_enqueue_style('wp-color-picker');
             wp_enqueue_style('flashsite-admin-shared');
             wp_enqueue_style('flashsite-core-admin');

@@ -19,9 +19,9 @@ final class BusinessValidator
                 'tax_id' => sanitize_text_field((string) $this->value($input, 'nif', $existing, ['identity', 'tax_id'], '')),
             ],
             'contact' => [
-                'phone' => Formatters::phoneDigits((string) $this->value($input, 'phone', $existing, ['contact', 'phone'], '')),
+                'phone' => Formatters::phoneSanitize((string) $this->value($input, 'phone', $existing, ['contact', 'phone'], '')),
                 'whatsapp' => [
-                    'number' => Formatters::phoneDigits((string) $this->value($input, 'whatsapp', $existing, ['contact', 'whatsapp', 'number'], '')),
+                    'number' => Formatters::phoneSanitize((string) $this->value($input, 'whatsapp', $existing, ['contact', 'whatsapp', 'number'], '')),
                     'link' => esc_url_raw((string) $this->value($input, 'whatsapp_link', $existing, ['contact', 'whatsapp', 'link'], '')),
                 ],
                 'email_public' => sanitize_email((string) $this->value($input, 'email', $existing, ['contact', 'email_public'], '')),
