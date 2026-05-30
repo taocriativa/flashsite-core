@@ -19,6 +19,12 @@ final class UpdateChecker
     {
         add_filter('pre_set_site_transient_update_plugins', [$this, 'injectUpdateInfo']);
         add_filter('plugins_api', [$this, 'injectPluginInfo'], 20, 3);
+        add_action('delete_site_transient_update_plugins', [$this, 'clearCache']);
+    }
+
+    public function clearCache(): void
+    {
+        delete_transient(self::TRANSIENT);
     }
 
     /** @param mixed $transient */

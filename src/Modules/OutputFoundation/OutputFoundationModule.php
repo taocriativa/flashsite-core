@@ -35,6 +35,11 @@ use FlashSite\Core\Modules\OutputFoundation\Elementor\WebsiteTag;
 use FlashSite\Core\Modules\OutputFoundation\Elementor\WhatsAppLinkTag;
 use FlashSite\Core\Modules\OutputFoundation\Elementor\WhatsAppTag;
 use FlashSite\Core\Modules\OutputFoundation\Elementor\YoutubeUrlTag;
+use FlashSite\Core\Modules\OutputFoundation\Elementor\ProfDisplayNameTag;
+use FlashSite\Core\Modules\OutputFoundation\Elementor\ProfTitleTag;
+use FlashSite\Core\Modules\OutputFoundation\Elementor\ProfSpecialtyTag;
+use FlashSite\Core\Modules\OutputFoundation\Elementor\ProfLicenseTag;
+use FlashSite\Core\Modules\OutputFoundation\Elementor\ProfSecondaryIdTag;
 use FlashSite\Core\Domain\Business\BusinessData;
 
 final class OutputFoundationModule implements ModuleInterface
@@ -77,6 +82,11 @@ final class OutputFoundationModule implements ModuleInterface
         PrimaryColorTag::class,
         SecondaryColorTag::class,
         AccentColorTag::class,
+        ProfDisplayNameTag::class,
+        ProfTitleTag::class,
+        ProfSpecialtyTag::class,
+        ProfLicenseTag::class,
+        ProfSecondaryIdTag::class,
     ];
 
     /** @var array<string, array{kind:string,path?:string,formatter?:string}> */
@@ -111,6 +121,12 @@ final class OutputFoundationModule implements ModuleInterface
         'branding.primary_color' => ['kind' => 'color', 'path' => 'branding.primary_color'],
         'branding.secondary_color' => ['kind' => 'color', 'path' => 'branding.secondary_color'],
         'branding.accent_color' => ['kind' => 'color', 'path' => 'branding.accent_color'],
+        // Campos profissionais — @since 2.4.0
+        'professional.display_name' => ['kind' => 'text', 'path' => 'professional.display_name'],
+        'professional.title' => ['kind' => 'text', 'path' => 'professional.title'],
+        'professional.specialty' => ['kind' => 'text', 'path' => 'professional.specialty'],
+        'professional.license' => ['kind' => 'text', 'path' => 'professional.license'],
+        'professional.secondary_id' => ['kind' => 'text', 'path' => 'professional.secondary_id'],
     ];
 
     public function __construct(
@@ -148,6 +164,16 @@ final class OutputFoundationModule implements ModuleInterface
         add_shortcode('flashsite_tagline', fn ($atts = []) => $this->renderTextShortcode('identity.tagline', is_array($atts) ? $atts : []));
         add_shortcode('flashsite_logo_light', fn ($atts = []) => $this->renderLogoShortcode('branding.logo_light_id', is_array($atts) ? $atts : []));
         add_shortcode('flashsite_logo_dark', fn ($atts = []) => $this->renderLogoShortcode('branding.logo_dark_id', is_array($atts) ? $atts : []));
+        // Campos profissionais — @since 2.4.0
+        add_shortcode('flashsite_prof_display_name', fn ($atts = []) => $this->renderTextShortcode('professional.display_name', is_array($atts) ? $atts : []));
+        add_shortcode('flashsite_prof_title', fn ($atts = []) => $this->renderTextShortcode('professional.title', is_array($atts) ? $atts : []));
+        add_shortcode('flashsite_prof_specialty', fn ($atts = []) => $this->renderTextShortcode('professional.specialty', is_array($atts) ? $atts : []));
+        add_shortcode('flashsite_prof_license', fn ($atts = []) => $this->renderTextShortcode('professional.license', is_array($atts) ? $atts : []));
+        add_shortcode('flashsite_prof_secondary_id', fn ($atts = []) => $this->renderTextShortcode('professional.secondary_id', is_array($atts) ? $atts : []));
+        // Shortcodes HTML estruturado — @since 2.4.0
+        add_shortcode('flashsite_hours_list', [$this, 'renderHoursListShortcode']);
+        add_shortcode('flashsite_accepted_plans', [$this, 'renderAcceptedPlansShortcode']);
+        add_shortcode('flashsite_maps', [$this, 'renderMapsShortcode']);
         add_action('elementor/dynamic_tags/register', [$this, 'registerElementorTags']);
     }
 
@@ -226,7 +252,12 @@ final class OutputFoundationModule implements ModuleInterface
 
     public function registerElementorTags($dynamicTags): void
     {
-        if (! class_exists('\\Elementor\\Core\\DynamicTags\\Data_Tag') || ! method_exists($dynamicTags, 'register')) {
+        // Compatibilidade Elementor < 3.21 (Data_Tag) e >= 3.21 (Tag).
+        // @since 2.4.0: guard expandido para não bloquear versões mais novas.
+        $tagBaseExists = class_exists('\\Elementor\\Core\\DynamicTags\\Data_Tag')
+                      || class_exists('\\Elementor\\Core\\DynamicTags\\Tag');
+
+        if (! $tagBaseExists || ! method_exists($dynamicTags, 'register')) {
             return;
         }
 
@@ -400,6 +431,132 @@ final class OutputFoundationModule implements ModuleInterface
         }
 
         return $html;
+    }
+
+    /**
+     * [flashsite_hours_list] — horários como <ul><li> estruturado.
+     * Atributos: class (default "flashsite-hours-list"), obs_class (default "flashsite-hours-obs").
+     *
+     * @param array<string, mixed>|string $atts
+     * @since 2.4.0
+     */
+    public function renderHoursListShortcode(array|string $atts = []): string
+    {
+        $atts = shortcode_atts([
+            'class'     => 'flashsite-hours-list',
+            'obs_class' => 'flashsite-hours-obs',
+        ], is_array($atts) ? $atts : [], 'flashsite_hours_list');
+
+        $dias = [
+            'monday'    => 'Segunda-feira',
+            'tuesday'   => 'Terça-feira',
+            'wednesday' => 'Quarta-feira',
+            'thursday'  => 'Quinta-feira',
+            'friday'    => 'Sexta-feira',
+            'saturday'  => 'Sábado',
+            'sunday'    => 'Domingo',
+        ];
+
+        $itens = [];
+        foreach ($dias as $chave => $label) {
+            $valor = trim((string) $this->businessData->get('hours.' . $chave, ''));
+            if ($valor !== '') {
+                $itens[] = sprintf(
+                    '<li><span class="flashsite-dia">%s</span><span class="flashsite-hora">%s</span></li>',
+                    esc_html($label),
+                    esc_html($valor)
+                );
+            }
+        }
+
+        if ($itens === []) {
+            // Fallback: texto legado numa só linha
+            $legado = trim((string) $this->businessData->get('hours.legacy_text', ''));
+            if ($legado === '') {
+                return '';
+            }
+            $itens[] = '<li>' . nl2br(esc_html($legado)) . '</li>';
+        }
+
+        $obs = trim((string) $this->businessData->get('hours.notes', ''));
+        if ($obs !== '') {
+            $itens[] = sprintf(
+                '<li class="%s"><em>%s</em></li>',
+                esc_attr((string) $atts['obs_class']),
+                esc_html($obs)
+            );
+        }
+
+        return sprintf(
+            '<ul class="%s">%s</ul>',
+            esc_attr((string) $atts['class']),
+            implode('', $itens)
+        );
+    }
+
+    /**
+     * [flashsite_accepted_plans] — convênios/planos como <ul><li> estruturado.
+     * Atributos: class (default "flashsite-plans-list").
+     *
+     * @param array<string, mixed>|string $atts
+     * @since 2.4.0
+     */
+    public function renderAcceptedPlansShortcode(array|string $atts = []): string
+    {
+        $atts = shortcode_atts([
+            'class' => 'flashsite-plans-list',
+        ], is_array($atts) ? $atts : [], 'flashsite_accepted_plans');
+
+        $planos = $this->businessData->get('professional.accepted_plans', []);
+
+        if (is_string($planos)) {
+            $planos = array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', $planos) ?: []));
+        }
+
+        if (! is_array($planos) || $planos === []) {
+            return '';
+        }
+
+        $itens = array_map(
+            static fn (string $plano): string => '<li>' . esc_html($plano) . '</li>',
+            array_filter(array_map('strval', $planos))
+        );
+
+        return sprintf('<ul class="%s">%s</ul>', esc_attr((string) $atts['class']), implode('', $itens));
+    }
+
+    /**
+     * [flashsite_maps] — renderiza o embed Google Maps como <iframe> seguro.
+     * Equivalente ao [tao_maps] do TAO Studio.
+     *
+     * @param array<string, mixed>|string $atts
+     * @since 2.4.0
+     */
+    public function renderMapsShortcode(array|string $atts = []): string
+    {
+        $embed = trim((string) $this->businessData->get('location.google_maps_embed', ''));
+        if ($embed === '') {
+            return '';
+        }
+
+        // Apenas iframes do Google Maps são permitidos.
+        if (strpos($embed, 'google.com/maps') === false) {
+            return '';
+        }
+
+        return wp_kses($embed, [
+            'iframe' => [
+                'src'             => true,
+                'width'           => true,
+                'height'          => true,
+                'style'           => true,
+                'allowfullscreen' => true,
+                'loading'         => true,
+                'referrerpolicy'  => true,
+                'frameborder'     => true,
+                'title'           => true,
+            ],
+        ]);
     }
 
     private function resolveValueAsString(string $path): string

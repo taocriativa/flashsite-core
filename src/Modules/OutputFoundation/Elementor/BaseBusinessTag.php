@@ -7,7 +7,10 @@ use FlashSite\Core\Core\Plugin;
 use FlashSite\Core\Domain\Business\BusinessData;
 use FlashSite\Core\Domain\Business\BusinessRepository;
 
-abstract class BaseBusinessTag extends \Elementor\Core\DynamicTags\Data_Tag
+// Garante que ElementorTagBase está disponível antes de ser usada como base desta classe.
+require_once __DIR__ . '/ElementorTagBase.php';
+
+abstract class BaseBusinessTag extends ElementorTagBase
 {
     public function __construct(array $data = [])
     {
