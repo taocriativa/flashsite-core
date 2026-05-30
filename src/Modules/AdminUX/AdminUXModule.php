@@ -25,7 +25,13 @@ final class AdminUXModule implements ModuleInterface
         add_action('admin_post_flashsite_toggle_delete_flag', [$this, 'handleToggleDeleteFlag']);
         add_action('admin_post_flashsite_restore_backup', [$this, 'handleRestoreBackup']);
         add_action('admin_post_flashsite_backup_now', [$this, 'handleBackupNow']);
-        $this->assets->enqueueAdminForScreens(['toplevel_page_flashsite-core', 'flashsite-core_page_flashsite-business-data', 'flashsite-core_page_flashsite-data-safety']);
+        $this->assets->enqueueAdminForScreens([
+            'toplevel_page_flashsite-core',
+            'flashsite-core_page_flashsite-business-data',
+            'flashsite-core_page_flashsite-data-safety',
+            'flashsite-core_page_flashsite-shortcodes',
+            'flashsite-core_page_flashsite-privacy-policy',
+        ]);
     }
 
     public function boot(): void {}
@@ -38,6 +44,8 @@ final class AdminUXModule implements ModuleInterface
         add_submenu_page('flashsite-core', 'Visão Geral', 'Visão Geral', 'flashsite_view_dashboard', 'flashsite-core', [$this, 'renderDashboard']);
         add_submenu_page('flashsite-core', 'Dados do Negócio', 'Dados do Negócio', 'flashsite_manage_business_data', 'flashsite-business-data', [$this, 'renderBusinessDataPage']);
         add_submenu_page('flashsite-core', 'Segurança de Dados', 'Segurança de Dados', 'flashsite_manage_business_data', 'flashsite-data-safety', [$this, 'renderDataSafetyPage']);
+        add_submenu_page('flashsite-core', 'Short codes', 'Short codes', 'flashsite_view_dashboard', 'flashsite-shortcodes', [$this, 'renderShortcodesPage']);
+        add_submenu_page('flashsite-core', 'Política de Privacidade', 'Política de Privacidade', 'flashsite_manage_business_data', 'flashsite-privacy-policy', [$this, 'renderPrivacyPolicyPage']);
     }
 
     public function renderDashboard(): void
@@ -51,6 +59,16 @@ final class AdminUXModule implements ModuleInterface
     {
         $profile = $this->businessRepository->getProfile();
         include FLASHSITE_CORE_PATH . 'templates/admin/business-data.php';
+    }
+
+    public function renderShortcodesPage(): void
+    {
+        include FLASHSITE_CORE_PATH . 'templates/admin/shortcodes.php';
+    }
+
+    public function renderPrivacyPolicyPage(): void
+    {
+        include FLASHSITE_CORE_PATH . 'templates/admin/privacy-policy.php';
     }
 
     public function renderDataSafetyPage(): void

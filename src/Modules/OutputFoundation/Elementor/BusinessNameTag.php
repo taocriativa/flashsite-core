@@ -4,6 +4,6 @@ namespace FlashSite\Core\Modules\OutputFoundation\Elementor;
 final class BusinessNameTag extends AbstractBusinessTextTag
 {
     protected function getTagSlug(): string { return 'flashsite-business-name'; }
-    protected function getTagTitle(): string { return 'FlashSite: Business Name'; }
+    protected function getTagTitle(): string { return 'FlashSite: Nome do Negócio'; }
     protected function getTagPath(): string { return 'identity.business_name'; }
 }

@@ -40,6 +40,14 @@ use FlashSite\Core\Modules\OutputFoundation\Elementor\ProfTitleTag;
 use FlashSite\Core\Modules\OutputFoundation\Elementor\ProfSpecialtyTag;
 use FlashSite\Core\Modules\OutputFoundation\Elementor\ProfLicenseTag;
 use FlashSite\Core\Modules\OutputFoundation\Elementor\ProfSecondaryIdTag;
+use FlashSite\Core\Modules\OutputFoundation\Elementor\HoursMondayTag;
+use FlashSite\Core\Modules\OutputFoundation\Elementor\HoursTuesdayTag;
+use FlashSite\Core\Modules\OutputFoundation\Elementor\HoursWednesdayTag;
+use FlashSite\Core\Modules\OutputFoundation\Elementor\HoursThursdayTag;
+use FlashSite\Core\Modules\OutputFoundation\Elementor\HoursFridayTag;
+use FlashSite\Core\Modules\OutputFoundation\Elementor\HoursSaturdayTag;
+use FlashSite\Core\Modules\OutputFoundation\Elementor\HoursSundayTag;
+use FlashSite\Core\Modules\OutputFoundation\Elementor\HoursNotesTag;
 use FlashSite\Core\Domain\Business\BusinessData;
 
 final class OutputFoundationModule implements ModuleInterface
@@ -87,6 +95,15 @@ final class OutputFoundationModule implements ModuleInterface
         ProfSpecialtyTag::class,
         ProfLicenseTag::class,
         ProfSecondaryIdTag::class,
+        // Horários individuais por dia — @since 2.5.0
+        HoursMondayTag::class,
+        HoursTuesdayTag::class,
+        HoursWednesdayTag::class,
+        HoursThursdayTag::class,
+        HoursFridayTag::class,
+        HoursSaturdayTag::class,
+        HoursSundayTag::class,
+        HoursNotesTag::class,
     ];
 
     /** @var array<string, array{kind:string,path?:string,formatter?:string}> */

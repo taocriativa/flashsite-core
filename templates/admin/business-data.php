@@ -156,31 +156,12 @@ $headerActions = [
             </table>
         </div>
 
-        <div class="fsc-card">
-            <h2>Output Foundation</h2>
-            <?php $shortcodes = [
-                '[flashsite_business_name]',
-                '[flashsite_phone]',
-                '[flashsite_whatsapp]',
-                '[flashsite_whatsapp_link]',
-                '[flashsite_email]',
-                '[flashsite_email_admin]',
-                '[flashsite_address multiline="yes"]',
-                '[flashsite_website]',
-                '[flashsite_tagline]',
-                '[flashsite_logo_light width="240"]',
-                '[flashsite_logo_dark width="240"]',
-                '[flashsite_business field="branding.primary_color"]',
-            ]; ?>
-            <div class="fsc-shortcode-list">
-                <?php foreach ($shortcodes as $shortcode) : ?>
-                    <div class="fsc-shortcode-item">
-                        <code><?php echo esc_html($shortcode); ?></code>
-                        <button type="button" class="button button-secondary fsc-btn fsc-copy-btn" data-copy-text="<?php echo esc_attr($shortcode); ?>">Copiar</button>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-            <p class="description fsc-shortcode-note">Elementor passa a consumir estes dados via dynamic tags quando o builder estiver activo. O plugin continua funcional sem Elementor.</p>
+        <div class="fsc-card" style="background:#f9f9f9;border-left:4px solid #a0a0a0;">
+            <p class="description" style="margin:0;">
+                📋 Para ver e copiar todos os shortcodes disponíveis, acede a
+                <a href="<?php echo esc_url(admin_url('admin.php?page=flashsite-shortcodes')); ?>"><strong>Short codes</strong></a>
+                no menu lateral.
+            </p>
         </div>
 
     </div>

@@ -9,4 +9,5 @@ return [
     FlashSite\Core\Modules\Api\ApiAccessModule::class,
     FlashSite\Core\Modules\SetupWizard\SetupWizardModule::class,
     FlashSite\Core\Modules\OutputFoundation\OutputFoundationModule::class,
+    FlashSite\Core\Modules\PrivacyPolicy\PrivacyPolicyModule::class,
 ];
