@@ -58,30 +58,36 @@ $groups = [
         ['[flashsite_privacy_date format="Y-m-d"]', 'Data com formato personalizado'],
     ],
 ];
-?>
-<div class="wrap fsc-wrap">
-    <?php include __DIR__ . '/partials/admin-header.php'; ?>
 
-    <div class="fsc-page-content">
+$headerTitle    = 'Short codes';
+$headerSubtitle = 'Referência de todos os shortcodes disponíveis. Clique em Copiar e cole directamente no Elementor ou no editor de páginas.';
+$headerActions  = [
+    [
+        'label'   => 'Voltar ao dashboard',
+        'url'     => admin_url('admin.php?page=flashsite-core'),
+        'variant' => 'secondary',
+    ],
+];
+?>
+<div class="wrap flashsite-core-wrap">
+    <?php include FLASHSITE_CORE_PATH . 'templates/admin/partials/admin-header.php'; ?>
+
+    <div class="fsc-card-grid" style="grid-template-columns:1fr;">
+
         <div class="fsc-card">
-            <h2>📋 Referência de Shortcodes</h2>
             <p class="description">
-                Todos os shortcodes disponíveis no FlashSite Core.
-                Clique em <strong>Copiar</strong> para copiar o shortcode e cole diretamente no Elementor (widget HTML ou Text Editor) ou no editor de páginas do WordPress.
-            </p>
-            <p class="description" style="margin-top:6px;">
-                <strong>Nota:</strong> shortcodes marcados com <em>(widget HTML)</em> renderizam HTML estruturado — devem ser usados num widget HTML do Elementor, não num widget Texto.
+                Shortcodes marcados com <strong>(widget HTML)</strong> renderizam HTML estruturado — devem ser usados num widget HTML do Elementor, não num widget Texto.
             </p>
         </div>
 
         <?php foreach ($groups as $groupLabel => $items) : ?>
-            <div class="fsc-card" style="margin-top:16px;">
+            <div class="fsc-card">
                 <h3><?php echo esc_html($groupLabel); ?></h3>
                 <div class="fsc-shortcode-list">
                     <?php foreach ($items as [$sc, $desc]) : ?>
-                        <div class="fsc-shortcode-item" style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #f0f0f0;">
-                            <code style="flex:0 0 auto;min-width:320px;"><?php echo esc_html($sc); ?></code>
-                            <span class="description" style="flex:1;"><?php echo esc_html($desc); ?></span>
+                        <div class="fsc-shortcode-item">
+                            <code><?php echo esc_html($sc); ?></code>
+                            <span class="description"><?php echo esc_html($desc); ?></span>
                             <button type="button"
                                     class="button button-secondary fsc-btn fsc-copy-btn"
                                     data-copy-text="<?php echo esc_attr($sc); ?>">
@@ -92,5 +98,6 @@ $groups = [
                 </div>
             </div>
         <?php endforeach; ?>
+
     </div>
 </div>

@@ -7,27 +7,29 @@ use FlashSite\Core\Modules\PrivacyPolicy\PrivacyPolicyModule;
 $content     = PrivacyPolicyModule::getContent();
 $updatedDate = PrivacyPolicyModule::getUpdatedDate();
 $updated     = isset($_GET['updated']) && $_GET['updated'] === '1';
+
+$headerTitle    = 'Política de Privacidade';
+$headerSubtitle = 'Edite o conteúdo da Política de Privacidade. A data de atualização é registada automaticamente a cada gravação.';
+$headerActions  = [
+    [
+        'label'   => 'Voltar ao dashboard',
+        'url'     => admin_url('admin.php?page=flashsite-core'),
+        'variant' => 'secondary',
+    ],
+];
 ?>
-<div class="wrap fsc-wrap">
-    <?php include __DIR__ . '/partials/admin-header.php'; ?>
+<div class="wrap flashsite-core-wrap">
+    <?php include FLASHSITE_CORE_PATH . 'templates/admin/partials/admin-header.php'; ?>
 
-    <div class="fsc-page-content">
+    <?php if ($updated) : ?>
+        <div class="notice notice-success is-dismissible">
+            <p>✅ Política de Privacidade guardada com sucesso. Data de atualização registada automaticamente.</p>
+        </div>
+    <?php endif; ?>
 
-        <?php if ($updated) : ?>
-            <div class="notice notice-success is-dismissible">
-                <p>✅ Política de Privacidade guardada com sucesso. Data de atualização registada automaticamente.</p>
-            </div>
-        <?php endif; ?>
+    <div class="fsc-card-grid" style="grid-template-columns:1fr;">
 
         <div class="fsc-card">
-            <h2>📄 Política de Privacidade</h2>
-            <p class="description">
-                Escreva ou cole aqui o texto da Política de Privacidade do site.
-                A data de atualização é registada automaticamente a cada save.<br>
-                Use <code>[flashsite_privacy_policy]</code> na página de Política de Privacidade para exibir o conteúdo.<br>
-                Use <code>[flashsite_privacy_date]</code> para exibir a data da última atualização.
-            </p>
-
             <?php if ($updatedDate !== '') : ?>
                 <p class="description"><strong>Última atualização:</strong> <?php echo esc_html($updatedDate); ?></p>
             <?php endif; ?>
@@ -52,33 +54,31 @@ $updated     = isset($_GET['updated']) && $_GET['updated'] === '1';
                     ?>
                 </div>
 
-                <div style="margin-top:16px;">
+                <div class="fsc-card-actions">
                     <?php submit_button('Guardar Política de Privacidade', 'primary fsc-btn', 'submit', false); ?>
                 </div>
             </form>
         </div>
 
-        <div class="fsc-card" style="margin-top:16px;">
+        <div class="fsc-card">
             <h3>Shortcodes disponíveis</h3>
-            <table class="widefat striped" style="max-width:600px;">
-                <thead>
-                    <tr><th>Shortcode</th><th>Descrição</th></tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><code>[flashsite_privacy_policy]</code></td>
-                        <td>Conteúdo completo da Política de Privacidade</td>
-                    </tr>
-                    <tr>
-                        <td><code>[flashsite_privacy_date]</code></td>
-                        <td>Data da última atualização (formato padrão: d/m/Y)</td>
-                    </tr>
-                    <tr>
-                        <td><code>[flashsite_privacy_date format="Y-m-d"]</code></td>
-                        <td>Data com formato personalizado (usa sintaxe PHP date())</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="fsc-shortcode-list">
+                <div class="fsc-shortcode-item">
+                    <code>[flashsite_privacy_policy]</code>
+                    <span class="description">Conteúdo completo da Política de Privacidade</span>
+                    <button type="button" class="button button-secondary fsc-btn fsc-copy-btn" data-copy-text="[flashsite_privacy_policy]">Copiar</button>
+                </div>
+                <div class="fsc-shortcode-item">
+                    <code>[flashsite_privacy_date]</code>
+                    <span class="description">Data da última atualização (formato padrão: d/m/Y)</span>
+                    <button type="button" class="button button-secondary fsc-btn fsc-copy-btn" data-copy-text="[flashsite_privacy_date]">Copiar</button>
+                </div>
+                <div class="fsc-shortcode-item">
+                    <code>[flashsite_privacy_date format="Y-m-d"]</code>
+                    <span class="description">Data com formato personalizado (usa sintaxe PHP date())</span>
+                    <button type="button" class="button button-secondary fsc-btn fsc-copy-btn" data-copy-text='[flashsite_privacy_date format="Y-m-d"]'>Copiar</button>
+                </div>
+            </div>
         </div>
 
     </div>

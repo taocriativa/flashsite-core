@@ -144,7 +144,8 @@ $mediaPreview = static function (int $attachmentId): string {
                 <tr>
                     <th><label for="address">Morada</label></th>
                     <td>
-                        <textarea class="large-text" id="address" name="address" rows="4" placeholder="Ex: Rua Exemplo, 25&#10;2.º andar, Sala 4&#10;1000-100 Lisboa"><?php echo esc_textarea($fieldValue($profileData, ['location', 'address'])); ?></textarea>
+                        <textarea class="large-text" id="address" name="address" rows="3" placeholder="Ex: Rua Exemplo, 25&#10;2.º andar, Sala 4"><?php echo esc_textarea($fieldValue($profileData, ['location', 'address'])); ?></textarea>
+                        <p class="description">Apenas rua, número e complemento. Cidade e código postal têm campos próprios abaixo.</p>
                     </td>
                 </tr>
                 <tr>
