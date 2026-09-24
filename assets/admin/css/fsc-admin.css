@@ -725,3 +725,10 @@
         padding: 16px;
     }
 }
+
+/* Avisos do WP realocados acima do cabeçalho (âncora .wp-header-end) */
+.flashsite-core-wrap > .notice,
+.flashsite-core-wrap > .updated,
+.flashsite-core-wrap > .error {
+    margin: 0 0 12px;
+}

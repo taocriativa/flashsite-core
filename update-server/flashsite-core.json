@@ -1,9 +1,9 @@
 {
     "name": "FlashSite Core",
-    "version": "2.5.1",
-    "download_url": "https://github.com/taocriativa/flashsite-core/releases/download/v2.5.1/flashsite-core-2.5.1.zip",
+    "version": "2.5.2",
+    "download_url": "https://github.com/taocriativa/flashsite-core/releases/download/v2.5.2/flashsite-core-2.5.2.zip",
     "tested": "7.0",
     "requires": "6.4",
     "requires_php": "8.1",
-    "changelog": "https://github.com/taocriativa/flashsite-core/blob/main/docs/CHANGELOG-2.5.1.md"
+    "changelog": "https://github.com/taocriativa/flashsite-core/blob/main/docs/CHANGELOG-2.5.2.md"
 }

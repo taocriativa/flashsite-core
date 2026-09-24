@@ -5,6 +5,8 @@ $headerTitle = isset($headerTitle) ? (string) $headerTitle : 'Gestão FlashSite'
 $headerSubtitle = isset($headerSubtitle) ? (string) $headerSubtitle : '';
 $headerActions = isset($headerActions) && is_array($headerActions) ? $headerActions : [];
 ?>
+<?php // Âncora do WP para avisos: sem ela, o common.js move-os para depois do primeiro <h1>, dentro do card. ?>
+<hr class="wp-header-end">
 <div class="fsc-admin-header">
     <div class="fsc-admin-header__brand">
         <div class="fsc-admin-header__logo-wrap">
