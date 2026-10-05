@@ -31,6 +31,25 @@ abstract class CollectionTagBase extends \FlashSite\Core\Modules\OutputFoundatio
     /** @var array<string, list<int>> cache por pedido das listas featured/latest */
     private static array $lists = [];
 
+    /**
+     * Item "atual" imposto por quem renderiza (páginas modelo do Core). Necessário porque o
+     * Elementor muda o post global para a página modelo durante o render.
+     */
+    private static int $contextPostId = 0;
+
+    /** @var callable|null (int $postId): int  devolve um item de pré-visualização se $postId for uma página modelo */
+    private static $previewResolver = null;
+
+    public static function setContextPostId(int $postId): void
+    {
+        self::$contextPostId = max(0, $postId);
+    }
+
+    public static function setPreviewResolver(?callable $resolver): void
+    {
+        self::$previewResolver = $resolver;
+    }
+
     abstract protected function slug(): string;
     abstract protected function title(): string;
 
@@ -55,7 +74,17 @@ abstract class CollectionTagBase extends \FlashSite\Core\Modules\OutputFoundatio
         if ($source === 'featured' || $source === 'latest') {
             return $this->listedPostId($source, max(1, (int) ($this->get_settings('position') ?: 1)));
         }
+        if (self::$contextPostId > 0) {
+            return self::$contextPostId;
+        }
         $id = function_exists('get_the_ID') ? (int) get_the_ID() : 0;
+        // A editar/pré-visualizar uma página modelo: mostra um item real como exemplo.
+        if ($id > 0 && self::$previewResolver !== null) {
+            $preview = (int) (self::$previewResolver)($id);
+            if ($preview > 0) {
+                return $preview;
+            }
+        }
         return $id > 0 ? $id : 0;
     }
 

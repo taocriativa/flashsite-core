@@ -140,6 +140,14 @@ return [
             'map' => ['disponivel' => 'InStock', 'reservado' => 'LimitedAvailability', 'vendido' => 'SoldOut', 'arrendado' => 'SoldOut'],
         ],
         'featured_field' => 'destaque',
+        // Páginas modelo (Elementor, em rascunho) usadas pelo Core em vez do Theme Builder.
+        'model_pages' => [
+            'item' => 'Modelo · Imóvel',
+            'card' => 'Modelo · Cartão de imóvel',
+            'archive_top' => 'Modelo · Imóveis topo',
+            'archive_bottom' => 'Modelo · Imóveis rodapé',
+        ],
+        'archive_per_page' => 12,
         'rules' => [
             ['required_unless' => ['preco', 'preco_sob_consulta']],
         ],

@@ -114,3 +114,26 @@ class ItemTitleTag extends ItemFieldTag
         return get_post_status($postId) === 'publish' || is_preview() ? (string) get_the_title($postId) : '';
     }
 }
+
+/** Descrição do item (conteúdo do editor), em texto simples com parágrafos separados por linha. */
+class ItemContentTag extends ItemTitleTag
+{
+    protected function slug(): string { return 'flashsite-item-content'; }
+    protected function title(): string { return 'Item · Descrição'; }
+    protected function fixedField(): ?string { return '__content'; }
+
+    protected function resolve(CollectionPresetInterface $preset, int $postId, FieldFormatter $formatter): string
+    {
+        $post = get_post($postId);
+        if (! $post instanceof \WP_Post) {
+            return '';
+        }
+        $text = wp_strip_all_tags(strip_shortcodes((string) $post->post_content));
+        return trim((string) preg_replace("/\n{3,}/", "\n\n", $text));
+    }
+
+    public function render(): void
+    {
+        echo nl2br(esc_html($this->text()));
+    }
+}

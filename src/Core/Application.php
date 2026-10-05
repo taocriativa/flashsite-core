@@ -35,6 +35,7 @@ use FlashSite\Core\Modules\Collections\CollectionsModule;
 use FlashSite\Core\Modules\Collections\DemoKitImporter;
 use FlashSite\Core\Modules\Collections\ItemPersistence;
 use FlashSite\Core\Modules\Collections\Output\CollectionsOutput;
+use FlashSite\Core\Modules\Collections\Output\ModelPages;
 use FlashSite\Core\Modules\Collections\Output\PublicRestController;
 use FlashSite\Core\Modules\DependencyManager\DependencyManagerModule;
 use FlashSite\Core\Modules\OutputFoundation\OutputFoundationModule;
@@ -151,10 +152,11 @@ final class Application
         $this->container->bind(ItemEditor::class, fn (Container $c) => new ItemEditor($c->make(ItemPersistence::class), $c->make(ItemReader::class), $c->make(CollectionSettings::class)));
         $this->container->bind(ListColumns::class, fn (Container $c) => new ListColumns($c->make(ItemReader::class), $c->make(FieldFormatter::class)));
         $this->container->bind(CollectionsOutput::class, fn (Container $c) => new CollectionsOutput($c->make(CollectionRegistry::class), $c->make(FieldFormatter::class), $c->make(SchemaOrgBuilder::class)));
+        $this->container->bind(ModelPages::class, fn () => new ModelPages());
         $this->container->bind(PublicRestController::class, fn (Container $c) => new PublicRestController($c->make(CollectionPublicSerializer::class)));
         $this->container->bind(DemoKitImporter::class, fn (Container $c) => new DemoKitImporter($c->make(ItemPersistence::class), FLASHSITE_CORE_PATH . 'config/collections/demo-kit'));
         $this->container->bind(CollectionsPage::class, fn (Container $c) => new CollectionsPage($c->make(CollectionRegistry::class), $c->make(ActivationRepository::class), $c->make(DemoKitImporter::class), $c->make(CollectionSettings::class)));
-        $this->container->bind(CollectionsModule::class, fn (Container $c) => new CollectionsModule($c->make(CollectionRegistry::class), $c->make(ActivationRepository::class), $c->make(CollectionCapabilities::class), $c->make(ItemSanitizer::class), $c->make(OptionsStorage::class), $c->make(Logger::class), $c->make(ItemPersistence::class), $c->make(ItemEditor::class), $c->make(ListColumns::class), $c->make(CollectionsOutput::class), $c->make(PublicRestController::class), $c->make(CollectionsPage::class)));
+        $this->container->bind(CollectionsModule::class, fn (Container $c) => new CollectionsModule($c->make(CollectionRegistry::class), $c->make(ActivationRepository::class), $c->make(CollectionCapabilities::class), $c->make(ItemSanitizer::class), $c->make(OptionsStorage::class), $c->make(Logger::class), $c->make(ItemPersistence::class), $c->make(ItemEditor::class), $c->make(ListColumns::class), $c->make(CollectionsOutput::class), $c->make(PublicRestController::class), $c->make(CollectionsPage::class), $c->make(ModelPages::class)));
         $this->container->bind(OutputFoundationModule::class, fn (Container $c) => new OutputFoundationModule($c->make(BusinessData::class), $c->make(Logger::class)));
     }
 

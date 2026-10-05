@@ -18,6 +18,7 @@ use FlashSite\Core\Modules\Collections\Admin\CollectionsPage;
 use FlashSite\Core\Modules\Collections\Admin\ItemEditor;
 use FlashSite\Core\Modules\Collections\Admin\ListColumns;
 use FlashSite\Core\Modules\Collections\Output\CollectionsOutput;
+use FlashSite\Core\Modules\Collections\Output\ModelPages;
 use FlashSite\Core\Modules\Collections\Output\PublicRestController;
 
 /**
@@ -50,6 +51,7 @@ final class CollectionsModule implements ModuleInterface
         private ?CollectionsOutput $output = null,
         private ?PublicRestController $rest = null,
         private ?CollectionsPage $page = null,
+        private ?ModelPages $modelPages = null,
     ) {}
 
     public function register(): void
@@ -88,6 +90,7 @@ final class CollectionsModule implements ModuleInterface
         }
         $this->output?->register($this->registered);
         $this->rest?->register($this->registered);
+        $this->modelPages?->register($this->registered);
     }
 
     public function syncCapabilities(): void
