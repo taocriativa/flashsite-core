@@ -29,6 +29,7 @@ final class ContactModule implements ModuleInterface
     public const DEFAULTS = [
         'forms_whatsapp' => 'all',      // all | marked (só formulários com a classe fs-form-whatsapp) | off
         'forms_intro' => 'Olá! Acabei de enviar este pedido pelo site:',
+        'phone_country' => 'auto',      // auto (país dos Dados do Negócio) | PT | BR | INT
         'float_enabled' => '0',
         'float_position' => 'right',    // right | left
         'float_where' => 'all',         // all | home | not_home
@@ -40,11 +41,16 @@ final class ContactModule implements ModuleInterface
 
     private const CHOICES = [
         'forms_whatsapp' => ['all', 'marked', 'off'],
+        'phone_country' => ['auto', 'PT', 'BR', 'INT'],
         'float_position' => ['right', 'left'],
         'float_where' => ['all', 'home', 'not_home'],
         'float_device' => ['all', 'mobile', 'desktop'],
         'float_style' => ['brand', 'whatsapp'],
     ];
+
+    /** Endereço "Para" a usar na ação E-mail dos formulários; o Core troca-o pelo e-mail do painel. */
+    public const RECIPIENT_PLACEHOLDER = 'pedidos@formularios.flashsite.invalid';
+    public const LAST_MAIL_OPTION = 'flashsite_forms_last_mail';
 
     public function __construct(private ?BusinessData $business = null) {}
 
@@ -55,6 +61,8 @@ final class ContactModule implements ModuleInterface
         add_action('wp_enqueue_scripts', [$this, 'enqueue'], 20);
         add_action('wp_footer', [$this, 'renderFloatButton'], 20);
         add_action('elementor/dynamic_tags/register', [$this, 'registerTag'], 20);
+        add_filter('wp_mail', [$this, 'routeFormMail'], 5);
+        add_action('wp_mail_failed', [$this, 'recordMailFailure']);
     }
 
     public function boot(): void {}
@@ -107,17 +115,19 @@ final class ContactModule implements ModuleInterface
         }
         $s = self::settings();
         $digits = $this->whatsappDigits();
-        if ($digits === '') {
-            return;
-        }
-        if ($s['forms_whatsapp'] !== 'off') {
+        if ($digits !== '' && $s['forms_whatsapp'] !== 'off') {
             wp_enqueue_script('flashsite-core-forms-whatsapp', FLASHSITE_CORE_URL . 'assets/frontend/js/fsc-forms-whatsapp.js', [], FLASHSITE_CORE_VERSION, ['in_footer' => true, 'strategy' => 'defer']);
-            wp_localize_script('flashsite-core-forms-whatsapp', 'flashsiteFormsWhatsapp', [
-                'number' => $digits,
-                'mode' => $s['forms_whatsapp'],
-                'intro' => $s['forms_intro'],
-            ]);
         }
+        // Validação dos campos de telefone: corre sempre, mesmo sem o envio para o WhatsApp.
+        if (! wp_script_is('flashsite-core-forms-whatsapp', 'enqueued')) {
+            wp_enqueue_script('flashsite-core-forms-whatsapp', FLASHSITE_CORE_URL . 'assets/frontend/js/fsc-forms-whatsapp.js', [], FLASHSITE_CORE_VERSION, ['in_footer' => true, 'strategy' => 'defer']);
+        }
+        wp_localize_script('flashsite-core-forms-whatsapp', 'flashsiteFormsWhatsapp', [
+            'number' => $s['forms_whatsapp'] !== 'off' ? $digits : '',
+            'mode' => $s['forms_whatsapp'],
+            'intro' => $s['forms_intro'],
+            'phoneCountry' => $this->phoneCountry(),
+        ]);
         if ($this->showFloat($s)) {
             wp_enqueue_style('flashsite-core-whatsapp-float', FLASHSITE_CORE_URL . 'assets/frontend/css/fsc-whatsapp-float.css', [], FLASHSITE_CORE_VERSION);
         }
@@ -159,6 +169,81 @@ final class ContactModule implements ModuleInterface
             esc_attr($label !== '' ? $label : 'Falar no WhatsApp'),
             $label !== '' ? '<span class="fs-wa-float__label">' . esc_html($label) . '</span>' : ''
         );
+    }
+
+    /** Pedido AJAX de envio de um formulário do Elementor (atómico ou clássico do Pro). */
+    public static function isFormSubmission(): bool
+    {
+        $action = isset($_POST['action']) ? sanitize_key(wp_unslash((string) $_POST['action'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+        return wp_doing_ajax() && str_ends_with($action, 'forms_send_form');
+    }
+
+    /** País para validar telefones: PT (9 dígitos), BR (DDD + 8/9 dígitos) ou INT (7 a 15 dígitos). */
+    public function phoneCountry(): string
+    {
+        $choice = self::settings()['phone_country'];
+        if ($choice !== 'auto') {
+            return $choice;
+        }
+        $country = $this->business !== null ? mb_strtolower(trim((string) $this->business->get('location.country', ''))) : '';
+        return match (true) {
+            in_array($country, ['pt', 'prt', 'portugal'], true) => 'PT',
+            in_array($country, ['br', 'bra', 'brasil', 'brazil'], true) => 'BR',
+            $country === '' => str_starts_with($this->whatsappDigits(), '55') ? 'BR' : 'PT',
+            default => 'INT',
+        };
+    }
+
+    // ── E-mail dos formulários ───────────────────────────────────────────────
+
+    /**
+     * Durante o envio de um formulário do Elementor: troca o destinatário-modelo
+     * (RECIPIENT_PLACEHOLDER) ou um "Para" vazio pelo e-mail do painel e regista o envio.
+     *
+     * @param array<string, mixed> $mail
+     * @return array<string, mixed>
+     */
+    public function routeFormMail($mail)
+    {
+        if (! is_array($mail)) {
+            return $mail;
+        }
+        $to = $mail['to'] ?? [];
+        $list = is_array($to) ? $to : array_filter(array_map('trim', explode(',', (string) $to)));
+        $replaced = false;
+        foreach ($list as $i => $address) {
+            if (stripos((string) $address, '@formularios.flashsite.invalid') !== false) {
+                $list[$i] = $this->recipientEmail();
+                $replaced = true;
+            }
+        }
+        $isForm = self::isFormSubmission();
+        if ($isForm && $list === []) {
+            $list = [$this->recipientEmail()];
+            $replaced = true;
+        }
+        if ($replaced) {
+            $mail['to'] = array_values(array_unique($list));
+        }
+        if ($isForm || $replaced) {
+            update_option(self::LAST_MAIL_OPTION, [
+                'time' => current_time('mysql'),
+                'to' => implode(', ', array_map('strval', (array) ($mail['to'] ?? []))),
+                'subject' => (string) ($mail['subject'] ?? ''),
+                'error' => '',
+            ], false);
+        }
+        return $mail;
+    }
+
+    public function recordMailFailure($error): void
+    {
+        $last = get_option(self::LAST_MAIL_OPTION, []);
+        if (! is_array($last) || ! self::isFormSubmission()) {
+            return;
+        }
+        $last['error'] = is_object($error) && method_exists($error, 'get_error_message') ? (string) $error->get_error_message() : 'Falha no envio';
+        update_option(self::LAST_MAIL_OPTION, $last, false);
     }
 
     // ── Tag do destinatário (só no envio) ───────────────────────────────────
@@ -207,6 +292,7 @@ final class ContactModule implements ModuleInterface
         echo '<table class="form-table" role="presentation">';
         $this->selectRow('forms_whatsapp', 'Abrir o WhatsApp depois do envio', ['all' => 'Em todos os formulários', 'marked' => 'Só nos formulários marcados (classe fs-form-whatsapp)', 'off' => 'Desligado'], $s);
         printf('<tr><th scope="row"><label for="forms_intro">Primeira linha da mensagem</label></th><td><input type="text" class="large-text" id="forms_intro" name="forms_intro" value="%s"></td></tr>', esc_attr($s['forms_intro']));
+        $this->selectRow('phone_country', 'Validar telefones como', ['auto' => 'Automático (país dos Dados do Negócio: ' . $this->phoneCountry() . ')', 'PT' => 'Portugal (9 dígitos)', 'BR' => 'Brasil (DDD + número)', 'INT' => 'Internacional (7 a 15 dígitos)'], $s);
         echo '</table>';
 
         echo '<h2>2. Botão flutuante de WhatsApp</h2>';
@@ -222,6 +308,15 @@ final class ContactModule implements ModuleInterface
         submit_button('Guardar');
         echo '</form>';
 
+        $last = get_option(self::LAST_MAIL_OPTION, []);
+        if (is_array($last) && ! empty($last['time'])) {
+            printf(
+                '<h2>Último e-mail de formulário</h2><p>%s · para <strong>%s</strong> · %s</p>',
+                esc_html((string) $last['time']),
+                esc_html((string) $last['to']),
+                ($last['error'] ?? '') !== '' ? '<span style="color:#b32d2e">Falhou: ' . esc_html((string) $last['error']) . '</span>' : 'entregue ao servidor de e-mail'
+            );
+        }
         echo '<h2>Como chegam os e-mails</h2><p>Os e-mails saem do servidor do site. Para não caírem no spam, é preciso ligar o envio a uma conta de e-mail (SMTP): o e-mail do domínio do cliente ou uma conta Gmail com palavra-passe de aplicação. É uma configuração única, feita na entrega.</p>';
         echo '</div>';
     }

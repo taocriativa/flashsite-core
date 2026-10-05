@@ -3,10 +3,77 @@
    campos preenchidos ("Rótulo: valor"). Funciona com o formulário do Elementor 4 (atómico) e
    com o formulário clássico do Elementor Pro. Os campos são lidos sozinhos: não há nada a
    configurar por formulário. Navegação na aba atual, por isso nunca é bloqueada como pop-up.
-   Modo "marked": só formulários com a classe fs-form-whatsapp. Classe fs-form-no-whatsapp exclui. */
+   Modo "marked": só formulários com a classe fs-form-whatsapp. Classe fs-form-no-whatsapp exclui.
+   Também valida os campos de telefone (país em FlashSite › WhatsApp e formulários). */
 (function () {
     'use strict';
     var cfg = window.flashsiteFormsWhatsapp || {};
+
+    /* ---------- Telefones: só números, com o comprimento do país ----------
+       PT: 9 dígitos (2/3/9…); BR: DDD + 8 ou 9 dígitos; INT: 7 a 15 dígitos.
+       Com indicativo (+351 / +55 / 00…), valida pelo país do indicativo. */
+    var PHONE_RULES = {
+        PT: { code: '351', min: 9, max: 9, re: /^[239]\d{8}$/, msg: 'Indique um número português com 9 dígitos (ex.: 912 345 678).' },
+        BR: { code: '55', min: 10, max: 11, re: /^[1-9]{2}9?\d{8}$/, msg: 'Informe DDD + número, só algarismos (ex.: 71 99999 9999).' },
+        INT: { code: '', min: 7, max: 15, re: /^\d{7,15}$/, msg: 'Indique um número de telefone válido.' }
+    };
+
+    function phoneError(raw) {
+        var value = (raw || '').trim();
+        if (value === '') { return ''; }
+        if (/[^\d\s+()\-.]/.test(value)) { return 'Use só números.'; }
+        var digits = value.replace(/\D/g, '');
+        var intl = /^\s*(\+|00)/.test(value);
+        if (intl) {
+            if (value.indexOf('00') === 0) { digits = digits.slice(2); }
+            if (digits.indexOf('351') === 0) { return PHONE_RULES.PT.re.test(digits.slice(3)) ? '' : PHONE_RULES.PT.msg; }
+            if (digits.indexOf('55') === 0) { return PHONE_RULES.BR.re.test(digits.slice(2)) ? '' : PHONE_RULES.BR.msg; }
+            return digits.length >= 8 && digits.length <= 15 ? '' : PHONE_RULES.INT.msg;
+        }
+        var rule = PHONE_RULES[cfg.phoneCountry] || PHONE_RULES.INT;
+        return rule.re.test(digits) ? '' : rule.msg;
+    }
+
+    function isPhone(el) {
+        return el && el.tagName === 'INPUT' && (el.type === 'tel' || /tel|phone|telefone|telemovel|whats|celular/i.test(el.name || el.id || ''));
+    }
+
+    function armPhone(el) {
+        if (el.__fsPhone) { return; }
+        el.__fsPhone = true;
+        el.setAttribute('inputmode', 'tel');
+        el.setAttribute('autocomplete', 'tel');
+        el.setAttribute('maxlength', '20');
+    }
+
+    document.addEventListener('input', function (e) {
+        var el = e.target;
+        if (!isPhone(el)) { return; }
+        armPhone(el);
+        var cleaned = el.value.replace(/[^\d\s+()\-.]/g, '').replace(/(?!^)\+/g, '');
+        if (cleaned !== el.value) { el.value = cleaned; }
+        el.setCustomValidity(phoneError(el.value));
+    }, true);
+
+    document.addEventListener('focusin', function (e) { if (isPhone(e.target)) { armPhone(e.target); } });
+
+    // Antes de qualquer envio: bloqueia se algum telefone estiver inválido.
+    document.addEventListener('submit', function (e) {
+        var form = e.target;
+        if (!form || form.tagName !== 'FORM') { return; }
+        var bad = null;
+        form.querySelectorAll('input').forEach(function (el) {
+            if (!isPhone(el)) { return; }
+            el.setCustomValidity(phoneError(el.value));
+            if (!bad && el.validationMessage) { bad = el; }
+        });
+        if (bad) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            bad.reportValidity();
+        }
+    }, true);
+
     if (!cfg.number) { return; }
 
     var CONSENT = /autoriz|consent|aceito|concordo|privacidade|rgpd|lgpd|termos/i;

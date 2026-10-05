@@ -31,15 +31,9 @@ final class FormsRecipientTag extends \Elementor\Core\DynamicTags\Tag
         return [\Elementor\Modules\DynamicTags\Module::TEXT_CATEGORY];
     }
 
-    public static function isFormSubmission(): bool
-    {
-        $action = isset($_POST['action']) ? sanitize_key(wp_unslash((string) $_POST['action'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification
-        return wp_doing_ajax() && str_ends_with($action, 'forms_send_form');
-    }
-
     public function render(): void
     {
-        if (! self::isFormSubmission() || self::$resolver === null) {
+        if (! ContactModule::isFormSubmission() || self::$resolver === null) {
             return;
         }
         echo esc_html((string) (self::$resolver)());
