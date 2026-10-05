@@ -30,6 +30,7 @@ class ItemFieldTag extends CollectionTagBase
 
     protected function register_controls(): void
     {
+        $this->registerItemSourceControls();
         if ($this->fixedField() === null) {
             $this->add_control('field', [
                 'label' => 'Campo',

@@ -33,6 +33,7 @@ final class CollectionsOutput
         Elementor\ItemImageTag::class,
         Elementor\ItemGalleryTag::class,
         Elementor\ItemUrlTag::class,
+        Elementor\ItemTitleTag::class,
     ];
 
     /** @var array<string, CollectionPresetInterface> */

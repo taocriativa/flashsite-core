@@ -29,6 +29,7 @@ class ItemImageTag extends CollectionTagBase
 
     protected function register_controls(): void
     {
+        $this->registerItemSourceControls();
         $this->add_control('source', [
             'label' => 'Imagem',
             'type' => \Elementor\Controls_Manager::SELECT,
@@ -95,6 +96,11 @@ class ItemGalleryTag extends CollectionTagBase
         return [\Elementor\Modules\DynamicTags\Module::GALLERY_CATEGORY];
     }
 
+    protected function register_controls(): void
+    {
+        $this->registerItemSourceControls();
+    }
+
     /** @return list<array{id: int, url: string}> */
     public function get_value(array $options = []): array
     {
@@ -139,10 +145,11 @@ class ItemUrlTag extends CollectionTagBase
 
     protected function register_controls(): void
     {
+        $this->registerItemSourceControls();
         $this->add_control('field', [
             'label' => 'Campo',
             'type' => \Elementor\Controls_Manager::SELECT,
-            'options' => self::fieldOptions([FieldType::Url]),
+            'options' => ['__permalink' => 'Página do item'] + self::fieldOptions([FieldType::Url]),
             'default' => '',
         ]);
     }
@@ -155,7 +162,11 @@ class ItemUrlTag extends CollectionTagBase
         if ($preset === null || $reader === null) {
             return '';
         }
-        $field = $preset->field((string) ($this->get_settings('field') ?? ''));
+        $key = (string) ($this->get_settings('field') ?? '');
+        if ($key === '__permalink') {
+            return get_post_status($postId) === 'publish' ? (string) get_permalink($postId) : '';
+        }
+        $field = $preset->field($key);
         if ($field === null || ! $field->public || $field->type !== FieldType::Url) {
             return '';
         }

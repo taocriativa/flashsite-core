@@ -47,6 +47,7 @@ class ItemTermsTag extends ItemFieldTag
 
     protected function register_controls(): void
     {
+        $this->registerItemSourceControls();
         if ($this->fixedTaxonomy() === null) {
             $this->add_control('taxonomy', [
                 'label' => 'Classificação',
@@ -91,4 +92,25 @@ class ItemZoneTag extends ItemTermsTag
     protected function slug(): string { return 'flashsite-item-zone'; }
     protected function title(): string { return 'Item · Zona'; }
     protected function fixedTaxonomy(): ?string { return 'zona'; }
+}
+
+/** Título do item (para cartões de destaque montados sem loop). */
+class ItemTitleTag extends ItemFieldTag
+{
+    protected function slug(): string { return 'flashsite-item-title'; }
+    protected function title(): string { return 'Item · Título'; }
+    protected function fixedField(): ?string { return '__title'; }
+
+    protected function register_controls(): void
+    {
+        $this->registerItemSourceControls();
+        $this->add_control('before', ['label' => 'Antes', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => '']);
+        $this->add_control('after', ['label' => 'Depois', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => '']);
+        $this->add_control('fallback', ['label' => 'Se estiver vazio', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => '']);
+    }
+
+    protected function resolve(CollectionPresetInterface $preset, int $postId, FieldFormatter $formatter): string
+    {
+        return get_post_status($postId) === 'publish' || is_preview() ? (string) get_the_title($postId) : '';
+    }
 }

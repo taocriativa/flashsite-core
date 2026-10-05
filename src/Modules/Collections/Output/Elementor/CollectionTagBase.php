@@ -18,11 +18,18 @@ require_once dirname(__DIR__, 3) . '/OutputFoundation/Elementor/ElementorTagBase
  * Resolvem o item atual (página individual, Loop Grid, loop atómico) por get_the_ID()
  * e o preset pelo post type. Fora de um item da coleção devolvem vazio.
  *
+ * Também podem apontar para um item fixo de uma lista, sem loop (útil em páginas montadas
+ * pelo MCP, que não cria loops): item_source = "featured" | "latest", position = 1..n,
+ * collection = chave do preset. Ex.: "2.º imóvel em destaque".
+ *
  * @since 2.6.0
  */
 abstract class CollectionTagBase extends \FlashSite\Core\Modules\OutputFoundation\Elementor\ElementorTagBase
 {
     public const GROUP = 'flashsite-collections';
+
+    /** @var array<string, list<int>> cache por pedido das listas featured/latest */
+    private static array $lists = [];
 
     abstract protected function slug(): string;
     abstract protected function title(): string;
@@ -44,8 +51,108 @@ abstract class CollectionTagBase extends \FlashSite\Core\Modules\OutputFoundatio
 
     protected function currentPostId(): int
     {
+        $source = (string) ($this->get_settings('item_source') ?: 'current');
+        if ($source === 'featured' || $source === 'latest') {
+            return $this->listedPostId($source, max(1, (int) ($this->get_settings('position') ?: 1)));
+        }
         $id = function_exists('get_the_ID') ? (int) get_the_ID() : 0;
         return $id > 0 ? $id : 0;
+    }
+
+    /** Controlos comuns: de onde vem o item. Chamar no início de register_controls(). */
+    protected function registerItemSourceControls(): void
+    {
+        $this->add_control('item_source', [
+            'label' => 'Item',
+            'type' => \Elementor\Controls_Manager::SELECT,
+            'options' => [
+                'current' => 'Item atual (página do item ou loop)',
+                'featured' => 'Item em destaque n.º…',
+                'latest' => 'Item mais recente n.º…',
+            ],
+            'default' => 'current',
+        ]);
+        $this->add_control('position', [
+            'label' => 'N.º',
+            'type' => \Elementor\Controls_Manager::NUMBER,
+            'default' => 1,
+            'min' => 1,
+            'condition' => ['item_source!' => 'current'],
+        ]);
+        $this->add_control('collection', [
+            'label' => 'Coleção',
+            'type' => \Elementor\Controls_Manager::SELECT,
+            'options' => self::collectionOptions(),
+            'default' => '',
+            'condition' => ['item_source!' => 'current'],
+        ]);
+    }
+
+    private function listedPostId(string $source, int $position): int
+    {
+        $registry = self::service(CollectionRegistry::class);
+        if (! $registry instanceof CollectionRegistry) {
+            return 0;
+        }
+        $key = (string) ($this->get_settings('collection') ?? '');
+        $preset = $key !== '' ? $registry->get($key) : null;
+        if ($preset === null) {
+            // Sem coleção escolhida: a primeira coleção ativa (registada como post type).
+            foreach ($registry->all() as $candidate) {
+                if (post_type_exists($candidate->postType())) {
+                    $preset = $candidate;
+                    break;
+                }
+            }
+        }
+        if ($preset === null || ! post_type_exists($preset->postType())) {
+            return 0;
+        }
+
+        $cacheKey = $preset->key() . '|' . $source;
+        if (! isset(self::$lists[$cacheKey])) {
+            $args = [
+                'post_type' => $preset->postType(),
+                'post_status' => 'publish',
+                'posts_per_page' => 24,
+                'fields' => 'ids',
+                'orderby' => ['menu_order' => 'ASC', 'date' => 'DESC'],
+                'no_found_rows' => true,
+            ];
+            if ($source === 'featured') {
+                $featured = $preset->field((string) $preset->setting('featured_field', 'destaque'));
+                if ($featured !== null) {
+                    $args['meta_query'] = [['key' => $featured->metaKey(), 'value' => '1']];
+                }
+            } else {
+                $args['orderby'] = 'date';
+                $args['order'] = 'DESC';
+            }
+            $unavailable = $preset->setting('unavailable_terms');
+            if (is_array($unavailable) && isset($unavailable['taxonomy'], $unavailable['terms'])) {
+                $args['tax_query'] = [[
+                    'taxonomy' => $preset->postType() . '_' . (string) $unavailable['taxonomy'],
+                    'field' => 'slug',
+                    'terms' => array_values((array) $unavailable['terms']),
+                    'operator' => 'NOT IN',
+                ]];
+            }
+            self::$lists[$cacheKey] = array_map('intval', (array) get_posts($args));
+        }
+        return self::$lists[$cacheKey][$position - 1] ?? 0;
+    }
+
+    /** @return array<string, string> */
+    protected static function collectionOptions(): array
+    {
+        $registry = self::service(CollectionRegistry::class);
+        $options = ['' => 'Primeira coleção ativa'];
+        if ($registry instanceof CollectionRegistry) {
+            foreach ($registry->all() as $preset) {
+                $options[$preset->key()] = $preset->labels()['plural'];
+            }
+        }
+        return $options;
     }
 
     protected function currentPreset(int $postId): ?CollectionPresetInterface
