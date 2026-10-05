@@ -10,4 +10,5 @@ return [
     FlashSite\Core\Modules\SetupWizard\SetupWizardModule::class,
     FlashSite\Core\Modules\OutputFoundation\OutputFoundationModule::class,
     FlashSite\Core\Modules\PrivacyPolicy\PrivacyPolicyModule::class,
+    FlashSite\Core\Modules\Collections\CollectionsModule::class,
 ];

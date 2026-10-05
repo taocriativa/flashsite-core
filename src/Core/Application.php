@@ -10,6 +10,12 @@ use FlashSite\Core\Domain\Api\PublicSerializer;
 use FlashSite\Core\Domain\Business\BusinessData;
 use FlashSite\Core\Domain\Business\BusinessRepository;
 use FlashSite\Core\Domain\Business\BusinessValidator;
+use FlashSite\Core\Domain\Collections\ActivationRepository;
+use FlashSite\Core\Domain\Collections\CollectionCapabilities;
+use FlashSite\Core\Domain\Collections\CollectionRegistry;
+use FlashSite\Core\Domain\Collections\ItemReader;
+use FlashSite\Core\Domain\Collections\ItemSanitizer;
+use FlashSite\Core\Domain\Collections\ItemValidator;
 use FlashSite\Core\Domain\Dependencies\DependencyRegistry;
 use FlashSite\Core\Domain\Safety\DataSafetyManager;
 use FlashSite\Core\Domain\Onboarding\OnboardingRepository;
@@ -18,6 +24,7 @@ use FlashSite\Core\Modules\AccessControl\AccessControlModule;
 use FlashSite\Core\Modules\AdminUX\AdminUXModule;
 use FlashSite\Core\Modules\Api\ApiAccessModule;
 use FlashSite\Core\Modules\BusinessData\BusinessDataModule;
+use FlashSite\Core\Modules\Collections\CollectionsModule;
 use FlashSite\Core\Modules\DependencyManager\DependencyManagerModule;
 use FlashSite\Core\Modules\OutputFoundation\OutputFoundationModule;
 use FlashSite\Core\Modules\SetupWizard\SetupWizardModule;
@@ -58,6 +65,20 @@ final class Application
             $this->container->make(RoleManager::class)->ensureRole();
             InstallationGuard::status();
         });
+        // 2.6.0 — Coleções: nenhum preset ativo por defeito; caps sincronizadas.
+        $schemaManager->register('2.6.0', function (): void {
+            $storage = $this->container->make(OptionsStorage::class);
+            if (! $storage->exists(ActivationRepository::OPTION_KEY)) {
+                $storage->update(ActivationRepository::OPTION_KEY, [], true);
+            }
+            $this->container->make(RoleManager::class)->ensureRole();
+            $this->container->make(CollectionCapabilities::class)->sync(
+                $this->container->make(CollectionRegistry::class),
+                $this->container->make(ActivationRepository::class)->activeKeys(),
+                true
+            );
+            update_option('flashsite_data_version', FLASHSITE_DATA_VERSION, true);
+        });
         $schemaManager->runIfNeeded();
 
         $moduleManager = $this->container->make(ModuleManager::class);
@@ -95,6 +116,12 @@ final class Application
         $this->container->bind(OnboardingRepository::class, fn (Container $c) => new OnboardingRepository($c->make(OptionsStorage::class)));
         $this->container->bind(DependencyRegistry::class, fn () => DependencyRegistry::fromConfig(FLASHSITE_CORE_PATH . 'config/dependencies.php'));
         $this->container->bind(RoleManager::class, fn () => new RoleManager(FLASHSITE_CORE_PATH . 'config/capabilities.php'));
+        $this->container->bind(CollectionRegistry::class, fn () => CollectionRegistry::fromDirectory(FLASHSITE_CORE_PATH . 'config/collections'));
+        $this->container->bind(ActivationRepository::class, fn (Container $c) => new ActivationRepository($c->make(OptionsStorage::class)));
+        $this->container->bind(CollectionCapabilities::class, fn (Container $c) => new CollectionCapabilities($c->make(OptionsStorage::class)));
+        $this->container->bind(ItemSanitizer::class, fn () => new ItemSanitizer());
+        $this->container->bind(ItemValidator::class, fn () => new ItemValidator());
+        $this->container->bind(ItemReader::class, fn () => new ItemReader());
     }
 
     private function registerModuleServices(): void
@@ -105,6 +132,7 @@ final class Application
         $this->container->bind(ApiAccessModule::class, fn (Container $c) => new ApiAccessModule($c->make(BusinessData::class), $c->make(PublicSerializer::class), $c->make(OutputResolver::class), $c->make(MetaProvider::class), $c->make(BusinessRepository::class), $c->make(BusinessValidator::class), $c->make(Logger::class)));
         $this->container->bind(DependencyManagerModule::class, fn (Container $c) => new DependencyManagerModule($c->make(DependencyRegistry::class), $c->make(PluginChecker::class), $c->make(Notices::class), $c->make(Logger::class)));
         $this->container->bind(SetupWizardModule::class, fn (Container $c) => new SetupWizardModule($c->make(BusinessRepository::class), $c->make(BusinessValidator::class), $c->make(OnboardingRepository::class), $c->make(DependencyRegistry::class), $c->make(PluginChecker::class), $c->make(Assets::class), $c->make(Logger::class)));
+        $this->container->bind(CollectionsModule::class, fn (Container $c) => new CollectionsModule($c->make(CollectionRegistry::class), $c->make(ActivationRepository::class), $c->make(CollectionCapabilities::class), $c->make(ItemSanitizer::class), $c->make(OptionsStorage::class), $c->make(Logger::class)));
         $this->container->bind(OutputFoundationModule::class, fn (Container $c) => new OutputFoundationModule($c->make(BusinessData::class), $c->make(Logger::class)));
     }
 

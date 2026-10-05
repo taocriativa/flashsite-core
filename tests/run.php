@@ -20,6 +20,9 @@ $files = [
     __DIR__ . '/Integration/OutputPrivacyTest.php',
     __DIR__ . '/Integration/DataSafetyTest.php',
     __DIR__ . '/Integration/OutputFoundationShortcodeTest.php',
+    __DIR__ . '/Unit/CollectionPresetTest.php',
+    __DIR__ . '/Unit/CollectionItemSanitizeValidateTest.php',
+    __DIR__ . '/Integration/CollectionsModuleTest.php',
 ];
 
 foreach ($files as $file) {
@@ -43,6 +46,9 @@ $tests = [
     new OutputPrivacyTest(),
     new DataSafetyTest(),
     new OutputFoundationShortcodeTest(),
+    new CollectionPresetTest(),
+    new CollectionItemSanitizeValidateTest(),
+    new CollectionsModuleTest(),
 ];
 
 $failures = [];

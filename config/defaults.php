@@ -18,4 +18,5 @@ return [
     'flashsite_dependency_state' => [],
     'flashsite_installation_status' => [],
     'flashsite_managed_hero' => [],
+    'flashsite_collections_active' => [],
 ];

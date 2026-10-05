@@ -34,6 +34,10 @@ $options = [
     'flashsite_business_profile_backup',
     'flashsite_business_profile_backup_meta',
     'flashsite_allow_data_deletion',
+    // 2.6.0 — configuração das Coleções. Os itens (posts e meta) nunca são apagados aqui.
+    'flashsite_collections_active',
+    'flashsite_collections_caps_hash',
+    'flashsite_collections_flush_rewrite',
     'flashsite_test_save_ran',
     'flashsite_test_invalid_ran',
 ];

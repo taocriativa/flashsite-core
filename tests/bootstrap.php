@@ -19,6 +19,11 @@ final class FlashSiteTestRole
     {
         $this->caps[$cap] = true;
     }
+
+    public function remove_cap(string $cap): void
+    {
+        unset($this->caps[$cap]);
+    }
 }
 
 
@@ -161,6 +166,12 @@ function flashsite_reset_test_state(): void
     $GLOBALS['flashsite_test_hooks'] = [];
     $GLOBALS['flashsite_test_rest_routes'] = [];
     $GLOBALS['flashsite_test_current_user_caps'] = [];
+    $GLOBALS['flashsite_test_post_types'] = [];
+    $GLOBALS['flashsite_test_taxonomies'] = [];
+    $GLOBALS['flashsite_test_post_meta_registry'] = [];
+    $GLOBALS['flashsite_test_post_meta'] = [];
+    $GLOBALS['flashsite_test_filters'] = [];
+    $GLOBALS['flashsite_test_rewrite_flushes'] = 0;
 $GLOBALS['flashsite_test_shortcodes'] = [];
 $GLOBALS['flashsite_test_styles'] = [];
 $GLOBALS['flashsite_test_scripts'] = [];
@@ -470,5 +481,72 @@ if (!function_exists('disabled')) {
     function disabled(bool $disabled, bool $current = true): string
     {
         return $disabled === $current ? 'disabled' : '';
+    }
+}
+
+
+// --- 2.6.0: stubs para o módulo Coleções ---
+$GLOBALS['flashsite_test_post_types'] = [];
+$GLOBALS['flashsite_test_taxonomies'] = [];
+$GLOBALS['flashsite_test_post_meta_registry'] = [];
+$GLOBALS['flashsite_test_post_meta'] = [];
+$GLOBALS['flashsite_test_filters'] = [];
+$GLOBALS['flashsite_test_rewrite_flushes'] = 0;
+
+if (!function_exists('add_filter')) {
+    function add_filter(string $hook, callable $callback, int $priority = 10, int $accepted_args = 1): bool
+    {
+        $GLOBALS['flashsite_test_filters'][$hook][] = $callback;
+        return true;
+    }
+}
+
+if (!function_exists('register_post_type')) {
+    function register_post_type(string $postType, array $args = []): object
+    {
+        $GLOBALS['flashsite_test_post_types'][$postType] = $args;
+        return (object) ['name' => $postType];
+    }
+}
+
+if (!function_exists('register_taxonomy')) {
+    function register_taxonomy(string $taxonomy, array|string $objectType, array $args = []): object
+    {
+        $GLOBALS['flashsite_test_taxonomies'][$taxonomy] = ['object_type' => (array) $objectType, 'args' => $args];
+        return (object) ['name' => $taxonomy];
+    }
+}
+
+if (!function_exists('register_post_meta')) {
+    function register_post_meta(string $postType, string $metaKey, array $args): bool
+    {
+        $GLOBALS['flashsite_test_post_meta_registry'][$postType][$metaKey] = $args;
+        return true;
+    }
+}
+
+if (!function_exists('get_post_meta')) {
+    function get_post_meta(int $postId, string $key = '', bool $single = false): mixed
+    {
+        $value = $GLOBALS['flashsite_test_post_meta'][$postId][$key] ?? null;
+        if ($value === null) {
+            return $single ? '' : [];
+        }
+        return $single ? $value : [$value];
+    }
+}
+
+if (!function_exists('update_post_meta')) {
+    function update_post_meta(int $postId, string $key, mixed $value): bool
+    {
+        $GLOBALS['flashsite_test_post_meta'][$postId][$key] = $value;
+        return true;
+    }
+}
+
+if (!function_exists('flush_rewrite_rules')) {
+    function flush_rewrite_rules(bool $hard = true): void
+    {
+        $GLOBALS['flashsite_test_rewrite_flushes']++;
     }
 }
