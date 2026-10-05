@@ -55,6 +55,7 @@ final class CollectionsOutput
         add_action('elementor/dynamic_tags/register', [$this, 'registerTags']);
         add_action('elementor/query/flashsite_featured', [$this, 'queryFeatured']);
         add_action('elementor/query/flashsite_available', [$this, 'queryAvailable']);
+        add_action('pre_get_posts', [$this, 'hideUnavailableItems']);
         add_filter('rank_math/json_ld', [$this, 'rankMathJsonLd'], 99, 2);
         add_action('wp_head', [$this, 'printJsonLd'], 30);
     }
@@ -82,6 +83,33 @@ final class CollectionsOutput
                 $dynamicTags->register(new $class());
             }
         }
+    }
+
+    /**
+     * settings.hide_field (ex.: "Esgotado hoje") vale para qualquer lista do site, incluindo o
+     * Loop nativo do Elementor 4, que não usa Query ID. A página do próprio item continua acessível.
+     */
+    public function hideUnavailableItems($query): void
+    {
+        if (is_admin() || ! is_object($query) || ! method_exists($query, 'get') || $query->get('p') || $query->get('name')) {
+            return;
+        }
+        $types = array_filter((array) $query->get('post_type'));
+        if (count($types) !== 1) {
+            return;
+        }
+        $preset = $this->registry->byPostType((string) reset($types));
+        if ($preset === null || ! isset($this->presets[$preset->key()]) || $query->get('flashsite_visibility_applied')) {
+            return;
+        }
+        $hidden = \FlashSite\Core\Domain\Collections\Visibility::metaQuery($preset);
+        if ($hidden === null) {
+            return;
+        }
+        $metaQuery = (array) $query->get('meta_query');
+        $metaQuery[] = $hidden;
+        $query->set('meta_query', $metaQuery);
+        $query->set('flashsite_visibility_applied', true);
     }
 
     /** Loop Grid › Query ID "flashsite_featured": só itens com destaque. */
