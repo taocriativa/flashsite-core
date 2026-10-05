@@ -20,11 +20,12 @@ use FlashSite\Core\Modules\Collections\Output\Elementor\CollectionTagBase;
  *   "Modelo · 404"        página de erro 404
  *   "Modelo · Cabeçalho"  + "Modelo · Rodapé" envolvem as páginas de texto feitas no editor do
  *                         WordPress (ex.: Política de Privacidade com [flashsite_privacy_policy])
- *   "Modelo · Popup"      popup em todas as páginas, aos 30 s de navegação e ao tentar sair
- *   "Modelo · Popup saída" (opcional) conteúdo próprio para a intenção de saída
+ *   Popups               quantos forem precisos, cada um com gatilho, frequência e páginas
+ *                         próprios (título antigo: "Modelo · Popup" 30 s, "Modelo · Popup saída")
  *
- * As páginas são encontradas pelo título (settings.model_pages do preset) e podem ficar em
- * rascunho: nunca são publicadas. Dentro delas, as tags "Item · …" com "Item atual" mostram
+ * O papel de cada página escolhe-se nas Definições da página do Elementor (ModelRoles,
+ * "FlashSite · Página modelo"), também via MCP. Alternativa antiga: o título da página
+ * (settings.model_pages do preset / "Modelo · …"). As páginas podem ficar em rascunho. Dentro delas, as tags "Item · …" com "Item atual" mostram
  * o item que está a ser renderizado (ou um item real de exemplo, no editor).
  *
  * @since 2.6.0
@@ -50,10 +51,22 @@ final class ModelPages
 
     private ?CollectionPresetInterface $currentPreset = null;
 
+    /** @var list<array{id: int, settings: array<string, mixed>}>|null */
+    private ?array $popups = null;
+
+    private const SITE_ROLES = [
+        self::SITE_404 => 'site:404',
+        self::SITE_HEADER => 'site:header',
+        self::SITE_FOOTER => 'site:footer',
+    ];
+
+    public function __construct(private ModelRoles $roles = new ModelRoles()) {}
+
     /** @param array<string, CollectionPresetInterface> $presets */
     public function register(array $presets): void
     {
         $this->presets = $presets;
+        $this->roles->register($presets);
         // Modelos do site (404, cabeçalho/rodapé de páginas de texto) funcionam sem coleções.
         add_filter('template_include', [$this, 'templateInclude'], 99);
         add_action('wp_enqueue_scripts', [$this, 'enqueueAssets']);
@@ -68,6 +81,9 @@ final class ModelPages
 
     public function sitePageId(string $title): int
     {
+        if (! isset($this->sitePages[$title]) && isset(self::SITE_ROLES[$title]) && ($byRole = $this->roles->first(self::SITE_ROLES[$title])) > 0) {
+            $this->sitePages[$title] = $byRole;
+        }
         if (! isset($this->sitePages[$title])) {
             $ids = get_posts([
                 'post_type' => 'page',
@@ -142,10 +158,10 @@ final class ModelPages
         if (isset($this->resolved[$cacheKey])) {
             return $this->resolved[$cacheKey];
         }
+        $id = $this->roles->first($preset->key() . ':' . $role);
         $titles = (array) $preset->setting('model_pages', []);
         $title = (string) ($titles[$role] ?? '');
-        $id = 0;
-        if ($title !== '') {
+        if ($id === 0 && $title !== '') {
             $ids = get_posts([
                 'post_type' => 'page',
                 'post_status' => ['draft', 'private', 'publish', 'pending'],
@@ -207,7 +223,7 @@ final class ModelPages
 
     public function enqueueAssets(): void
     {
-        if ($this->popupIds() !== []) {
+        if ($this->popups() !== []) {
             wp_enqueue_style('flashsite-core-popup', FLASHSITE_CORE_URL . 'assets/frontend/css/fsc-popup.css', [], FLASHSITE_CORE_VERSION);
             wp_enqueue_script('flashsite-core-popup', FLASHSITE_CORE_URL . 'assets/frontend/js/fsc-popup.js', [], FLASHSITE_CORE_VERSION, ['in_footer' => true, 'strategy' => 'defer']);
         }
@@ -240,7 +256,7 @@ final class ModelPages
         } else {
             $ids = [];
         }
-        $ids = array_values(array_unique(array_filter(array_merge($ids, array_values($this->popupIds())))));
+        $ids = array_values(array_unique(array_filter(array_merge($ids, array_column($this->popups(), 'id')))));
         if ($ids === []) {
             return;
         }
@@ -256,63 +272,88 @@ final class ModelPages
     }
 
     /**
-     * Popups do site: "Modelo · Popup" (aos N segundos) e, se existir, "Modelo · Popup saída"
-     * (intenção de saída; sem ele, a saída usa o mesmo modelo). Não aparecem no editor, nas
-     * pré-visualizações nem nas próprias páginas modelo.
+     * Popups desta página: as páginas com papel "Popup" (cada uma com o seu gatilho) e, como
+     * alternativa antiga, as páginas "Modelo · Popup" (30 s) e "Modelo · Popup saída" (saída).
+     * Não aparecem no editor, nas pré-visualizações nem nas próprias páginas modelo.
      *
-     * @return array<string, int> gatilho => page ID ("timer", "exit")
+     * @return list<array{id: int, settings: array<string, mixed>}>
      */
-    public function popupIds(): array
+    public function popups(): array
     {
-        if (is_admin() || wp_doing_ajax() || is_feed() || is_embed() || isset($_GET['elementor-preview']) || is_customize_preview()) { // phpcs:ignore WordPress.Security.NonceVerification
-            return [];
+        if ($this->popups !== null) {
+            return $this->popups;
         }
-        $main = $this->sitePageId(self::SITE_POPUP);
-        if ($main === 0) {
-            return [];
+        $this->popups = [];
+        if (is_admin() || wp_doing_ajax() || is_feed() || is_embed() || isset($_GET['elementor-preview']) || is_customize_preview()) { // phpcs:ignore WordPress.Security.NonceVerification
+            return $this->popups;
         }
         $current = (int) get_queried_object_id();
-        if ($current > 0 && str_starts_with((string) get_the_title($current), 'Modelo · ')) {
-            return [];
+        if ($current > 0 && (($this->roles->roleOf($current) !== '' && get_post_type($current) === 'page') || str_starts_with((string) get_the_title($current), 'Modelo · '))) {
+            return $this->popups;
         }
-        $exit = $this->sitePageId(self::SITE_POPUP_EXIT);
-        $ids = ['timer' => $main, 'exit' => $exit > 0 ? $exit : $main];
-        /** Filtro para desligar ou trocar os popups numa página: devolver [] desliga. */
-        return (array) apply_filters('flashsite/site_popup_ids', $ids);
+
+        $list = [];
+        foreach ($this->roles->pages('site:popup') as $id) {
+            $list[$id] = $this->roles->popupSettings($id);
+        }
+        foreach ([self::SITE_POPUP => 'delay', self::SITE_POPUP_EXIT => 'exit'] as $title => $trigger) {
+            $id = $this->sitePageId($title);
+            if ($id > 0 && ! isset($list[$id])) {
+                $list[$id] = ['fs_popup_trigger' => $trigger] + ModelRoles::POPUP_DEFAULTS;
+            }
+        }
+
+        foreach ($list as $id => $settings) {
+            if ($this->popupMatchesPage((string) $settings['fs_popup_where'])) {
+                $this->popups[] = ['id' => (int) $id, 'settings' => $settings];
+            }
+        }
+        /** Filtro: devolver [] desliga os popups nesta página. */
+        $this->popups = array_values((array) apply_filters('flashsite/site_popups', $this->popups));
+        return $this->popups;
     }
 
-    /** Escreve os popups (escondidos) no rodapé; o fsc-popup.js abre-os pelos gatilhos. */
+    /** @deprecated 2.6.0-beta.7 usar popups() */
+    public function popupIds(): array
+    {
+        return array_column($this->popups(), 'id');
+    }
+
+    private function popupMatchesPage(string $where): bool
+    {
+        $home = is_front_page();
+        return match ($where) {
+            'home' => $home,
+            'not_home' => ! $home,
+            'collections' => $this->presetForRequest() !== null,
+            default => true,
+        };
+    }
+
+    /** Escreve os popups (escondidos) no rodapé; o fsc-popup.js abre cada um pelo seu gatilho. */
     public function renderPopups(): void
     {
-        $ids = $this->popupIds();
-        if ($ids === []) {
+        $popups = $this->popups();
+        if ($popups === []) {
             return;
         }
-        $settings = (array) apply_filters('flashsite/site_popup_settings', [
-            'delay' => 30,     // segundos de navegação até ao popup "timer"
-            'cooldown' => 7,   // dias sem voltar a mostrar depois de fechado
-        ]);
-        printf(
-            '<div class="fs-popups" data-delay="%d" data-cooldown="%d" data-version="%s">',
-            max(0, (int) ($settings['delay'] ?? 30)),
-            max(0, (int) ($settings['cooldown'] ?? 7)),
-            esc_attr(substr(md5(implode('|', $ids) . '|' . (string) get_post_modified_time('U', true, $ids['timer'] ?? 0)), 0, 8))
-        );
-        $rendered = [];
-        foreach ($ids as $trigger => $pageId) {
-            if (isset($rendered[$pageId])) {
-                // Mesmo modelo nos dois gatilhos: um só popup.
-                echo '<span hidden data-fs-popup-alias="' . esc_attr((string) $trigger) . '" data-target="fs-popup-' . (int) $pageId . '"></span>';
-                continue;
-            }
-            $rendered[$pageId] = true;
+        echo '<div class="fs-popups">';
+        foreach ($popups as $popup) {
+            $id = $popup['id'];
+            $s = $popup['settings'];
             printf(
-                '<dialog class="fs-popup" id="fs-popup-%1$d" data-trigger="%2$s" aria-label="%3$s"><div class="fs-popup__box"><button type="button" class="fs-popup__close" aria-label="Fechar" data-fs-popup-close>&times;</button>',
-                (int) $pageId,
-                esc_attr((string) $trigger),
-                esc_attr('Mensagem')
+                '<dialog class="fs-popup" id="fs-popup-%1$d" data-popup="%1$d" data-trigger="%2$s" data-delay="%3$d" data-scroll="%4$d" data-frequency="%5$s" data-days="%6$d" data-device="%7$s" data-version="%8$s" aria-label="%9$s"><div class="fs-popup__box"><button type="button" class="fs-popup__close" aria-label="Fechar" data-fs-popup-close>&times;</button>',
+                $id,
+                esc_attr((string) $s['fs_popup_trigger']),
+                (int) $s['fs_popup_delay'],
+                (int) $s['fs_popup_scroll'],
+                esc_attr((string) $s['fs_popup_frequency']),
+                (int) $s['fs_popup_days'],
+                esc_attr((string) $s['fs_popup_device']),
+                esc_attr(substr(md5((string) get_post_field('post_modified', $id)), 0, 8)),
+                esc_attr(wp_strip_all_tags(get_the_title($id)))
             );
-            $this->renderModel((int) $pageId, 0);
+            $this->renderModel($id, 0);
             echo '</div></dialog>';
         }
         echo '</div>';
@@ -356,13 +397,13 @@ final class ModelPages
                 echo '</div>';
             }
             echo '</div>';
-            $this->renderPagination();
+            $this->renderPagination($preset);
         } else {
             printf(
                 '<div class="fs-collection-empty"><p>%s</p><a href="%s">%s</a></div>',
-                esc_html(sprintf('Não encontrámos %s com estes filtros.', mb_strtolower((string) $preset->labels()['plural']))),
+                esc_html($this->text($preset, 'empty')),
                 esc_url((string) get_post_type_archive_link($preset->postType())),
-                'Ver todos'
+                esc_html($this->text($preset, 'show_all'))
             );
         }
         echo '</section>';
@@ -405,13 +446,13 @@ final class ModelPages
                 usort($terms, static fn ($a, $b) => (int) $a->term_id <=> (int) $b->term_id);
             }
             printf('<label class="fs-collection-filters__field"><span class="fs-collection-filters__label">%s</span><select name="%s">', esc_html($taxonomy->singularLabel), esc_attr($name));
-            printf('<option value="">%s</option>', esc_html('Todos'));
+            printf('<option value="">%s</option>', esc_html($this->text($preset, 'any')));
             $this->renderOptions($terms, 0, $current, $taxonomy->hierarchical, 0);
             echo '</select></label>';
         }
-        echo '<div class="fs-collection-filters__actions"><button type="submit" class="fs-collection-filters__submit">Filtrar</button>';
+        printf('<div class="fs-collection-filters__actions"><button type="submit" class="fs-collection-filters__submit">%s</button>', esc_html($this->text($preset, 'filter')));
         if ($active) {
-            printf('<a class="fs-collection-filters__reset" href="%s">Limpar</a>', esc_url((string) get_post_type_archive_link($preset->postType())));
+            printf('<a class="fs-collection-filters__reset" href="%s">%s</a>', esc_url((string) get_post_type_archive_link($preset->postType())), esc_html($this->text($preset, 'reset')));
         }
         echo '</div></form>';
     }
@@ -436,9 +477,26 @@ final class ModelPages
         }
     }
 
-    private function renderPagination(): void
+    /** Textos da listagem: settings.archive_texts do preset, com alternativas genéricas. */
+    private function text(CollectionPresetInterface $preset, string $key): string
     {
-        $links = paginate_links(['type' => 'list', 'prev_text' => '← Anteriores', 'next_text' => 'Seguintes →']);
+        $defaults = [
+            'empty' => 'Não encontrámos resultados com estes filtros.',
+            'show_all' => 'Ver todos',
+            'any' => 'Todos',
+            'filter' => 'Filtrar',
+            'reset' => 'Limpar',
+            'prev' => '← Anteriores',
+            'next' => 'Seguintes →',
+        ];
+        $texts = (array) $preset->setting('archive_texts', []);
+        $value = $texts[$key] ?? $defaults[$key] ?? '';
+        return (string) apply_filters('flashsite/collections/archive_text', $value, $key, $preset->key());
+    }
+
+    private function renderPagination(CollectionPresetInterface $preset): void
+    {
+        $links = paginate_links(['type' => 'list', 'prev_text' => $this->text($preset, 'prev'), 'next_text' => $this->text($preset, 'next')]);
         if (is_string($links) && $links !== '') {
             echo '<nav class="fs-collection-pagination" aria-label="Paginação">' . $links . '</nav>'; // phpcs:ignore WordPress.Security.EscapeOutput
         }

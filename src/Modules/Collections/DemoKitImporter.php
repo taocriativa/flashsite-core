@@ -7,7 +7,11 @@ use FlashSite\Core\Domain\Collections\CollectionPresetInterface;
 use FlashSite\Core\Domain\Collections\FieldType;
 
 /**
- * Importa/remove o kit de itens fictícios de um preset (config/collections/demo-kit/<key>.php).
+ * Importa/remove o kit de itens fictícios de um preset (<pasta>/<key>.php).
+ *
+ * Os kits NÃO vêm no Core de produção: são fornecidos por um plugin à parte (FlashSite Demo Kit)
+ * através do filtro "flashsite/collections/demo_kit_dirs". Sem esse plugin, a secção de exemplos
+ * nem aparece no painel.
  *
  * - Idempotente: um item do kit com o mesmo título não é criado duas vezes.
  * - Itens marcados com _fs_demo_kit = 1; a remoção só toca nesses itens.
@@ -19,11 +23,12 @@ final class DemoKitImporter
 {
     public const MARKER = '_fs_demo_kit';
 
-    public function __construct(private ItemPersistence $persistence, private string $kitDirectory) {}
+    public function __construct(private ItemPersistence $persistence, private string $kitDirectory = '') {}
 
     public function hasKit(CollectionPresetInterface $preset): bool
     {
-        return is_file($this->kitFile($preset));
+        $file = $this->kitFile($preset);
+        return $file !== '' && is_file($file);
     }
 
     /** @return array{created: int, skipped: int, missing_images: list<string>} */
@@ -116,7 +121,14 @@ final class DemoKitImporter
 
     private function kitFile(CollectionPresetInterface $preset): string
     {
-        return rtrim($this->kitDirectory, '/\\') . DIRECTORY_SEPARATOR . $preset->key() . '.php';
+        $dirs = (array) apply_filters('flashsite/collections/demo_kit_dirs', $this->kitDirectory !== '' ? [$this->kitDirectory] : []);
+        foreach ($dirs as $dir) {
+            $file = rtrim((string) $dir, '/\\') . DIRECTORY_SEPARATOR . $preset->key() . '.php';
+            if ($dir !== '' && is_file($file)) {
+                return $file;
+            }
+        }
+        return '';
     }
 
     private function existingKitItem(CollectionPresetInterface $preset, string $title): int

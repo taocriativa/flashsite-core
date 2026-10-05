@@ -1,10 +1,10 @@
 /* FlashSite Core 2.6.0 · Popups do site. O conteúdo é a página "Modelo · Popup" do Elementor;
-   aqui só a caixa, o fundo e o botão fechar. Ajustável por variáveis. */
+   aqui só a caixa, o fundo e o botão fechar. Cores das variáveis globais fs-cor-* do Elementor. */
 .fs-popup {
     --fs-popup-max: 760px;
     --fs-popup-backdrop: rgba(21, 25, 30, .55);
-    --fs-popup-ink: var(--demo-imo-cor-tinta, #15191E);
-    --fs-popup-surface: var(--demo-imo-cor-claro, #FFFFFF);
+    --fs-popup-ink: var(--fs-cor-texto, #1A1A1A);
+    --fs-popup-surface: var(--fs-cor-superficie, #FFFFFF);
     width: calc(100% - 32px);
     max-width: var(--fs-popup-max);
     max-height: calc(100dvh - 32px);

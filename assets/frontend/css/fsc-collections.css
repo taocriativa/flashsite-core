@@ -1,16 +1,18 @@
-/* FlashSite Core 2.6.0 · Listagens das Coleções (filtros, grelha, paginação).
-   Neutro e herdado do site: tipografia "inherit"; cores ajustáveis por variáveis. */
+/* FlashSite Core 2.6.0 · Listagens das Coleções (filtros, grelha, paginação) e páginas de texto.
+   Cores e fontes vêm das variáveis globais do Elementor com nomes fixos (criadas pelo MCP na
+   configuração do site): fs-cor-texto, fs-cor-texto-suave, fs-cor-destaque, fs-cor-fundo,
+   fs-cor-superficie, fs-cor-linha, fs-fonte-titulo, fs-fonte-texto. Sem elas: valores neutros. */
 .fs-collection-archive {
     --fs-col-max: 1200px;
     --fs-col-gap: 20px;
-    --fs-col-line: var(--demo-imo-cor-linha, #D9D1C4);
-    --fs-col-ink: var(--demo-imo-cor-tinta, #15191E);
-    --fs-col-accent: var(--demo-imo-cor-verde, #1F3A34);
-    --fs-col-surface: var(--demo-imo-cor-claro, #FFFFFF);
-    --fs-col-bg: var(--demo-imo-cor-fundo, transparent);
+    --fs-col-line: var(--fs-cor-linha, #DDDDDD);
+    --fs-col-ink: var(--fs-cor-texto, #1A1A1A);
+    --fs-col-accent: var(--fs-cor-destaque, #1A1A1A);
+    --fs-col-surface: var(--fs-cor-superficie, #FFFFFF);
+    --fs-col-bg: var(--fs-cor-fundo, transparent);
     background: var(--fs-col-bg);
     padding: 32px 24px 96px;
-    font-family: inherit;
+    font-family: var(--fs-fonte-texto, inherit);
     color: var(--fs-col-ink);
 }
 .fs-collection-filters,
@@ -66,10 +68,10 @@
 .fs-collection-page img[src=""] { display: none; }
 
 /* Páginas de texto envolvidas por Modelo · Cabeçalho / Modelo · Rodapé (ex.: Política de Privacidade). */
-.fs-text-page { padding: 64px 24px 96px; background: var(--demo-imo-cor-fundo, transparent); }
-.fs-text-page__inner { max-width: 760px; margin-inline: auto; font-size: 17px; line-height: 1.7; color: var(--demo-imo-cor-texto-suave, inherit); }
-.fs-text-page__title { margin: 0 0 32px; font-size: clamp(32px, 5vw, 48px); line-height: 1.1; color: var(--demo-imo-cor-tinta, inherit); font-family: var(--demo-imo-fonte-titulo, inherit); font-weight: 400; }
-.fs-text-page__content h2, .fs-text-page__content h3 { color: var(--demo-imo-cor-tinta, inherit); margin: 40px 0 12px; line-height: 1.25; }
-.fs-text-page__content a { color: var(--demo-imo-cor-verde, inherit); }
+.fs-text-page { padding: 64px 24px 96px; background: var(--fs-cor-fundo, transparent); }
+.fs-text-page__inner { max-width: 760px; margin-inline: auto; font-size: 17px; line-height: 1.7; color: var(--fs-cor-texto-suave, inherit); }
+.fs-text-page__title { margin: 0 0 32px; font-size: clamp(32px, 5vw, 48px); line-height: 1.1; color: var(--fs-cor-texto, inherit); font-family: var(--fs-fonte-titulo, inherit); font-weight: 400; }
+.fs-text-page__content h2, .fs-text-page__content h3 { color: var(--fs-cor-texto, inherit); margin: 40px 0 12px; line-height: 1.25; }
+.fs-text-page__content a { color: var(--fs-cor-destaque, inherit); }
 @media (max-width: 767px) { .fs-text-page { padding: 40px 16px 64px; } }
 .fs-text-page__updated { font-size: 14px; opacity: .7; margin: -16px 0 32px; }

@@ -1,90 +1,132 @@
-/* FlashSite Core 2.6.0 · Popups do site ("Modelo · Popup" / "Modelo · Popup saída").
-   Gatilhos: N segundos de navegação (somados entre páginas na mesma visita) e intenção de
-   saída (rato a sair pelo topo, só em computador). Um botão com link "#fechar" fecha o popup. No máximo um popup por visita; depois de
-   fechado não volta durante "cooldown" dias. Teste: ?fs_popup=timer ou ?fs_popup=exit. */
+/* FlashSite Core 2.6.0 · Popups do site (páginas com papel "Popup").
+   Cada popup tem o seu gatilho e a sua frequência (data-*), definidos nas Definições da página:
+   - delay:  N segundos de navegação, somados entre páginas na mesma visita;
+   - exit:   rato a sair pelo topo da janela (só computador);
+   - scroll: N% da página percorrida.
+   Frequência: "session" uma vez por visita; "days" uma vez por visita e, depois de fechado,
+   só volta após N dias (editar o popup reinicia); "always" em todas as páginas.
+   Nunca abrem dois ao mesmo tempo: o seguinte espera que o anterior feche.
+   Um botão com link "#fechar" fecha o popup. Teste: ?fs_popup=<ID da página>, ?fs_popup=delay|exit|scroll. */
 (function () {
     'use strict';
     var root = document.querySelector('.fs-popups');
     if (!root) { return; }
 
-    var delay = parseInt(root.getAttribute('data-delay'), 10) || 0;
-    var cooldownDays = parseInt(root.getAttribute('data-cooldown'), 10) || 0;
-    var version = root.getAttribute('data-version') || '';
-    var KEY_CLOSED = 'fs_popup_closed';
-    var KEY_SHOWN = 'fs_popup_shown';
-    var KEY_START = 'fs_popup_start';
-
-    function store(type) {
-        try { return window[type]; } catch (e) { return null; }
-    }
+    function store(type) { try { return window[type]; } catch (e) { return null; } }
     var local = store('localStorage');
     var session = store('sessionStorage');
     function get(s, k) { try { return s ? s.getItem(k) : null; } catch (e) { return null; } }
     function set(s, k, v) { try { if (s) { s.setItem(k, v); } } catch (e) {} }
 
-    function dialogFor(trigger) {
-        var el = root.querySelector('dialog[data-trigger="' + trigger + '"]');
-        if (el) { return el; }
-        var alias = root.querySelector('[data-fs-popup-alias="' + trigger + '"]');
-        return alias ? document.getElementById(alias.getAttribute('data-target')) : null;
-    }
-
-    var forced = (new URLSearchParams(window.location.search)).get('fs_popup');
+    var KEY_START = 'fs_popup_start';
+    var isDesktop = !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches);
+    var dialogs = Array.prototype.slice.call(root.querySelectorAll('dialog.fs-popup'));
     var open = null;
+    var queue = [];
 
-    function blocked() {
-        if (get(session, KEY_SHOWN)) { return true; }
-        var closed = get(local, KEY_CLOSED);
-        if (!closed) { return false; }
-        var parts = closed.split('|');
-        var at = parseInt(parts[0], 10) || 0;
-        return parts[1] === version && Date.now() - at < cooldownDays * 86400000;
+    function cfg(d) {
+        return {
+            id: d.getAttribute('data-popup'),
+            trigger: d.getAttribute('data-trigger') || 'delay',
+            delay: parseInt(d.getAttribute('data-delay'), 10) || 0,
+            scroll: parseInt(d.getAttribute('data-scroll'), 10) || 50,
+            frequency: d.getAttribute('data-frequency') || 'days',
+            days: parseInt(d.getAttribute('data-days'), 10) || 0,
+            device: d.getAttribute('data-device') || 'all',
+            version: d.getAttribute('data-version') || ''
+        };
     }
 
-    function show(trigger, force) {
-        if (open || (!force && blocked())) { return; }
-        var dialog = dialogFor(trigger);
-        if (!dialog) { return; }
-        open = dialog;
-        set(session, KEY_SHOWN, '1');
-        if (typeof dialog.showModal === 'function') { dialog.showModal(); } else { dialog.setAttribute('open', ''); }
+    function blocked(c) {
+        if (c.frequency === 'always') { return false; }
+        if (get(session, 'fs_popup_seen_' + c.id)) { return true; }
+        if (c.frequency !== 'days') { return false; }
+        var closed = (get(local, 'fs_popup_closed_' + c.id) || '').split('|');
+        var at = parseInt(closed[0], 10) || 0;
+        return closed[1] === c.version && Date.now() - at < c.days * 86400000;
+    }
+
+    function show(d, force) {
+        var c = cfg(d);
+        if (d.open || (!force && blocked(c))) { return; }
+        if (open) {
+            if (c.trigger !== 'exit' && queue.indexOf(d) === -1) { queue.push(d); }
+            return;
+        }
+        open = d;
+        set(session, 'fs_popup_seen_' + c.id, '1');
+        if (typeof d.showModal === 'function') { d.showModal(); } else { d.setAttribute('open', ''); }
         document.documentElement.classList.add('fs-popup-open');
     }
 
-    function close() {
-        if (!open) { return; }
-        if (typeof open.close === 'function' && open.open) { open.close(); } else { open.removeAttribute('open'); }
-        open = null;
-        document.documentElement.classList.remove('fs-popup-open');
-        set(local, KEY_CLOSED, Date.now() + '|' + version);
+    function remember(d) {
+        var c = cfg(d);
+        set(local, 'fs_popup_closed_' + c.id, Date.now() + '|' + c.version);
     }
 
-    Array.prototype.forEach.call(root.querySelectorAll('dialog.fs-popup'), function (dialog) {
-        dialog.addEventListener('cancel', function (e) { e.preventDefault(); close(); });
-        dialog.addEventListener('click', function (e) {
+    function close(d) {
+        if (typeof d.close === 'function' && d.open) { d.close(); } else { d.removeAttribute('open'); }
+        remember(d);
+        if (open === d) { open = null; }
+        document.documentElement.classList.remove('fs-popup-open');
+        var next = queue.shift();
+        if (next) { window.setTimeout(function () { show(next, false); }, 800); }
+    }
+
+    dialogs.forEach(function (d) {
+        d.addEventListener('cancel', function (e) { e.preventDefault(); close(d); });
+        d.addEventListener('click', function (e) {
             var closer = e.target.closest('[data-fs-popup-close], a[href$="#fechar"]');
-            if (e.target === dialog || closer) { e.preventDefault(); close(); return; }
-            if (e.target.closest('a[href]')) { set(local, KEY_CLOSED, Date.now() + '|' + version); }
+            if (e.target === d || closer) { e.preventDefault(); close(d); return; }
+            if (e.target.closest('a[href]')) { remember(d); }
         });
     });
 
-    if (forced === 'timer' || forced === 'exit' || forced === '1') {
-        window.setTimeout(function () { show(forced === 'exit' ? 'exit' : 'timer', true); }, 600);
+    var forced = (new URLSearchParams(window.location.search)).get('fs_popup');
+    if (forced) {
+        var target = dialogs.filter(function (d) { var c = cfg(d); return c.id === forced || c.trigger === forced || (forced === 'timer' && c.trigger === 'delay'); })[0];
+        if (target) { window.setTimeout(function () { show(target, true); }, 600); }
         return;
     }
-    if (blocked()) { return; }
 
-    // Tempo de navegação somado na visita (sessionStorage), não só nesta página.
     var start = parseInt(get(session, KEY_START), 10);
     if (!start) { start = Date.now(); set(session, KEY_START, String(start)); }
-    window.setTimeout(function () { show('timer', false); }, Math.max(0, delay * 1000 - (Date.now() - start)));
 
-    // Intenção de saída: só com rato (em telemóvel não há sinal fiável), após 5 s na página.
-    if (window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    var exitPopups = [];
+    var scrollPopups = [];
+    dialogs.forEach(function (d) {
+        var c = cfg(d);
+        if ((c.device === 'desktop' && !isDesktop) || (c.device === 'mobile' && isDesktop) || blocked(c)) { return; }
+        if (c.trigger === 'delay') {
+            window.setTimeout(function () { show(d, false); }, Math.max(0, c.delay * 1000 - (Date.now() - start)));
+        } else if (c.trigger === 'exit' && isDesktop) {
+            exitPopups.push(d);
+        } else if (c.trigger === 'scroll') {
+            scrollPopups.push(d);
+        }
+    });
+
+    if (exitPopups.length) {
         window.setTimeout(function () {
             document.addEventListener('mouseout', function (e) {
-                if (!e.relatedTarget && e.clientY <= 0) { show('exit', false); }
+                if (e.relatedTarget || e.clientY > 0) { return; }
+                for (var i = 0; i < exitPopups.length; i++) {
+                    if (!blocked(cfg(exitPopups[i]))) { show(exitPopups[i], false); return; }
+                }
             });
         }, 5000);
+    }
+
+    if (scrollPopups.length) {
+        var onScroll = function () {
+            var max = document.documentElement.scrollHeight - window.innerHeight;
+            var pct = max > 0 ? (window.scrollY / max) * 100 : 100;
+            scrollPopups = scrollPopups.filter(function (d) {
+                if (pct >= cfg(d).scroll) { show(d, false); return false; }
+                return true;
+            });
+            if (!scrollPopups.length) { window.removeEventListener('scroll', onScroll); }
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
     }
 })();

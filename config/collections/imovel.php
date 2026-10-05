@@ -148,6 +148,10 @@ return [
             'archive_bottom' => 'Modelo · Imóveis rodapé',
         ],
         'archive_per_page' => 12,
+        'archive_texts' => [
+            'empty' => 'Não encontrámos imóveis com estes filtros.',
+            'show_all' => 'Ver todos os imóveis',
+        ],
         'rules' => [
             ['required_unless' => ['preco', 'preco_sob_consulta']],
         ],
