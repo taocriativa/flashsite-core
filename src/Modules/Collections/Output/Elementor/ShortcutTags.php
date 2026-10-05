@@ -22,10 +22,22 @@ class ItemPriceTag extends ItemFieldTag
     protected function title(): string { return 'Item · Preço'; }
     protected function fixedField(): ?string { return 'preco'; }
 
+    protected function register_controls(): void
+    {
+        parent::register_controls();
+        $this->add_control('price_part', [
+            'label' => 'Mostrar',
+            'type' => \Elementor\Controls_Manager::SELECT,
+            'options' => [FieldFormatter::PART_FULL => 'Preço com período (149 €/mês)', FieldFormatter::PART_AMOUNT => 'Só o valor (149 €)'],
+            'default' => FieldFormatter::PART_FULL,
+        ]);
+    }
+
     protected function resolve(CollectionPresetInterface $preset, int $postId, FieldFormatter $formatter): string
     {
         $style = (string) ($this->get_settings('money') ?: FieldFormatter::MONEY_CENTS);
-        return $formatter->price($preset, $postId, $style);
+        $part = (string) ($this->get_settings('price_part') ?: FieldFormatter::PART_FULL);
+        return $formatter->price($preset, $postId, $style, $part);
     }
 }
 

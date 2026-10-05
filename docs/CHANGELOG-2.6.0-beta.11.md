@@ -7,3 +7,4 @@
 - Tags: fonte "Item n.º… (pela ordem do painel)" (`item_source: ordered`) e, em "Item · Campo",
   `list_index` para mostrar uma linha de um campo lista.
 - Teste PlanoPresetTest. Demo Kit 1.1.0 com 4 planos fictícios.
+- Tag Item · Preço: opção 'Mostrar' (preço com período / só o valor). Periodicidade com rótulos 'por mês', 'por sessão'…

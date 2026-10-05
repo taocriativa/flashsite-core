@@ -56,9 +56,9 @@ return [
         // Preço
         'preco' => ['type' => 'money', 'label' => 'Preço', 'group' => 'principal', 'min' => 0, 'placeholder' => 'Ex.: 120,00', 'admin_column' => true],
         'periodicidade' => [
-            'type' => 'select', 'label' => 'Por', 'group' => 'principal',
-            'options' => ['mes' => 'Mês', 'semana' => 'Semana', 'sessao' => 'Sessão', 'pacote' => 'Pacote', 'ano' => 'Ano', 'unico' => 'Pagamento único'],
-            'help' => 'Aparece a seguir ao preço: "120,00 €/mês".',
+            'type' => 'select', 'label' => 'Periodicidade', 'group' => 'principal',
+            'options' => ['mes' => 'por mês', 'semana' => 'por semana', 'sessao' => 'por sessão', 'pacote' => 'por pacote', 'ano' => 'por ano', 'unico' => 'pagamento único'],
+            'help' => 'Aparece com o preço: "120,00 €/mês".',
         ],
         'preco_desde' => ['type' => 'bool', 'label' => 'Mostrar "desde" antes do preço', 'group' => 'principal'],
         'preco_sob_consulta' => ['type' => 'bool', 'label' => 'Preço sob consulta', 'group' => 'principal', 'help' => 'O preço deixa de aparecer no site.'],

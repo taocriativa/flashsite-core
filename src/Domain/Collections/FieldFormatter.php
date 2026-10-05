@@ -88,7 +88,11 @@ final class FieldFormatter
     }
 
     /** Preço com "sob consulta" e sufixo por termo (ex.: "/mês" no arrendamento). */
-    public function price(CollectionPresetInterface $preset, int $postId, string $moneyStyle = self::MONEY_CENTS): string
+    public const PART_FULL = 'full';
+    public const PART_AMOUNT = 'amount';
+
+    /** @param string $part "full" (desde 149,00 €/mês) ou "amount" (desde 149,00 €, sem o sufixo de período) */
+    public function price(CollectionPresetInterface $preset, int $postId, string $moneyStyle = self::MONEY_CENTS, string $part = self::PART_FULL): string
     {
         $config = self::priceConfig($preset);
         $priceKey = (string) ($config['field'] ?? 'preco');
@@ -107,7 +111,8 @@ final class FieldFormatter
         if (! is_float($value)) {
             return '';
         }
-        return $this->pricePrefix($preset, $postId) . self::money($value, $moneyStyle, $this->currency()) . $this->priceSuffix($preset, $postId);
+        $suffix = $part === self::PART_AMOUNT ? '' : $this->priceSuffix($preset, $postId);
+        return $this->pricePrefix($preset, $postId) . self::money($value, $moneyStyle, $this->currency()) . $suffix;
     }
 
     public function isOnRequest(CollectionPresetInterface $preset, int $postId): bool
