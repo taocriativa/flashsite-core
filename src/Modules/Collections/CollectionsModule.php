@@ -14,8 +14,11 @@ use FlashSite\Core\Domain\Collections\FieldType;
 use FlashSite\Core\Domain\Collections\ItemSanitizer;
 use FlashSite\Core\Domain\Collections\TaxonomyDefinition;
 use FlashSite\Core\Infrastructure\Storage\OptionsStorage;
+use FlashSite\Core\Modules\Collections\Admin\CollectionsPage;
 use FlashSite\Core\Modules\Collections\Admin\ItemEditor;
 use FlashSite\Core\Modules\Collections\Admin\ListColumns;
+use FlashSite\Core\Modules\Collections\Output\CollectionsOutput;
+use FlashSite\Core\Modules\Collections\Output\PublicRestController;
 
 /**
  * Motor das Coleções: regista CPT, taxonomias e post meta dos presets ativos.
@@ -44,6 +47,9 @@ final class CollectionsModule implements ModuleInterface
         private ItemPersistence $persistence,
         private ItemEditor $editor,
         private ListColumns $columns,
+        private ?CollectionsOutput $output = null,
+        private ?PublicRestController $rest = null,
+        private ?CollectionsPage $page = null,
     ) {}
 
     public function register(): void
@@ -53,6 +59,7 @@ final class CollectionsModule implements ModuleInterface
         add_action('init', [$this, 'maybeFlushRewriteRules'], 99);
         add_filter('use_block_editor_for_post_type', [$this, 'disableBlockEditor'], 10, 2);
         add_action('flashsite_collections_changed', [$this, 'onActivationChanged']);
+        $this->page?->register();
     }
 
     public function boot(): void
@@ -79,6 +86,8 @@ final class CollectionsModule implements ModuleInterface
         if (is_admin()) {
             $this->columns->register($this->registered);
         }
+        $this->output?->register($this->registered);
+        $this->rest?->register($this->registered);
     }
 
     public function syncCapabilities(): void

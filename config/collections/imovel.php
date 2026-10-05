@@ -131,6 +131,15 @@ return [
 
     'settings' => [
         'cover_from' => 'galeria',
+        // Preço no site: "350,00 €/mês" no arrendamento.
+        'price_suffix' => ['taxonomy' => 'finalidade', 'terms' => ['arrendamento' => '/mês']],
+        // Query "flashsite_available" (Loop Grid) e disponibilidade no JSON-LD.
+        'unavailable_terms' => ['taxonomy' => 'estado', 'terms' => ['vendido', 'arrendado']],
+        'schema_availability' => [
+            'taxonomy' => 'estado',
+            'map' => ['disponivel' => 'InStock', 'reservado' => 'LimitedAvailability', 'vendido' => 'SoldOut', 'arrendado' => 'SoldOut'],
+        ],
+        'featured_field' => 'destaque',
         'rules' => [
             ['required_unless' => ['preco', 'preco_sob_consulta']],
         ],
