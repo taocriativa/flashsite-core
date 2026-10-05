@@ -11,4 +11,5 @@ return [
     FlashSite\Core\Modules\OutputFoundation\OutputFoundationModule::class,
     FlashSite\Core\Modules\PrivacyPolicy\PrivacyPolicyModule::class,
     FlashSite\Core\Modules\Collections\CollectionsModule::class,
+    FlashSite\Core\Modules\Contact\ContactModule::class,
 ];

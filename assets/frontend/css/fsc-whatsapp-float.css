@@ -1,0 +1,33 @@
+/* FlashSite Core 2.6.0 · Botão flutuante de WhatsApp. Cores das variáveis fs-* do Elementor. */
+.fs-wa-float {
+    --fs-wa-bg: var(--fs-cor-destaque, #1A1A1A);
+    --fs-wa-ink: var(--fs-cor-superficie, #FFFFFF);
+    position: fixed; z-index: 9990; bottom: 20px;
+    display: inline-flex; align-items: center; gap: 10px;
+    min-width: 56px; height: 56px; padding: 0 16px;
+    justify-content: center;
+    border-radius: 999px;
+    background: var(--fs-wa-bg); color: var(--fs-wa-ink);
+    font-family: var(--fs-fonte-texto, inherit); font-size: 15px; font-weight: 600; line-height: 1;
+    text-decoration: none;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .22);
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+.fs-wa-float:hover, .fs-wa-float:focus-visible { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(0, 0, 0, .26); color: var(--fs-wa-ink); }
+.fs-wa-float--right { right: 20px; }
+.fs-wa-float--left { left: 20px; }
+.fs-wa-float--whatsapp { --fs-wa-bg: #25D366; --fs-wa-ink: #FFFFFF; }
+.fs-wa-float:not(.fs-wa-float--label) { width: 56px; padding: 0; }
+.fs-wa-float__icon { width: 28px; height: 28px; flex: none; }
+@media (max-width: 767px) {
+    .fs-wa-float { bottom: 16px; height: 52px; min-width: 52px; }
+    .fs-wa-float--right { right: 16px; }
+    .fs-wa-float--left { left: 16px; }
+    .fs-wa-float__label { display: none; }
+    .fs-wa-float--label { width: 52px; padding: 0; }
+    .fs-wa-float--desktop { display: none; }
+}
+@media (min-width: 768px) {
+    .fs-wa-float--mobile { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .fs-wa-float { transition: none; } }
