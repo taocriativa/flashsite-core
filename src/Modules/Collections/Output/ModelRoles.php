@@ -228,6 +228,24 @@ final class ModelRoles
             'default' => 'all',
             'condition' => $popup,
         ]);
+        $top = array_values(array_filter(array_keys($this->roleOptions()), static fn ($r) => str_ends_with((string) $r, ':archive_top')));
+        if ($top !== []) {
+            $document->add_control('fs_archive_columns', [
+                'label' => 'Colunas da listagem',
+                'type' => \Elementor\Controls_Manager::SELECT,
+                'options' => ['' => 'Padrão da coleção', '1' => '1 (lista)', '2' => '2', '3' => '3', '4' => '4'],
+                'default' => '',
+                'condition' => [self::ROLE => $top],
+            ]);
+            $document->add_control('fs_archive_nav', [
+                'label' => 'Atalhos por categoria no topo',
+                'type' => \Elementor\Controls_Manager::SELECT,
+                'options' => ['' => 'Padrão da coleção', 'yes' => 'Mostrar', 'no' => 'Esconder'],
+                'default' => '',
+                'description' => 'Só em listagens agrupadas (ex.: Menu). Botões fixos que levam a cada categoria.',
+                'condition' => [self::ROLE => $top],
+            ]);
+        }
         $document->end_controls_section();
     }
 }

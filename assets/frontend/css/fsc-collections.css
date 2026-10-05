@@ -77,6 +77,21 @@
 .fs-text-page__updated { font-size: 14px; opacity: .7; margin: -16px 0 32px; }
 
 /* Listagem agrupada (settings.archive_group_by), ex.: menu por categoria. */
+.fs-collection-nav {
+    position: sticky; top: 0; z-index: 5;
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
+    max-width: var(--fs-col-max); margin: 0 auto 40px; padding: 14px 0;
+    background: var(--fs-cor-fundo, #fff);
+}
+.fs-collection-nav__link {
+    padding: 8px 18px; border: 1px solid var(--fs-col-line); border-radius: 999px;
+    font-size: 14px; letter-spacing: .04em; text-decoration: none;
+    color: var(--fs-cor-texto, inherit); transition: background .2s, color .2s;
+}
+.fs-collection-nav__link:hover, .fs-collection-nav__link:focus-visible {
+    background: var(--fs-cor-texto, #222); color: var(--fs-cor-fundo, #fff);
+}
+.fs-collection-group { scroll-margin-top: 80px; }
 .fs-collection-group { max-width: var(--fs-col-max); margin: 0 auto 56px; }
 .fs-collection-group__title {
     margin: 0 0 20px; padding-bottom: 12px;

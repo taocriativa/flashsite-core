@@ -99,6 +99,7 @@ return [
         'archive_per_page' => -1,
         'archive_filters' => false,
         'archive_columns' => 2,
+        'archive_group_nav' => true,
         'model_pages' => [
             'item' => 'Modelo · Prato',
             'card' => 'Modelo · Cartão de prato',

@@ -54,6 +54,9 @@ final class ModelPages
     /** @var list<array{id: int, settings: array<string, mixed>}>|null */
     private ?array $popups = null;
 
+    /** Atalhos por categoria na listagem agrupada (definido em renderArchive). */
+    private bool $groupNav = false;
+
     private const SITE_ROLES = [
         self::SITE_404 => 'site:404',
         self::SITE_HEADER => 'site:header',
@@ -391,9 +394,17 @@ final class ModelPages
         if ($preset === null) {
             return;
         }
-        $this->renderModel($this->pageId($preset, 'archive_top'), 0);
+        $topId = $this->pageId($preset, 'archive_top');
+        $this->renderModel($topId, 0);
 
-        $columns = max(1, min(4, (int) $preset->setting('archive_columns', 3)));
+        // A página "topo da listagem" pode mudar colunas e atalhos (Definições › FlashSite · Página modelo).
+        $topSettings = $this->roles->settings($topId);
+        $columns = (string) ($topSettings['fs_archive_columns'] ?? '') !== ''
+            ? (int) $topSettings['fs_archive_columns']
+            : (int) $preset->setting('archive_columns', 3);
+        $columns = max(1, min(4, $columns));
+        $navSetting = (string) ($topSettings['fs_archive_nav'] ?? '');
+        $this->groupNav = $navSetting === '' ? (bool) $preset->setting('archive_group_nav', false) : $navSetting === 'yes';
         printf('<section class="fs-collection-archive fs-collection-archive--%s" style="--fs-col-columns:%d">', esc_attr($preset->key()), $columns);
         $this->renderFilters($preset);
 
@@ -468,6 +479,13 @@ final class ModelPages
             $ib = $b === '_outros' ? 999 : ($ib === false ? 500 : $ib);
             return $ia <=> $ib;
         });
+        if ($this->groupNav && count($groups) > 1) {
+            echo '<nav class="fs-collection-nav" aria-label="Categorias">';
+            foreach (array_keys($groups) as $slug) {
+                printf('<a class="fs-collection-nav__link" href="#%s">%s</a>', esc_attr('grupo-' . $slug), esc_html($labels[$slug] ?? (string) $slug));
+            }
+            echo '</nav>';
+        }
         foreach ($groups as $slug => $ids) {
             printf('<div class="fs-collection-group fs-collection-group--%s" id="%s">', esc_attr((string) $slug), esc_attr('grupo-' . $slug));
             printf('<h2 class="fs-collection-group__title">%s</h2>', esc_html($labels[$slug] ?? (string) $slug));

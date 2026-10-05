@@ -23,3 +23,6 @@
 @media (prefers-reduced-motion: reduce) {
     .fs-marquee__track { animation: none; }
 }
+
+/* Textos dinâmicos vazios (ex.: selo "Vegano" desligado) não ocupam espaço. */
+.e-paragraph-base:empty, .e-heading-base:empty { display: none !important; }
