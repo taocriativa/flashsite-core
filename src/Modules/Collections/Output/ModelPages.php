@@ -223,6 +223,11 @@ final class ModelPages
 
     public function enqueueAssets(): void
     {
+        // Efeitos por classe (ex.: .fs-marquee). Pequenos e usados em qualquer página.
+        if (! is_admin()) {
+            wp_enqueue_style('flashsite-core-effects', FLASHSITE_CORE_URL . 'assets/frontend/css/fsc-effects.css', [], FLASHSITE_CORE_VERSION);
+            wp_enqueue_script('flashsite-core-effects', FLASHSITE_CORE_URL . 'assets/frontend/js/fsc-effects.js', [], FLASHSITE_CORE_VERSION, ['in_footer' => true, 'strategy' => 'defer']);
+        }
         if ($this->popups() !== []) {
             wp_enqueue_style('flashsite-core-popup', FLASHSITE_CORE_URL . 'assets/frontend/css/fsc-popup.css', [], FLASHSITE_CORE_VERSION);
             wp_enqueue_script('flashsite-core-popup', FLASHSITE_CORE_URL . 'assets/frontend/js/fsc-popup.js', [], FLASHSITE_CORE_VERSION, ['in_footer' => true, 'strategy' => 'defer']);

@@ -1,0 +1,25 @@
+/* FlashSite Core 2.6.0 · Efeitos reutilizáveis ligados por classe (ver fsc-effects.js). */
+.fs-marquee.fs-marquee--ready {
+    overflow: hidden !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+}
+.fs-marquee__track {
+    display: flex;
+    flex: none;
+    width: max-content;
+    animation: fs-marquee var(--fs-marquee-duration, 30s) linear infinite;
+    will-change: transform;
+}
+.fs-marquee__group {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--fs-marquee-gap, 28px);
+    padding-inline-end: var(--fs-marquee-gap, 28px);
+}
+.fs-marquee:hover .fs-marquee__track { animation-play-state: paused; }
+@keyframes fs-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) {
+    .fs-marquee__track { animation: none; }
+}
