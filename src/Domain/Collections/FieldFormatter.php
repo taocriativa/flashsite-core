@@ -40,7 +40,8 @@ final class FieldFormatter
 
     public static function number(float $value): string
     {
-        $text = number_format($value, 2, ',', '.');
+        // Sem separador de milhares abaixo de 10 000 (anos, áreas): "2015", "1250 m²".
+        $text = number_format($value, 2, ',', abs($value) >= 10000 ? '.' : '');
         return rtrim(rtrim($text, '0'), ',');
     }
 

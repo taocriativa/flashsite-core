@@ -16,6 +16,11 @@ use FlashSite\Core\Modules\Collections\Output\Elementor\CollectionTagBase;
  *   archive_top     topo da listagem (/imoveis/ e /imoveis/<taxonomia>/<termo>/)
  *   archive_bottom  fim da listagem
  *
+ * Modelos do site inteiro (independentes das coleções):
+ *   "Modelo · 404"        página de erro 404
+ *   "Modelo · Cabeçalho"  + "Modelo · Rodapé" envolvem as páginas de texto feitas no editor do
+ *                         WordPress (ex.: Política de Privacidade com [flashsite_privacy_policy])
+ *
  * As páginas são encontradas pelo título (settings.model_pages do preset) e podem ficar em
  * rascunho: nunca são publicadas. Dentro delas, as tags "Item · …" com "Item atual" mostram
  * o item que está a ser renderizado (ou um item real de exemplo, no editor).
@@ -24,6 +29,15 @@ use FlashSite\Core\Modules\Collections\Output\Elementor\CollectionTagBase;
  */
 final class ModelPages
 {
+    public const SITE_404 = 'Modelo · 404';
+    public const SITE_HEADER = 'Modelo · Cabeçalho';
+    public const SITE_FOOTER = 'Modelo · Rodapé';
+
+    /** @var array<string, int> */
+    private array $sitePages = [];
+
+    private string $siteMode = '';
+
     /** @var array<string, CollectionPresetInterface> */
     private array $presets = [];
 
@@ -36,13 +50,85 @@ final class ModelPages
     public function register(array $presets): void
     {
         $this->presets = $presets;
+        // Modelos do site (404, cabeçalho/rodapé de páginas de texto) funcionam sem coleções.
+        add_filter('template_include', [$this, 'templateInclude'], 99);
+        add_action('wp_enqueue_scripts', [$this, 'enqueueAssets']);
+        add_action('wp_enqueue_scripts', [$this, 'primeElementorAssets'], 15);
         if ($presets === []) {
             return;
         }
-        add_filter('template_include', [$this, 'templateInclude'], 99);
         add_action('pre_get_posts', [$this, 'archiveQuery']);
-        add_action('wp_enqueue_scripts', [$this, 'enqueueAssets']);
         CollectionTagBase::setPreviewResolver(fn (int $postId): int => $this->previewItemFor($postId));
+    }
+
+    public function sitePageId(string $title): int
+    {
+        if (! isset($this->sitePages[$title])) {
+            $ids = get_posts([
+                'post_type' => 'page',
+                'post_status' => ['draft', 'private', 'publish', 'pending'],
+                'title' => $title,
+                'posts_per_page' => 1,
+                'fields' => 'ids',
+                'orderby' => 'ID',
+                'order' => 'ASC',
+                'suppress_filters' => true,
+            ]);
+            $this->sitePages[$title] = (int) ($ids[0] ?? 0);
+        }
+        return $this->sitePages[$title];
+    }
+
+    /** 404 ou página de texto (não Elementor) a envolver com cabeçalho/rodapé. */
+    private function siteModeForRequest(): string
+    {
+        if ($this->siteMode !== '') {
+            return $this->siteMode === 'none' ? '' : $this->siteMode;
+        }
+        $mode = 'none';
+        if (is_404() && $this->sitePageId(self::SITE_404) > 0) {
+            $mode = '404';
+        } elseif (is_page() && ! $this->isElementorPage((int) get_queried_object_id())
+            && ($this->sitePageId(self::SITE_HEADER) > 0 || $this->sitePageId(self::SITE_FOOTER) > 0)) {
+            $mode = 'page';
+        }
+        $this->siteMode = $mode;
+        return $mode === 'none' ? '' : $mode;
+    }
+
+    private function isElementorPage(int $postId): bool
+    {
+        return $postId > 0 && get_post_meta($postId, '_elementor_edit_mode', true) === 'builder';
+    }
+
+    public function render404(): void
+    {
+        $this->renderModel($this->sitePageId(self::SITE_404), 0);
+    }
+
+    /** Página de texto: cabeçalho do site, título + conteúdo do editor, rodapé do site. */
+    public function renderTextPage(): void
+    {
+        $this->renderModel($this->sitePageId(self::SITE_HEADER), 0);
+        echo '<article class="fs-text-page"><div class="fs-text-page__inner">';
+        while (have_posts()) {
+            the_post();
+            echo '<h1 class="fs-text-page__title">' . esc_html(get_the_title()) . '</h1>';
+            echo '<div class="fs-text-page__content">';
+            // Página de privacidade do WordPress: usa o texto gerido em FlashSite › Política de Privacidade.
+            $policy = class_exists('\\FlashSite\\Core\\Modules\\PrivacyPolicy\\PrivacyPolicyModule')
+                ? \FlashSite\Core\Modules\PrivacyPolicy\PrivacyPolicyModule::getContent()
+                : '';
+            if ((int) get_the_ID() === (int) get_option('wp_page_for_privacy_policy') && trim($policy) !== '') {
+                printf('<p class="fs-text-page__updated">Última atualização: %s</p>', esc_html(\FlashSite\Core\Modules\PrivacyPolicy\PrivacyPolicyModule::getUpdatedDate()));
+                echo wp_kses_post(wpautop($policy));
+            } else {
+                the_content();
+            }
+            echo '</div>';
+        }
+        echo '</div></article>';
+        $this->renderModel($this->sitePageId(self::SITE_FOOTER), 0);
     }
 
     public function pageId(CollectionPresetInterface $preset, string $role): int
@@ -72,6 +158,13 @@ final class ModelPages
 
     public function templateInclude(string $template): string
     {
+        $siteMode = $this->siteModeForRequest();
+        if ($siteMode === '404') {
+            return FLASHSITE_CORE_PATH . 'templates/collections/404.php';
+        }
+        if ($siteMode === 'page') {
+            return FLASHSITE_CORE_PATH . 'templates/collections/page.php';
+        }
         $preset = $this->presetForRequest();
         if ($preset === null) {
             return $template;
@@ -109,10 +202,48 @@ final class ModelPages
 
     public function enqueueAssets(): void
     {
-        if ($this->presetForRequest() === null) {
+        if ($this->presetForRequest() === null && $this->siteModeForRequest() === '') {
             return;
         }
         wp_enqueue_style('flashsite-core-collections-front', FLASHSITE_CORE_URL . 'assets/frontend/css/fsc-collections.css', [], FLASHSITE_CORE_VERSION);
+    }
+
+    /**
+     * O Elementor 4 só gera/carrega o CSS atómico (base/global/local-<id>-frontend-*.css) das
+     * páginas que "renderizam" antes do <head> (hook elementor/post/render) e o CSS de post de
+     * documentos conhecidos no enqueue. As páginas modelo são renderizadas no corpo, por isso
+     * são anunciadas aqui, antes do enqueue de estilos do Elementor.
+     */
+    public function primeElementorAssets(): void
+    {
+        if (! class_exists('\\Elementor\\Plugin')) {
+            return;
+        }
+        $siteMode = $this->siteModeForRequest();
+        $preset = $this->presetForRequest();
+        if ($siteMode === '404') {
+            $ids = [$this->sitePageId(self::SITE_404)];
+        } elseif ($siteMode === 'page') {
+            $ids = [$this->sitePageId(self::SITE_HEADER), $this->sitePageId(self::SITE_FOOTER)];
+        } elseif ($preset !== null) {
+            $roles = is_singular($preset->postType()) ? ['item'] : ['archive_top', 'card', 'archive_bottom'];
+            $ids = array_map(fn (string $role): int => $this->pageId($preset, $role), $roles);
+        } else {
+            return;
+        }
+        $ids = array_values(array_filter($ids));
+        if ($ids === []) {
+            return;
+        }
+        foreach ($ids as $id) {
+            do_action('elementor/post/render', $id);
+            if (class_exists('\\Elementor\\Core\\Files\\CSS\\Post')) {
+                \Elementor\Core\Files\CSS\Post::create($id)->enqueue();
+            }
+        }
+        $frontend = \Elementor\Plugin::instance()->frontend;
+        $frontend->enqueue_styles();
+        $frontend->enqueue_scripts();
     }
 
     public function currentPreset(): ?CollectionPresetInterface
@@ -157,7 +288,7 @@ final class ModelPages
         } else {
             printf(
                 '<div class="fs-collection-empty"><p>%s</p><a href="%s">%s</a></div>',
-                esc_html((string) ($preset->labels()['not_found'] ?? 'Nada encontrado.') . ' Experimente outros filtros.'),
+                esc_html(sprintf('Não encontrámos %s com estes filtros.', mb_strtolower((string) $preset->labels()['plural']))),
                 esc_url((string) get_post_type_archive_link($preset->postType())),
                 'Ver todos'
             );

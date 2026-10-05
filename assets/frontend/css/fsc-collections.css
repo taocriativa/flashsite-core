@@ -64,3 +64,12 @@
 
 /* Imagens de tags dinâmicas sem valor: não deixar caixas vazias. */
 .fs-collection-page img[src=""] { display: none; }
+
+/* Páginas de texto envolvidas por Modelo · Cabeçalho / Modelo · Rodapé (ex.: Política de Privacidade). */
+.fs-text-page { padding: 64px 24px 96px; background: var(--demo-imo-cor-fundo, transparent); }
+.fs-text-page__inner { max-width: 760px; margin-inline: auto; font-size: 17px; line-height: 1.7; color: var(--demo-imo-cor-texto-suave, inherit); }
+.fs-text-page__title { margin: 0 0 32px; font-size: clamp(32px, 5vw, 48px); line-height: 1.1; color: var(--demo-imo-cor-tinta, inherit); font-family: var(--demo-imo-fonte-titulo, inherit); font-weight: 400; }
+.fs-text-page__content h2, .fs-text-page__content h3 { color: var(--demo-imo-cor-tinta, inherit); margin: 40px 0 12px; line-height: 1.25; }
+.fs-text-page__content a { color: var(--demo-imo-cor-verde, inherit); }
+@media (max-width: 767px) { .fs-text-page { padding: 40px 16px 64px; } }
+.fs-text-page__updated { font-size: 14px; opacity: .7; margin: -16px 0 32px; }
