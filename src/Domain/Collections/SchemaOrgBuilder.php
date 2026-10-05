@@ -53,7 +53,7 @@ final class SchemaOrgBuilder
             $data['datePosted'] = $item['date'];
         }
 
-        $priceKey = (string) (PriceBandResolver::config($preset)['field'] ?? 'preco');
+        $priceKey = (string) (FieldFormatter::priceConfig($preset)['field'] ?? 'preco');
         $price = $item['fields'][$priceKey] ?? null;
         if (is_float($price) || is_int($price)) {
             $offer = [

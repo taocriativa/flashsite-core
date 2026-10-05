@@ -48,6 +48,12 @@ class ItemFieldTag extends CollectionTagBase
             ],
             'default' => FieldFormatter::MONEY_CENTS,
         ]);
+        $this->add_control('list_index', [
+            'label' => 'Listas: item n.º (0 = todos)',
+            'type' => \Elementor\Controls_Manager::NUMBER,
+            'default' => 0,
+            'min' => 0,
+        ]);
         $this->add_control('before', ['label' => 'Antes', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => '']);
         $this->add_control('after', ['label' => 'Depois', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => '']);
         $this->add_control('fallback', ['label' => 'Se estiver vazio', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => '']);
@@ -86,6 +92,12 @@ class ItemFieldTag extends CollectionTagBase
         $field = $preset->field($key);
         if ($field === null) {
             return '';
+        }
+        $index = (int) ($this->get_settings('list_index') ?? 0);
+        if ($index > 0 && $field->type === \FlashSite\Core\Domain\Collections\FieldType::ListOfText) {
+            $reader = self::reader();
+            $items = $reader !== null ? array_values(array_filter(array_map('strval', (array) $reader->value($field, $postId)), 'strlen')) : [];
+            return trim($items[$index - 1] ?? '');
         }
         $style = (string) ($this->get_settings('money') ?: FieldFormatter::MONEY_CENTS);
         return $formatter->field($preset, $field, $postId, $style);

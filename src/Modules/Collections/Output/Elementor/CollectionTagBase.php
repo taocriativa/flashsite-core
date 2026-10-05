@@ -19,7 +19,7 @@ require_once dirname(__DIR__, 3) . '/OutputFoundation/Elementor/ElementorTagBase
  * e o preset pelo post type. Fora de um item da coleção devolvem vazio.
  *
  * Também podem apontar para um item fixo de uma lista, sem loop (útil em páginas montadas
- * pelo MCP, que não cria loops): item_source = "featured" | "latest", position = 1..n,
+ * pelo MCP, que não cria loops): item_source = "featured" | "latest" | "ordered", position = 1..n,
  * collection = chave do preset. Ex.: "2.º imóvel em destaque".
  *
  * @since 2.6.0
@@ -71,7 +71,7 @@ abstract class CollectionTagBase extends \FlashSite\Core\Modules\OutputFoundatio
     protected function currentPostId(): int
     {
         $source = (string) ($this->get_settings('item_source') ?: 'current');
-        if ($source === 'featured' || $source === 'latest') {
+        if ($source === 'featured' || $source === 'latest' || $source === 'ordered') {
             return $this->listedPostId($source, max(1, (int) ($this->get_settings('position') ?: 1)));
         }
         if (self::$contextPostId > 0) {
@@ -98,6 +98,7 @@ abstract class CollectionTagBase extends \FlashSite\Core\Modules\OutputFoundatio
                 'current' => 'Item atual (página do item ou loop)',
                 'featured' => 'Item em destaque n.º…',
                 'latest' => 'Item mais recente n.º…',
+                'ordered' => 'Item n.º… (pela ordem do painel)',
             ],
             'default' => 'current',
         ]);
@@ -153,7 +154,7 @@ abstract class CollectionTagBase extends \FlashSite\Core\Modules\OutputFoundatio
                 if ($featured !== null) {
                     $args['meta_query'] = [['key' => $featured->metaKey(), 'value' => '1']];
                 }
-            } else {
+            } elseif ($source === 'latest') {
                 $args['orderby'] = 'date';
                 $args['order'] = 'DESC';
             }
