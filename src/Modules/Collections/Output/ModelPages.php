@@ -217,6 +217,10 @@ final class ModelPages
             $query->set('post_type', $preset->postType());
             $query->set('posts_per_page', (int) $preset->setting('archive_per_page', 12));
             $query->set('orderby', ['menu_order' => 'ASC', 'date' => 'DESC']);
+            $metaQuery = \FlashSite\Core\Domain\Collections\Visibility::apply($preset, $query->get('meta_query'));
+            if ($metaQuery !== []) {
+                $query->set('meta_query', $metaQuery);
+            }
             return;
         }
     }
@@ -393,7 +397,10 @@ final class ModelPages
         $this->renderFilters($preset);
 
         $cardId = $this->pageId($preset, 'card');
-        if (have_posts()) {
+        $groupBy = (string) $preset->setting('archive_group_by', '');
+        if ($groupBy !== '' && have_posts() && ! $this->isFiltered($preset)) {
+            $this->renderGrouped($preset, $groupBy, $cardId);
+        } elseif (have_posts()) {
             echo '<div class="fs-collection-grid">';
             while (have_posts()) {
                 the_post();
@@ -415,6 +422,62 @@ final class ModelPages
         wp_reset_postdata();
 
         $this->renderModel($this->pageId($preset, 'archive_bottom'), 0);
+    }
+
+    /** Algum filtro ativo (?taxonomia=…) ou página de termo: nesse caso, grelha simples. */
+    private function isFiltered(CollectionPresetInterface $preset): bool
+    {
+        foreach ($preset->taxonomies() as $taxonomy) {
+            $name = $taxonomy->taxonomyName($preset->postType());
+            if ($this->currentTermSlug($name) !== '') {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * settings.archive_group_by: uma secção por termo (ex.: Entradas, Pratos, Sobremesas), pela
+     * ordem dos termos do preset; itens sem termo vão para o fim.
+     */
+    private function renderGrouped(CollectionPresetInterface $preset, string $taxonomyKey, int $cardId): void
+    {
+        $taxonomy = null;
+        foreach ($preset->taxonomies() as $candidate) {
+            if ($candidate->key === $taxonomyKey) {
+                $taxonomy = $candidate;
+            }
+        }
+        $name = $taxonomy !== null ? $taxonomy->taxonomyName($preset->postType()) : '';
+        $groups = [];
+        $labels = [];
+        while (have_posts()) {
+            the_post();
+            $terms = $name !== '' ? wp_get_object_terms((int) get_the_ID(), $name) : [];
+            $term = is_array($terms) && $terms !== [] ? $terms[0] : null;
+            $slug = $term !== null ? (string) $term->slug : '_outros';
+            $labels[$slug] = $term !== null ? (string) $term->name : 'Outros';
+            $groups[$slug][] = (int) get_the_ID();
+        }
+        $order = $taxonomy !== null ? array_keys($taxonomy->terms) : [];
+        uksort($groups, static function ($a, $b) use ($order): int {
+            $ia = array_search($a, $order, true);
+            $ib = array_search($b, $order, true);
+            $ia = $a === '_outros' ? 999 : ($ia === false ? 500 : $ia);
+            $ib = $b === '_outros' ? 999 : ($ib === false ? 500 : $ib);
+            return $ia <=> $ib;
+        });
+        foreach ($groups as $slug => $ids) {
+            printf('<div class="fs-collection-group fs-collection-group--%s" id="%s">', esc_attr((string) $slug), esc_attr('grupo-' . $slug));
+            printf('<h2 class="fs-collection-group__title">%s</h2>', esc_html($labels[$slug] ?? (string) $slug));
+            echo '<div class="fs-collection-grid">';
+            foreach ($ids as $id) {
+                echo '<div class="fs-collection-grid__item">';
+                $this->renderModel($cardId, $id);
+                echo '</div>';
+            }
+            echo '</div></div>';
+        }
     }
 
     private function renderModel(int $pageId, int $contextPostId): void

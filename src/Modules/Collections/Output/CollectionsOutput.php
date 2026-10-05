@@ -101,6 +101,12 @@ final class CollectionsOutput
     public function queryAvailable($query): void
     {
         $preset = $this->presetForQuery($query);
+        if ($preset !== null) {
+            $metaQuery = \FlashSite\Core\Domain\Collections\Visibility::apply($preset, $query->get('meta_query'));
+            if ($metaQuery !== []) {
+                $query->set('meta_query', $metaQuery);
+            }
+        }
         $config = $preset?->setting('unavailable_terms');
         if ($preset === null || ! is_array($config) || ! isset($config['taxonomy'], $config['terms'])) {
             return;

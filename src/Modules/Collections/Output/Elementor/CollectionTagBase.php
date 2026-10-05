@@ -158,6 +158,10 @@ abstract class CollectionTagBase extends \FlashSite\Core\Modules\OutputFoundatio
                 $args['orderby'] = 'date';
                 $args['order'] = 'DESC';
             }
+            $metaQuery = \FlashSite\Core\Domain\Collections\Visibility::apply($preset, $args['meta_query'] ?? []);
+            if ($metaQuery !== []) {
+                $args['meta_query'] = $metaQuery;
+            }
             $unavailable = $preset->setting('unavailable_terms');
             if (is_array($unavailable) && isset($unavailable['taxonomy'], $unavailable['terms'])) {
                 $args['tax_query'] = [[

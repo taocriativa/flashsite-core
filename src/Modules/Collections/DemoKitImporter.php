@@ -75,13 +75,19 @@ final class DemoKitImporter
                     $result['missing_images'][] = (string) $slug;
                 }
             }
+            $usedGallery = false;
             foreach ($preset->fields() as $field) {
                 if ($field->type === FieldType::Gallery && $imageIds !== []) {
                     $fields[$field->key] = $imageIds;
+                    $usedGallery = true;
                     break;
                 }
             }
             $this->persistence->saveFields($preset, $postId, $fields);
+            // Preset sem galeria (ex.: pratos): a primeira imagem passa a ser a foto do item.
+            if (! $usedGallery && $imageIds !== []) {
+                set_post_thumbnail($postId, $imageIds[0]);
+            }
 
             $selected = [];
             foreach ((array) ($item['terms'] ?? []) as $taxKey => $value) {

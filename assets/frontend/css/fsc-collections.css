@@ -75,3 +75,12 @@
 .fs-text-page__content a { color: var(--fs-cor-destaque, inherit); }
 @media (max-width: 767px) { .fs-text-page { padding: 40px 16px 64px; } }
 .fs-text-page__updated { font-size: 14px; opacity: .7; margin: -16px 0 32px; }
+
+/* Listagem agrupada (settings.archive_group_by), ex.: menu por categoria. */
+.fs-collection-group { max-width: var(--fs-col-max); margin: 0 auto 56px; }
+.fs-collection-group__title {
+    margin: 0 0 20px; padding-bottom: 12px;
+    font-family: var(--fs-fonte-titulo, inherit); font-size: clamp(26px, 3vw, 36px); line-height: 1.1; font-weight: inherit;
+    color: var(--fs-cor-texto, inherit);
+    border-bottom: 1px solid var(--fs-col-line);
+}
