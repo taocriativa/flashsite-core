@@ -7,7 +7,6 @@ use FlashSite\Core\Core\Contracts\LoggerInterface;
 use FlashSite\Core\Core\Contracts\ModuleInterface;
 use FlashSite\Core\Modules\OutputFoundation\Elementor\AccentColorTag;
 use FlashSite\Core\Modules\OutputFoundation\Elementor\AddressTag;
-use FlashSite\Core\Modules\OutputFoundation\Elementor\AdminEmailTag;
 use FlashSite\Core\Modules\OutputFoundation\Elementor\BusinessNameTag;
 use FlashSite\Core\Modules\OutputFoundation\Elementor\BusinessTypeTag;
 use FlashSite\Core\Modules\OutputFoundation\Elementor\CityRegionTag;
@@ -70,7 +69,7 @@ final class OutputFoundationModule implements ModuleInterface
         WhatsAppLinkTag::class,
         EmailTag::class,
         EmailLinkTag::class,
-        AdminEmailTag::class,
+        // AdminEmailTag removida em 2.6.0: contact.email_admin é campo interno.
         AddressTag::class,
         CityRegionTag::class,
         PostalCodeTag::class,
@@ -118,7 +117,6 @@ final class OutputFoundationModule implements ModuleInterface
         'business.whatsapp_link' => ['kind' => 'url', 'formatter' => 'whatsapp_link'],
         'business.email' => ['kind' => 'text', 'path' => 'contact.email_public'],
         'business.email_link' => ['kind' => 'url', 'formatter' => 'email_link'],
-        'business.admin_email' => ['kind' => 'text', 'path' => 'contact.email_admin'],
         'business.address.street' => ['kind' => 'text', 'path' => 'location.address'],
         'business.address.city_region' => ['kind' => 'text', 'path' => 'location.city_region'],
         'business.address.postal_code' => ['kind' => 'text', 'path' => 'location.postal_code'],

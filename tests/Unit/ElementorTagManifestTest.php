@@ -10,7 +10,7 @@ final class ElementorTagManifestTest extends TestCase
         $classes = OutputFoundationModule::getElementorTagClasses();
 
         $this->assertTrue(in_array('FlashSite\\Core\\Modules\\OutputFoundation\\Elementor\\BusinessNameTag', $classes, true), 'BusinessNameTag deve existir no manifesto.');
-        $this->assertTrue(in_array('FlashSite\\Core\\Modules\\OutputFoundation\\Elementor\\AdminEmailTag', $classes, true), 'AdminEmailTag deve existir no manifesto.');
+        $this->assertFalse(in_array('FlashSite\\Core\\Modules\\OutputFoundation\\Elementor\\AdminEmailTag', $classes, true), 'AdminEmailTag não pode ser registada: contact.email_admin é interno.');
         $this->assertTrue(in_array('FlashSite\\Core\\Modules\\OutputFoundation\\Elementor\\WhatsAppLinkTag', $classes, true), 'WhatsAppLinkTag deve existir no manifesto.');
         $this->assertTrue(in_array('FlashSite\\Core\\Modules\\OutputFoundation\\Elementor\\CityRegionTag', $classes, true), 'CityRegionTag deve existir no manifesto.');
         $this->assertSame(count($classes), count(array_unique($classes)), 'Manifesto de tags não pode conter duplicados.');

@@ -60,7 +60,7 @@ final class ApiWriteModuleTest extends TestCase
         $this->assertSame('contact', $updatedContact['updated_section']);
 
         $saved = $repository->getProfile()->toArray();
-        $this->assertSame('351966111222', $saved['contact']['phone']);
+        $this->assertSame('+351 966 111 222', $saved['contact']['phone']);
         $this->assertSame('novo@flashsite.pt', $saved['contact']['email_public']);
         $this->assertSame('#000000', $saved['branding']['primary_color']);
         $this->assertSame('Flash Site', $saved['identity']['business_name']);
@@ -77,7 +77,7 @@ final class ApiWriteModuleTest extends TestCase
         $saved = $repository->getProfile()->toArray();
         $this->assertSame('#112233', $saved['branding']['primary_color']);
         $this->assertSame('#445566', $saved['branding']['secondary_color']);
-        $this->assertSame('351966111222', $saved['contact']['phone']);
+        $this->assertSame('+351 966 111 222', $saved['contact']['phone']);
 
         $invalid = $module->updatePrivateSection(new FlashSiteTestRequest(['section' => 'contact'], [
             'email_public' => 'not-an-email',

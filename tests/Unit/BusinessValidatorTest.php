@@ -21,7 +21,7 @@ final class BusinessValidatorTest extends TestCase
 
         $this->assertSame([], $result['errors']);
         $this->assertSame('Flash Site', $result['data']['identity']['business_name']);
-        $this->assertSame('351912345678', $result['data']['contact']['phone']);
+        $this->assertSame('+351 912 345 678', $result['data']['contact']['phone']);
         $this->assertSame('info@example.com', $result['data']['contact']['email_public']);
         $this->assertSame('#FF00AA', $result['data']['branding']['primary_color']);
         $this->assertSame(['Consulta', 'Avaliação'], $result['data']['professional']['services']);
