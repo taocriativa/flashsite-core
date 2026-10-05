@@ -172,6 +172,9 @@ function flashsite_reset_test_state(): void
     $GLOBALS['flashsite_test_post_meta'] = [];
     $GLOBALS['flashsite_test_filters'] = [];
     $GLOBALS['flashsite_test_rewrite_flushes'] = 0;
+    $GLOBALS['flashsite_test_terms'] = [];
+    $GLOBALS['flashsite_test_object_terms'] = [];
+    $GLOBALS['flashsite_test_thumbnails'] = [];
 $GLOBALS['flashsite_test_shortcodes'] = [];
 $GLOBALS['flashsite_test_styles'] = [];
 $GLOBALS['flashsite_test_scripts'] = [];
@@ -548,5 +551,104 @@ if (!function_exists('flush_rewrite_rules')) {
     function flush_rewrite_rules(bool $hard = true): void
     {
         $GLOBALS['flashsite_test_rewrite_flushes']++;
+    }
+}
+
+$GLOBALS['flashsite_test_terms'] = [];
+$GLOBALS['flashsite_test_object_terms'] = [];
+$GLOBALS['flashsite_test_thumbnails'] = [];
+
+if (!function_exists('is_admin')) {
+    function is_admin(): bool
+    {
+        return !empty($GLOBALS['flashsite_test_is_admin']);
+    }
+}
+
+if (!function_exists('delete_post_meta')) {
+    function delete_post_meta(int $postId, string $key): bool
+    {
+        unset($GLOBALS['flashsite_test_post_meta'][$postId][$key]);
+        return true;
+    }
+}
+
+if (!function_exists('is_wp_error')) {
+    function is_wp_error(mixed $thing): bool
+    {
+        return false;
+    }
+}
+
+/** Store de termos: [taxonomy][term_id] => ['term_id', 'slug', 'name', 'parent'] */
+if (!function_exists('term_exists')) {
+    function term_exists(int|string $term, string $taxonomy = '', ?int $parent = null): mixed
+    {
+        foreach ($GLOBALS['flashsite_test_terms'][$taxonomy] ?? [] as $t) {
+            if ((is_int($term) && $t['term_id'] === $term) || (is_string($term) && ($t['slug'] === $term || $t['name'] === $term))) {
+                if ($parent !== null && $t['parent'] !== $parent) {
+                    continue;
+                }
+                return ['term_id' => $t['term_id'], 'term_taxonomy_id' => $t['term_id']];
+            }
+        }
+        return null;
+    }
+}
+
+if (!function_exists('wp_insert_term')) {
+    function wp_insert_term(string $name, string $taxonomy, array $args = []): array
+    {
+        $GLOBALS['flashsite_test_term_seq'] = ($GLOBALS['flashsite_test_term_seq'] ?? 100) + 1;
+        $id = $GLOBALS['flashsite_test_term_seq'];
+        $slug = (string) ($args['slug'] ?? strtolower(preg_replace('/[^a-z0-9]+/i', '-', $name)));
+        $GLOBALS['flashsite_test_terms'][$taxonomy][$id] = ['term_id' => $id, 'slug' => $slug, 'name' => $name, 'parent' => (int) ($args['parent'] ?? 0)];
+        return ['term_id' => $id, 'term_taxonomy_id' => $id];
+    }
+}
+
+if (!function_exists('wp_set_object_terms')) {
+    function wp_set_object_terms(int $objectId, array|int|string $terms, string $taxonomy, bool $append = false): array
+    {
+        $ids = array_map('intval', (array) $terms);
+        $GLOBALS['flashsite_test_object_terms'][$objectId][$taxonomy] = $ids;
+        return $ids;
+    }
+}
+
+if (!function_exists('wp_get_object_terms')) {
+    function wp_get_object_terms(int $objectId, string $taxonomy, array $args = []): array
+    {
+        $ids = $GLOBALS['flashsite_test_object_terms'][$objectId][$taxonomy] ?? [];
+        $field = $args['fields'] ?? 'ids';
+        $out = [];
+        foreach ($ids as $id) {
+            $t = $GLOBALS['flashsite_test_terms'][$taxonomy][$id] ?? null;
+            if ($t === null) {
+                continue;
+            }
+            $out[] = match ($field) {
+                'slugs' => $t['slug'],
+                'names' => $t['name'],
+                default => $t['term_id'],
+            };
+        }
+        return $out;
+    }
+}
+
+if (!function_exists('set_post_thumbnail')) {
+    function set_post_thumbnail(int $postId, int $thumbnailId): bool
+    {
+        $GLOBALS['flashsite_test_thumbnails'][$postId] = $thumbnailId;
+        return true;
+    }
+}
+
+if (!function_exists('delete_post_thumbnail')) {
+    function delete_post_thumbnail(int $postId): bool
+    {
+        unset($GLOBALS['flashsite_test_thumbnails'][$postId]);
+        return true;
     }
 }

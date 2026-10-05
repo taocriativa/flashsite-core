@@ -33,6 +33,9 @@ final class FieldDefinition
         public readonly string $help,
         public readonly string $placeholder,
         public readonly string $unit,
+        public readonly string $placement,
+        public readonly bool $adminColumn,
+        public readonly string $columnLabel,
     ) {}
 
     /** @param array<string, mixed> $config */
@@ -77,6 +80,10 @@ final class FieldDefinition
             (string) ($config['help'] ?? ''),
             (string) ($config['placeholder'] ?? ''),
             (string) ($config['unit'] ?? ''),
+            // "side" mostra o campo na coluna lateral da ficha (ex.: destaque).
+            ($config['placement'] ?? 'main') === 'side' ? 'side' : 'main',
+            (bool) ($config['admin_column'] ?? false),
+            (string) ($config['column_label'] ?? $label),
         );
     }
 
@@ -110,6 +117,8 @@ final class FieldDefinition
             'help' => $this->help,
             'placeholder' => $this->placeholder,
             'unit' => $this->unit,
+            'placement' => $this->placement,
+            'admin_column' => $this->adminColumn,
             'meta_key' => $this->metaKey(),
         ];
     }

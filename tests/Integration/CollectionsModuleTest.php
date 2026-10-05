@@ -10,6 +10,10 @@ use FlashSite\Core\Domain\Collections\CollectionCapabilities;
 use FlashSite\Core\Domain\Collections\CollectionRegistry;
 use FlashSite\Core\Domain\Collections\ItemReader;
 use FlashSite\Core\Domain\Collections\ItemSanitizer;
+use FlashSite\Core\Domain\Collections\ItemValidator;
+use FlashSite\Core\Modules\Collections\Admin\ItemEditor;
+use FlashSite\Core\Modules\Collections\Admin\ListColumns;
+use FlashSite\Core\Modules\Collections\ItemPersistence;
 use FlashSite\Core\Infrastructure\Storage\OptionsStorage;
 use FlashSite\Core\Modules\Collections\CollectionsModule;
 
@@ -24,7 +28,8 @@ final class CollectionsModuleTest extends TestCase
         $registry = CollectionRegistry::fromDirectory(dirname(__DIR__) . '/fixtures/collections');
         $activation = new ActivationRepository($storage);
         $caps = new CollectionCapabilities($storage);
-        $module = new CollectionsModule($registry, $activation, $caps, new ItemSanitizer(), $storage, new Logger());
+        $persistence = new ItemPersistence(new ItemSanitizer(), new ItemValidator(), new ItemReader());
+        $module = new CollectionsModule($registry, $activation, $caps, new ItemSanitizer(), $storage, new Logger(), $persistence, new ItemEditor($persistence, new ItemReader()), new ListColumns(new ItemReader()));
         $module->register();
 
         // 1. Sem presets ativos: nada é registado (sites atuais não mudam).

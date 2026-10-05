@@ -14,6 +14,8 @@ use FlashSite\Core\Domain\Collections\FieldType;
 use FlashSite\Core\Domain\Collections\ItemSanitizer;
 use FlashSite\Core\Domain\Collections\TaxonomyDefinition;
 use FlashSite\Core\Infrastructure\Storage\OptionsStorage;
+use FlashSite\Core\Modules\Collections\Admin\ItemEditor;
+use FlashSite\Core\Modules\Collections\Admin\ListColumns;
 
 /**
  * Motor das Coleções: regista CPT, taxonomias e post meta dos presets ativos.
@@ -39,6 +41,9 @@ final class CollectionsModule implements ModuleInterface
         private ItemSanitizer $sanitizer,
         private OptionsStorage $storage,
         private LoggerInterface $logger,
+        private ItemPersistence $persistence,
+        private ItemEditor $editor,
+        private ListColumns $columns,
     ) {}
 
     public function register(): void
@@ -66,6 +71,14 @@ final class CollectionsModule implements ModuleInterface
         foreach ($this->activePresets() as $preset) {
             $this->registerPreset($preset);
         }
+        if ($this->registered === []) {
+            return;
+        }
+        // A ficha também trata gravações REST (faixa de preço e capa), por isso regista sempre.
+        $this->editor->register($this->registered);
+        if (is_admin()) {
+            $this->columns->register($this->registered);
+        }
     }
 
     public function syncCapabilities(): void
@@ -76,15 +89,20 @@ final class CollectionsModule implements ModuleInterface
     public function onActivationChanged(): void
     {
         $this->capabilities->sync($this->registry, $this->activeKeysKnown(), true);
-        $this->storage->update(self::FLUSH_FLAG, true, true);
+        $this->storage->update(self::FLUSH_FLAG, '1', true);
     }
 
     public function maybeFlushRewriteRules(): void
     {
-        if ($this->storage->get(self::FLUSH_FLAG, false) !== true) {
+        // update_option(true) volta da BD como '1': ler como booleano.
+        if (! filter_var($this->storage->get(self::FLUSH_FLAG, false), FILTER_VALIDATE_BOOLEAN)) {
             return;
         }
-        $this->storage->update(self::FLUSH_FLAG, false, true);
+        $this->storage->update(self::FLUSH_FLAG, '0', true);
+        // Termos fixos e faixas de preço só são semeados quando o conjunto ativo muda.
+        foreach ($this->registered as $preset) {
+            $this->persistence->seedTerms($preset);
+        }
         flush_rewrite_rules(false);
     }
 
@@ -117,6 +135,12 @@ final class CollectionsModule implements ModuleInterface
         $postType = $preset->postType();
         $labels = $preset->labels();
 
+        // Taxonomias primeiro: as regras /imoveis/<taxonomia>/<termo>/ têm de ter prioridade
+        // sobre as regras de anexo do CPT (/imoveis/<item>/<anexo>/), senão dão 404.
+        foreach ($preset->taxonomies() as $taxonomy) {
+            $this->registerTaxonomy($preset, $taxonomy);
+        }
+
         register_post_type($postType, [
             'labels' => $this->postTypeLabels($labels),
             'public' => true,
@@ -132,10 +156,6 @@ final class CollectionsModule implements ModuleInterface
             'map_meta_cap' => true,
             'delete_with_user' => false,
         ]);
-
-        foreach ($preset->taxonomies() as $taxonomy) {
-            $this->registerTaxonomy($preset, $taxonomy);
-        }
 
         foreach ($preset->fields() as $field) {
             $this->registerField($preset, $field);
@@ -159,7 +179,8 @@ final class CollectionsModule implements ModuleInterface
             'public' => true,
             'hierarchical' => $taxonomy->hierarchical,
             'show_ui' => true,
-            'show_admin_column' => true,
+            'show_admin_column' => $taxonomy->adminColumn,
+            'show_in_quick_edit' => false,
             'show_in_rest' => true,
             // A ficha do Core desenha a seleção; evita a metabox nativa duplicada.
             'meta_box_cb' => false,

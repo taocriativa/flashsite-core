@@ -11,6 +11,8 @@ use InvalidArgumentException;
  * `locked = true` significa estrutura fixa do preset (ex.: finalidade, estado):
  * o cliente atribui termos mas não cria, edita nem apaga termos.
  * `locked = false` (ex.: zona, categoria do menu) deixa o cliente gerir os termos.
+ * `auto = true` é atribuída pelo sistema (ex.: faixa de preço) e não aparece na ficha.
+ * `default` é o slug do termo usado quando o item é gravado sem escolha.
  *
  * @since 2.6.0
  */
@@ -30,6 +32,11 @@ final class TaxonomyDefinition
         public readonly array $terms,
         public readonly string $slug,
         public readonly int $order,
+        public readonly bool $auto,
+        public readonly bool $required,
+        public readonly string $default,
+        public readonly bool $adminColumn,
+        public readonly string $help,
     ) {}
 
     /** @param array<string, mixed> $config */
@@ -50,7 +57,12 @@ final class TaxonomyDefinition
             $terms[str_replace('_', '-', $slug)] = (string) $name;
         }
 
-        $locked = (bool) ($config['locked'] ?? $terms !== []);
+        $auto = (bool) ($config['auto'] ?? false);
+        $locked = $auto || (bool) ($config['locked'] ?? $terms !== []);
+        $default = str_replace('_', '-', FieldDefinition::normalizeOptionValue((string) ($config['default'] ?? '')));
+        if ($default !== '' && ! array_key_exists($default, $terms)) {
+            throw new InvalidArgumentException(sprintf('Taxonomia "%s": termo por defeito "%s" não existe em "terms".', $key, $default));
+        }
 
         return new self(
             $key,
@@ -63,6 +75,11 @@ final class TaxonomyDefinition
             $terms,
             (string) ($config['slug'] ?? str_replace('_', '-', $key)),
             (int) ($config['order'] ?? $position),
+            $auto,
+            (bool) ($config['required'] ?? false),
+            $default,
+            (bool) ($config['admin_column'] ?? false),
+            (string) ($config['help'] ?? ''),
         );
     }
 
@@ -86,6 +103,11 @@ final class TaxonomyDefinition
             'terms' => $this->terms,
             'slug' => $this->slug,
             'order' => $this->order,
+            'auto' => $this->auto,
+            'required' => $this->required,
+            'default' => $this->default,
+            'admin_column' => $this->adminColumn,
+            'help' => $this->help,
         ];
     }
 }
