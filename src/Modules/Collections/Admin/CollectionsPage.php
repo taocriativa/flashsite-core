@@ -46,8 +46,11 @@ final class CollectionsPage
             wp_die('Sem permissão.');
         }
         $notice = isset($_GET['fs_notice']) ? sanitize_text_field(wp_unslash((string) $_GET['fs_notice'])) : '';
-        echo '<div class="wrap flashsite-admin"><h1>Coleções</h1>';
-        echo '<p>Conteúdos que o cliente cadastra no painel e o site mostra sozinho. Desligar uma coleção esconde-a, mas nunca apaga os registos.</p>';
+        $headerTitle = 'Coleções';
+        $headerSubtitle = 'Conteúdos que o cliente cadastra no painel e o site mostra sozinho. Desligar uma coleção esconde-a, mas nunca apaga os registos.';
+        $headerActions = [['label' => 'Voltar ao dashboard', 'url' => admin_url('admin.php?page=flashsite-core'), 'variant' => 'secondary']];
+        echo '<div class="wrap flashsite-core-wrap">';
+        include FLASHSITE_CORE_PATH . 'templates/admin/partials/admin-header.php';
         if ($notice !== '') {
             printf('<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html($notice));
         }
@@ -62,8 +65,9 @@ final class CollectionsPage
         if ($activeCount === 0) {
             echo '<div class="notice notice-warning inline"><p><strong>Nenhuma coleção ativa.</strong> Marque a caixa da coleção que quer usar e carregue em "Guardar coleções".</p></div>';
         }
-        echo '<h2>1. Coleções do site</h2>';
-        echo '<table class="widefat striped" style="max-width:820px"><thead><tr><th style="width:110px">Estado</th><th>Coleção</th><th>Endereço no site</th><th>Campos</th></tr></thead><tbody>';
+        echo '<div class="fsc-card-grid" style="grid-template-columns:1fr;">';
+        echo '<div class="fsc-card"><h2>1. Coleções do site</h2>';
+        echo '<table class="widefat striped"><thead><tr><th style="width:110px">Estado</th><th>Coleção</th><th>Endereço no site</th><th>Campos</th></tr></thead><tbody>';
         foreach ($this->registry->all() as $key => $preset) {
             $isActive = $this->activation->isActive((string) $key);
             printf(
@@ -76,30 +80,33 @@ final class CollectionsPage
                 $isActive ? '<span style="color:#008a20">Ativa</span>' : '<span style="color:#8a8a8e">Desligada</span>'
             );
         }
-        echo '</tbody></table>';
+        echo '</tbody></table></div>';
 
         $current = $this->settings?->currency()->code ?? Currency::DEFAULT;
-        echo '<h2>2. Moeda dos preços</h2><p>Usada em todos os preços do site, nas faixas de preço e nos dados para o Google.</p>';
+        echo '<div class="fsc-card"><h2>2. Moeda dos preços</h2><p>Usada em todos os preços do site, nas faixas de preço e nos dados para o Google.</p>';
         echo '<select name="currency" id="fs-currency">';
         foreach (Currency::options() as $code => $label) {
             printf('<option value="%s"%s>%s</option>', esc_attr($code), $code === $current ? ' selected' : '', esc_html($label));
         }
         echo '</select>';
-        submit_button('Guardar coleções');
+        echo '<div class="fsc-card-actions">';
+        submit_button('Guardar coleções', 'primary fsc-btn', 'submit', false);
+        echo '</div></div></div>';
         echo '</form>';
 
         $withKit = array_filter($this->registry->all(), fn ($preset) => $this->activation->isActive($preset->key()) && $this->importer->hasKit($preset));
         if ($withKit !== []) {
-            echo '<h2>3. Exemplos para demonstração</h2><p>Cria registos fictícios para sites de demonstração. Não usar em sites de clientes.</p>';
+            echo '<div class="fsc-card-grid" style="grid-template-columns:1fr;margin-top:20px"><div class="fsc-card"><h2>3. Exemplos para demonstração</h2><p>Cria registos fictícios para sites de demonstração. Não usar em sites de clientes.</p>';
             foreach ($withKit as $preset) {
                 echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" style="display:inline-block;margin:0 8px 8px 0">';
                 echo '<input type="hidden" name="action" value="flashsite_collections_demo">';
                 printf('<input type="hidden" name="collection" value="%s">', esc_attr($preset->key()));
                 wp_nonce_field(self::NONCE);
-                printf('<button class="button button-secondary" name="op" value="import">Importar exemplos · %s</button> ', esc_html($preset->labels()['plural']));
+                printf('<button class="button button-secondary fsc-btn" name="op" value="import">Importar exemplos · %s</button> ', esc_html($preset->labels()['plural']));
                 printf('<button class="button-link-delete" name="op" value="remove" onclick="return confirm(\'Mover os exemplos para o lixo?\')">Remover exemplos</button>');
                 echo '</form>';
             }
+            echo '</div></div>';
         }
         echo '</div>';
     }

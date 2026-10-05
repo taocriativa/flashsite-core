@@ -273,29 +273,37 @@ final class ContactModule implements ModuleInterface
         $s = self::settings();
         $digits = $this->whatsappDigits();
         $saved = isset($_GET['fs_saved']); // phpcs:ignore WordPress.Security.NonceVerification
-        echo '<div class="wrap flashsite-admin"><h1>WhatsApp e formulários</h1>';
+        $headerTitle = 'WhatsApp e formulários';
+        $headerSubtitle = 'Para onde vão os pedidos dos formulários e o botão de WhatsApp do site.';
+        $headerActions = [
+            ['label' => 'Dados do negócio', 'url' => admin_url('admin.php?page=flashsite-business-data'), 'variant' => 'secondary'],
+            ['label' => 'Voltar ao dashboard', 'url' => admin_url('admin.php?page=flashsite-core'), 'variant' => 'secondary'],
+        ];
+        echo '<div class="wrap flashsite-core-wrap">';
+        include FLASHSITE_CORE_PATH . 'templates/admin/partials/admin-header.php';
         if ($saved) {
             echo '<div class="notice notice-success is-dismissible"><p>Guardado.</p></div>';
         }
         if ($digits === '') {
             printf('<div class="notice notice-warning"><p>Falta o número de WhatsApp em <a href="%s">Dados do Negócio</a>. Sem ele, nada desta página funciona.</p></div>', esc_url(admin_url('admin.php?page=flashsite-business-data')));
         } else {
-            printf('<p>WhatsApp do negócio: <strong>+%s</strong> · E-mail que recebe os pedidos: <strong>%s</strong> (<a href="%s">alterar em Dados do Negócio</a>)</p>', esc_html($digits), esc_html($this->recipientEmail()), esc_url(admin_url('admin.php?page=flashsite-business-data')));
+            printf('<div class="fsc-card fsc-card--soft" style="margin-bottom:20px"><p>WhatsApp do negócio: <strong>+%s</strong> · E-mail que recebe os pedidos: <strong>%s</strong> (<a href="%s">alterar em Dados do Negócio</a>)</p></div>', esc_html($digits), esc_html($this->recipientEmail()), esc_url(admin_url('admin.php?page=flashsite-business-data')));
         }
 
         echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
         echo '<input type="hidden" name="action" value="flashsite_contact_save">';
         wp_nonce_field(self::NONCE);
 
-        echo '<h2>1. Formulários</h2>';
+        echo '<div class="fsc-card-grid" style="grid-template-columns:1fr;">';
+        echo '<div class="fsc-card"><h2>1. Formulários</h2>';
         echo '<p>Depois de enviar, o visitante vê o WhatsApp a abrir com o resumo do que preencheu, pronto a enviar para o seu número. O e-mail com o mesmo resumo é enviado pelo próprio formulário.</p>';
         echo '<table class="form-table" role="presentation">';
         $this->selectRow('forms_whatsapp', 'Abrir o WhatsApp depois do envio', ['all' => 'Em todos os formulários', 'marked' => 'Só nos formulários marcados (classe fs-form-whatsapp)', 'off' => 'Desligado'], $s);
         printf('<tr><th scope="row"><label for="forms_intro">Primeira linha da mensagem</label></th><td><input type="text" class="large-text" id="forms_intro" name="forms_intro" value="%s"></td></tr>', esc_attr($s['forms_intro']));
         $this->selectRow('phone_country', 'Validar telefones como', ['auto' => 'Automático (país dos Dados do Negócio: ' . $this->phoneCountry() . ')', 'PT' => 'Portugal (9 dígitos)', 'BR' => 'Brasil (DDD + número)', 'INT' => 'Internacional (7 a 15 dígitos)'], $s);
-        echo '</table>';
+        echo '</table></div>';
 
-        echo '<h2>2. Botão flutuante de WhatsApp</h2>';
+        echo '<div class="fsc-card"><h2>2. Botão flutuante de WhatsApp</h2>';
         echo '<table class="form-table" role="presentation">';
         printf('<tr><th scope="row">Mostrar o botão</th><td><label><input type="checkbox" name="float_enabled" value="1"%s> Ligado</label></td></tr>', checked($s['float_enabled'], '1', false));
         $this->selectRow('float_position', 'Posição', ['right' => 'Canto inferior direito', 'left' => 'Canto inferior esquerdo'], $s);
@@ -305,19 +313,21 @@ final class ContactModule implements ModuleInterface
         printf('<tr><th scope="row"><label for="float_label">Texto ao lado do ícone</label></th><td><input type="text" class="regular-text" id="float_label" name="float_label" value="%s" placeholder="(vazio: só o ícone)"></td></tr>', esc_attr($s['float_label']));
         printf('<tr><th scope="row"><label for="float_message">Mensagem inicial</label></th><td><input type="text" class="large-text" id="float_message" name="float_message" value="%s"></td></tr>', esc_attr($s['float_message']));
         echo '</table>';
-        submit_button('Guardar');
+        echo '<div class="fsc-card-actions">';
+        submit_button('Guardar', 'primary fsc-btn', 'submit', false);
+        echo '</div></div></div>';
         echo '</form>';
 
         $last = get_option(self::LAST_MAIL_OPTION, []);
         if (is_array($last) && ! empty($last['time'])) {
             printf(
-                '<h2>Último e-mail de formulário</h2><p>%s · para <strong>%s</strong> · %s</p>',
+                '<div class="fsc-card" style="margin-top:20px"><h2>Último e-mail de formulário</h2><p>%s · para <strong>%s</strong> · %s</p></div>',
                 esc_html((string) $last['time']),
                 esc_html((string) $last['to']),
                 ($last['error'] ?? '') !== '' ? '<span style="color:#b32d2e">Falhou: ' . esc_html((string) $last['error']) . '</span>' : 'entregue ao servidor de e-mail'
             );
         }
-        echo '<h2>Como chegam os e-mails</h2><p>Os e-mails saem do servidor do site. Para não caírem no spam, é preciso ligar o envio a uma conta de e-mail (SMTP): o e-mail do domínio do cliente ou uma conta Gmail com palavra-passe de aplicação. É uma configuração única, feita na entrega.</p>';
+        echo '<div class="fsc-card fsc-card--soft" style="margin-top:20px"><h2>Como chegam os e-mails</h2><p>Os e-mails saem do servidor do site. Para não caírem no spam, é preciso ligar o envio a uma conta de e-mail (SMTP): o e-mail do domínio do cliente ou uma conta Gmail com palavra-passe de aplicação. É uma configuração única, feita na entrega.</p></div>';
         echo '</div>';
     }
 
