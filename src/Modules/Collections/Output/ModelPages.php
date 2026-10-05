@@ -20,6 +20,8 @@ use FlashSite\Core\Modules\Collections\Output\Elementor\CollectionTagBase;
  *   "Modelo · 404"        página de erro 404
  *   "Modelo · Cabeçalho"  + "Modelo · Rodapé" envolvem as páginas de texto feitas no editor do
  *                         WordPress (ex.: Política de Privacidade com [flashsite_privacy_policy])
+ *   "Modelo · Popup"      popup em todas as páginas, aos 30 s de navegação e ao tentar sair
+ *   "Modelo · Popup saída" (opcional) conteúdo próprio para a intenção de saída
  *
  * As páginas são encontradas pelo título (settings.model_pages do preset) e podem ficar em
  * rascunho: nunca são publicadas. Dentro delas, as tags "Item · …" com "Item atual" mostram
@@ -32,6 +34,8 @@ final class ModelPages
     public const SITE_404 = 'Modelo · 404';
     public const SITE_HEADER = 'Modelo · Cabeçalho';
     public const SITE_FOOTER = 'Modelo · Rodapé';
+    public const SITE_POPUP = 'Modelo · Popup';
+    public const SITE_POPUP_EXIT = 'Modelo · Popup saída';
 
     /** @var array<string, int> */
     private array $sitePages = [];
@@ -54,6 +58,7 @@ final class ModelPages
         add_filter('template_include', [$this, 'templateInclude'], 99);
         add_action('wp_enqueue_scripts', [$this, 'enqueueAssets']);
         add_action('wp_enqueue_scripts', [$this, 'primeElementorAssets'], 15);
+        add_action('wp_footer', [$this, 'renderPopups'], 5);
         if ($presets === []) {
             return;
         }
@@ -202,6 +207,10 @@ final class ModelPages
 
     public function enqueueAssets(): void
     {
+        if ($this->popupIds() !== []) {
+            wp_enqueue_style('flashsite-core-popup', FLASHSITE_CORE_URL . 'assets/frontend/css/fsc-popup.css', [], FLASHSITE_CORE_VERSION);
+            wp_enqueue_script('flashsite-core-popup', FLASHSITE_CORE_URL . 'assets/frontend/js/fsc-popup.js', [], FLASHSITE_CORE_VERSION, ['in_footer' => true, 'strategy' => 'defer']);
+        }
         if ($this->presetForRequest() === null && $this->siteModeForRequest() === '') {
             return;
         }
@@ -229,9 +238,9 @@ final class ModelPages
             $roles = is_singular($preset->postType()) ? ['item'] : ['archive_top', 'card', 'archive_bottom'];
             $ids = array_map(fn (string $role): int => $this->pageId($preset, $role), $roles);
         } else {
-            return;
+            $ids = [];
         }
-        $ids = array_values(array_filter($ids));
+        $ids = array_values(array_unique(array_filter(array_merge($ids, array_values($this->popupIds())))));
         if ($ids === []) {
             return;
         }
@@ -244,6 +253,69 @@ final class ModelPages
         $frontend = \Elementor\Plugin::instance()->frontend;
         $frontend->enqueue_styles();
         $frontend->enqueue_scripts();
+    }
+
+    /**
+     * Popups do site: "Modelo · Popup" (aos N segundos) e, se existir, "Modelo · Popup saída"
+     * (intenção de saída; sem ele, a saída usa o mesmo modelo). Não aparecem no editor, nas
+     * pré-visualizações nem nas próprias páginas modelo.
+     *
+     * @return array<string, int> gatilho => page ID ("timer", "exit")
+     */
+    public function popupIds(): array
+    {
+        if (is_admin() || wp_doing_ajax() || is_feed() || is_embed() || isset($_GET['elementor-preview']) || is_customize_preview()) { // phpcs:ignore WordPress.Security.NonceVerification
+            return [];
+        }
+        $main = $this->sitePageId(self::SITE_POPUP);
+        if ($main === 0) {
+            return [];
+        }
+        $current = (int) get_queried_object_id();
+        if ($current > 0 && str_starts_with((string) get_the_title($current), 'Modelo · ')) {
+            return [];
+        }
+        $exit = $this->sitePageId(self::SITE_POPUP_EXIT);
+        $ids = ['timer' => $main, 'exit' => $exit > 0 ? $exit : $main];
+        /** Filtro para desligar ou trocar os popups numa página: devolver [] desliga. */
+        return (array) apply_filters('flashsite/site_popup_ids', $ids);
+    }
+
+    /** Escreve os popups (escondidos) no rodapé; o fsc-popup.js abre-os pelos gatilhos. */
+    public function renderPopups(): void
+    {
+        $ids = $this->popupIds();
+        if ($ids === []) {
+            return;
+        }
+        $settings = (array) apply_filters('flashsite/site_popup_settings', [
+            'delay' => 30,     // segundos de navegação até ao popup "timer"
+            'cooldown' => 7,   // dias sem voltar a mostrar depois de fechado
+        ]);
+        printf(
+            '<div class="fs-popups" data-delay="%d" data-cooldown="%d" data-version="%s">',
+            max(0, (int) ($settings['delay'] ?? 30)),
+            max(0, (int) ($settings['cooldown'] ?? 7)),
+            esc_attr(substr(md5(implode('|', $ids) . '|' . (string) get_post_modified_time('U', true, $ids['timer'] ?? 0)), 0, 8))
+        );
+        $rendered = [];
+        foreach ($ids as $trigger => $pageId) {
+            if (isset($rendered[$pageId])) {
+                // Mesmo modelo nos dois gatilhos: um só popup.
+                echo '<span hidden data-fs-popup-alias="' . esc_attr((string) $trigger) . '" data-target="fs-popup-' . (int) $pageId . '"></span>';
+                continue;
+            }
+            $rendered[$pageId] = true;
+            printf(
+                '<dialog class="fs-popup" id="fs-popup-%1$d" data-trigger="%2$s" aria-label="%3$s"><div class="fs-popup__box"><button type="button" class="fs-popup__close" aria-label="Fechar" data-fs-popup-close>&times;</button>',
+                (int) $pageId,
+                esc_attr((string) $trigger),
+                esc_attr('Mensagem')
+            );
+            $this->renderModel((int) $pageId, 0);
+            echo '</div></dialog>';
+        }
+        echo '</div>';
     }
 
     public function currentPreset(): ?CollectionPresetInterface

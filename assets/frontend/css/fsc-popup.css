@@ -1,0 +1,41 @@
+/* FlashSite Core 2.6.0 · Popups do site. O conteúdo é a página "Modelo · Popup" do Elementor;
+   aqui só a caixa, o fundo e o botão fechar. Ajustável por variáveis. */
+.fs-popup {
+    --fs-popup-max: 760px;
+    --fs-popup-backdrop: rgba(21, 25, 30, .55);
+    --fs-popup-ink: var(--demo-imo-cor-tinta, #15191E);
+    --fs-popup-surface: var(--demo-imo-cor-claro, #FFFFFF);
+    width: calc(100% - 32px);
+    max-width: var(--fs-popup-max);
+    max-height: calc(100dvh - 32px);
+    padding: 0; margin: auto;
+    border: 0; border-radius: 6px;
+    background: transparent; color: var(--fs-popup-ink);
+    overflow: visible;
+}
+.fs-popup[open] { animation: fs-popup-in .28s ease-out; }
+.fs-popup::backdrop { background: var(--fs-popup-backdrop); animation: fs-popup-fade .28s ease-out; }
+.fs-popup__box {
+    position: relative;
+    max-height: calc(100dvh - 32px);
+    overflow: auto;
+    border-radius: inherit;
+    background: var(--fs-popup-surface);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .22);
+}
+.fs-popup__close {
+    position: absolute; top: 10px; right: 10px; z-index: 2;
+    width: 40px; height: 40px; padding: 0;
+    display: grid; place-items: center;
+    font: 400 26px/1 system-ui, sans-serif; color: inherit;
+    background: var(--fs-popup-surface); border: 0; border-radius: 999px; cursor: pointer;
+    opacity: .75;
+}
+.fs-popup__close:hover, .fs-popup__close:focus-visible { opacity: 1; }
+.fs-popup__box > .elementor { margin: 0; }
+html.fs-popup-open { overflow: hidden; }
+@keyframes fs-popup-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes fs-popup-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+    .fs-popup[open], .fs-popup::backdrop { animation: none; }
+}
