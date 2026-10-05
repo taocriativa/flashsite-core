@@ -14,6 +14,7 @@ use FlashSite\Core\Domain\Collections\ActivationRepository;
 use FlashSite\Core\Domain\Collections\CollectionCapabilities;
 use FlashSite\Core\Domain\Collections\CollectionPublicSerializer;
 use FlashSite\Core\Domain\Collections\CollectionRegistry;
+use FlashSite\Core\Domain\Collections\CollectionSettings;
 use FlashSite\Core\Domain\Collections\FieldFormatter;
 use FlashSite\Core\Domain\Collections\SchemaOrgBuilder;
 use FlashSite\Core\Domain\Collections\ItemReader;
@@ -129,12 +130,13 @@ final class Application
         $this->container->bind(CollectionRegistry::class, fn () => CollectionRegistry::fromDirectory(FLASHSITE_CORE_PATH . 'config/collections'));
         $this->container->bind(ActivationRepository::class, fn (Container $c) => new ActivationRepository($c->make(OptionsStorage::class)));
         $this->container->bind(CollectionCapabilities::class, fn (Container $c) => new CollectionCapabilities($c->make(OptionsStorage::class)));
-        $this->container->bind(ItemSanitizer::class, fn () => new ItemSanitizer());
+        $this->container->bind(CollectionSettings::class, fn (Container $c) => new CollectionSettings($c->make(OptionsStorage::class)));
+        $this->container->bind(ItemSanitizer::class, fn (Container $c) => new ItemSanitizer($c->make(CollectionSettings::class)));
         $this->container->bind(ItemValidator::class, fn () => new ItemValidator());
         $this->container->bind(ItemReader::class, fn () => new ItemReader());
-        $this->container->bind(FieldFormatter::class, fn (Container $c) => new FieldFormatter($c->make(ItemReader::class)));
+        $this->container->bind(FieldFormatter::class, fn (Container $c) => new FieldFormatter($c->make(ItemReader::class), $c->make(CollectionSettings::class)));
         $this->container->bind(CollectionPublicSerializer::class, fn (Container $c) => new CollectionPublicSerializer($c->make(ItemReader::class), $c->make(FieldFormatter::class)));
-        $this->container->bind(SchemaOrgBuilder::class, fn (Container $c) => new SchemaOrgBuilder($c->make(CollectionPublicSerializer::class)));
+        $this->container->bind(SchemaOrgBuilder::class, fn (Container $c) => new SchemaOrgBuilder($c->make(CollectionPublicSerializer::class), $c->make(CollectionSettings::class)));
     }
 
     private function registerModuleServices(): void
@@ -145,13 +147,13 @@ final class Application
         $this->container->bind(ApiAccessModule::class, fn (Container $c) => new ApiAccessModule($c->make(BusinessData::class), $c->make(PublicSerializer::class), $c->make(OutputResolver::class), $c->make(MetaProvider::class), $c->make(BusinessRepository::class), $c->make(BusinessValidator::class), $c->make(Logger::class)));
         $this->container->bind(DependencyManagerModule::class, fn (Container $c) => new DependencyManagerModule($c->make(DependencyRegistry::class), $c->make(PluginChecker::class), $c->make(Notices::class), $c->make(Logger::class)));
         $this->container->bind(SetupWizardModule::class, fn (Container $c) => new SetupWizardModule($c->make(BusinessRepository::class), $c->make(BusinessValidator::class), $c->make(OnboardingRepository::class), $c->make(DependencyRegistry::class), $c->make(PluginChecker::class), $c->make(Assets::class), $c->make(Logger::class)));
-        $this->container->bind(ItemPersistence::class, fn (Container $c) => new ItemPersistence($c->make(ItemSanitizer::class), $c->make(ItemValidator::class), $c->make(ItemReader::class)));
-        $this->container->bind(ItemEditor::class, fn (Container $c) => new ItemEditor($c->make(ItemPersistence::class), $c->make(ItemReader::class)));
-        $this->container->bind(ListColumns::class, fn (Container $c) => new ListColumns($c->make(ItemReader::class)));
+        $this->container->bind(ItemPersistence::class, fn (Container $c) => new ItemPersistence($c->make(ItemSanitizer::class), $c->make(ItemValidator::class), $c->make(ItemReader::class), $c->make(CollectionSettings::class)));
+        $this->container->bind(ItemEditor::class, fn (Container $c) => new ItemEditor($c->make(ItemPersistence::class), $c->make(ItemReader::class), $c->make(CollectionSettings::class)));
+        $this->container->bind(ListColumns::class, fn (Container $c) => new ListColumns($c->make(ItemReader::class), $c->make(FieldFormatter::class)));
         $this->container->bind(CollectionsOutput::class, fn (Container $c) => new CollectionsOutput($c->make(CollectionRegistry::class), $c->make(FieldFormatter::class), $c->make(SchemaOrgBuilder::class)));
         $this->container->bind(PublicRestController::class, fn (Container $c) => new PublicRestController($c->make(CollectionPublicSerializer::class)));
         $this->container->bind(DemoKitImporter::class, fn (Container $c) => new DemoKitImporter($c->make(ItemPersistence::class), FLASHSITE_CORE_PATH . 'config/collections/demo-kit'));
-        $this->container->bind(CollectionsPage::class, fn (Container $c) => new CollectionsPage($c->make(CollectionRegistry::class), $c->make(ActivationRepository::class), $c->make(DemoKitImporter::class)));
+        $this->container->bind(CollectionsPage::class, fn (Container $c) => new CollectionsPage($c->make(CollectionRegistry::class), $c->make(ActivationRepository::class), $c->make(DemoKitImporter::class), $c->make(CollectionSettings::class)));
         $this->container->bind(CollectionsModule::class, fn (Container $c) => new CollectionsModule($c->make(CollectionRegistry::class), $c->make(ActivationRepository::class), $c->make(CollectionCapabilities::class), $c->make(ItemSanitizer::class), $c->make(OptionsStorage::class), $c->make(Logger::class), $c->make(ItemPersistence::class), $c->make(ItemEditor::class), $c->make(ListColumns::class), $c->make(CollectionsOutput::class), $c->make(PublicRestController::class), $c->make(CollectionsPage::class)));
         $this->container->bind(OutputFoundationModule::class, fn (Container $c) => new OutputFoundationModule($c->make(BusinessData::class), $c->make(Logger::class)));
     }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace FlashSite\Core\Modules\Collections\Admin;
 
 use FlashSite\Core\Domain\Collections\CollectionPresetInterface;
+use FlashSite\Core\Domain\Collections\CollectionSettings;
+use FlashSite\Core\Domain\Collections\Currency;
 use FlashSite\Core\Domain\Collections\FieldDefinition;
 use FlashSite\Core\Domain\Collections\FieldType;
 use FlashSite\Core\Domain\Collections\ItemReader;
@@ -31,7 +33,7 @@ final class ItemEditor
 
     private bool $saving = false;
 
-    public function __construct(private ItemPersistence $persistence, private ItemReader $reader) {}
+    public function __construct(private ItemPersistence $persistence, private ItemReader $reader, private ?CollectionSettings $settings = null) {}
 
     /** @param array<string, CollectionPresetInterface> $presets */
     public function register(array $presets): void
@@ -276,7 +278,9 @@ final class ItemEditor
                 break;
             case FieldType::Number:
             case FieldType::Money:
-                $display = $value === null ? '' : ($field->type === FieldType::Money ? number_format((float) $value, 2, ',', '.') : rtrim(rtrim(number_format((float) $value, 2, ',', ''), '0'), ','));
+                $currency = $this->settings?->currency() ?? Currency::of(Currency::DEFAULT);
+                $display = $value === null ? '' : ($field->type === FieldType::Money ? $currency->number((float) $value) : rtrim(rtrim(number_format((float) $value, 2, ',', ''), '0'), ','));
+                $unit = $field->type === FieldType::Money ? $currency->symbol() : $field->unit;
                 printf(
                     '<div class="fsc-item__affix"><input type="text" inputmode="decimal" id="%s" name="%s" value="%s" class="widefat"%s%s>%s</div>',
                     esc_attr($id),
@@ -284,7 +288,7 @@ final class ItemEditor
                     esc_attr($display),
                     $placeholder,
                     $required,
-                    $field->unit !== '' ? '<span class="fsc-item__unit">' . esc_html($field->unit) . '</span>' : ''
+                    $unit !== '' ? '<span class="fsc-item__unit">' . esc_html($unit) . '</span>' : ''
                 );
                 break;
             case FieldType::Bool:

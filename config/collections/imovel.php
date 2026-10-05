@@ -96,7 +96,7 @@ return [
     'fields' => [
         // Dados principais
         'referencia' => ['type' => 'text', 'label' => 'Referência', 'group' => 'principal', 'max_length' => 30, 'placeholder' => 'Ex.: IMO-0042', 'admin_column' => true],
-        'preco' => ['type' => 'money', 'label' => 'Preço', 'group' => 'principal', 'min' => 0, 'unit' => '€', 'placeholder' => 'Ex.: 285.000,00', 'help' => 'No arrendamento, indique o valor mensal.', 'admin_column' => true],
+        'preco' => ['type' => 'money', 'label' => 'Preço', 'group' => 'principal', 'min' => 0, 'placeholder' => 'Ex.: 285.000,00', 'help' => 'No arrendamento, indique o valor mensal.', 'admin_column' => true],
         'preco_sob_consulta' => ['type' => 'bool', 'label' => 'Preço sob consulta', 'group' => 'principal', 'help' => 'O preço deixa de aparecer no site.'],
         'classe_energetica' => [
             'type' => 'select', 'label' => 'Classe energética', 'group' => 'principal',
@@ -131,7 +131,7 @@ return [
 
     'settings' => [
         'cover_from' => 'galeria',
-        // Preço no site: "350,00 €/mês" no arrendamento.
+        // Preço no site: "350,00 €/mês" no arrendamento (moeda definida em FlashSite › Coleções).
         'price_suffix' => ['taxonomy' => 'finalidade', 'terms' => ['arrendamento' => '/mês']],
         // Query "flashsite_available" (Loop Grid) e disponibilidade no JSON-LD.
         'unavailable_terms' => ['taxonomy' => 'estado', 'terms' => ['vendido', 'arrendado']],
@@ -149,8 +149,8 @@ return [
             'taxonomy' => 'faixa',
             'group_taxonomy' => 'finalidade',
             'groups' => [
-                'venda' => ['label' => 'Venda', 'suffix' => '€', 'limits' => [100000, 200000, 300000, 500000, 1000000]],
-                'arrendamento' => ['label' => 'Arrendamento', 'suffix' => '€/mês', 'limits' => [500, 750, 1000, 1500, 2500]],
+                'venda' => ['label' => 'Venda', 'limits' => [100000, 200000, 300000, 500000, 1000000]],
+                'arrendamento' => ['label' => 'Arrendamento', 'per' => '/mês', 'limits' => [500, 750, 1000, 1500, 2500]],
             ],
         ],
     ],

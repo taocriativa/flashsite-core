@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace FlashSite\Core\Modules\Collections;
 
 use FlashSite\Core\Domain\Collections\CollectionPresetInterface;
+use FlashSite\Core\Domain\Collections\CollectionSettings;
 use FlashSite\Core\Domain\Collections\FieldType;
 use FlashSite\Core\Domain\Collections\ItemReader;
 use FlashSite\Core\Domain\Collections\ItemSanitizer;
@@ -25,6 +26,7 @@ final class ItemPersistence
         private ItemSanitizer $sanitizer,
         private ItemValidator $validator,
         private ItemReader $reader,
+        private ?CollectionSettings $settings = null,
     ) {}
 
     /**
@@ -148,12 +150,12 @@ final class ItemPersistence
             $groupSlug = is_array($terms) && $terms !== [] ? (string) $terms[0] : null;
         }
 
-        $band = PriceBandResolver::resolve($preset, is_float($price) ? $price : null, $onRequest, $groupSlug);
+        $band = PriceBandResolver::resolve($preset, is_float($price) ? $price : null, $onRequest, $groupSlug, $this->settings?->currency());
         if ($band === null) {
             wp_set_object_terms($postId, [], $bandName, false);
             return;
         }
-        $termId = $this->ensureTerm($bandName, $band[1], $band[0]);
+        $termId = $this->ensureTerm($bandName, $band[1], $band[0], 0, true);
         wp_set_object_terms($postId, $termId > 0 ? [$termId] : [], $bandName, false);
     }
 
@@ -183,21 +185,26 @@ final class ItemPersistence
     {
         foreach ($preset->taxonomies() as $taxonomy) {
             $name = $taxonomy->taxonomyName($preset->postType());
-            $terms = $taxonomy->auto ? PriceBandResolver::allTerms($preset) : $taxonomy->terms;
+            $terms = $taxonomy->auto ? PriceBandResolver::allTerms($preset, $this->settings?->currency()) : $taxonomy->terms;
             foreach ($terms as $slug => $label) {
-                $this->ensureTerm($name, $label, $slug);
+                // Faixas automáticas: o nome acompanha a moeda do site.
+                $this->ensureTerm($name, $label, $slug, 0, $taxonomy->auto);
             }
         }
     }
 
-    public function ensureTerm(string $taxonomy, string $name, string $slug = '', int $parent = 0): int
+    public function ensureTerm(string $taxonomy, string $name, string $slug = '', int $parent = 0, bool $syncName = false): int
     {
         $existing = term_exists($slug !== '' ? $slug : $name, $taxonomy, $parent ?: null);
-        if (is_array($existing)) {
-            return (int) $existing['term_id'];
-        }
-        if (is_int($existing) || (is_string($existing) && is_numeric($existing))) {
-            return (int) $existing;
+        $existingId = is_array($existing) ? (int) $existing['term_id'] : ((is_int($existing) || (is_string($existing) && is_numeric($existing))) ? (int) $existing : 0);
+        if ($existingId > 0) {
+            if ($syncName && function_exists('get_term') && function_exists('wp_update_term')) {
+                $term = get_term($existingId, $taxonomy);
+                if (is_object($term) && (string) $term->name !== $name) {
+                    wp_update_term($existingId, $taxonomy, ['name' => $name]);
+                }
+            }
+            return $existingId;
         }
         $args = ['parent' => $parent];
         if ($slug !== '') {

@@ -11,7 +11,9 @@ namespace FlashSite\Core\Domain\Collections;
  *
  * Configuração em settings.price_bands do preset:
  *   field, flag (bool "sob consulta"), taxonomy (auto), group_taxonomy (ex.: finalidade),
- *   groups: [grupo => [label, suffix, limits: [int, ...]]]
+ *   groups: [grupo => [label, per (ex.: "/mês"), limits: [int, ...]]]
+ *
+ * Os nomes usam a moeda do site: "Venda · Até 100 mil €" / "Venda · Até R$ 100 mil".
  *
  * @since 2.6.0
  */
@@ -34,7 +36,7 @@ final class PriceBandResolver
      *
      * @return array<string, string> slug => nome
      */
-    public static function allTerms(CollectionPresetInterface $preset): array
+    public static function allTerms(CollectionPresetInterface $preset, ?Currency $currency = null): array
     {
         $config = self::config($preset);
         if ($config === null) {
@@ -45,7 +47,7 @@ final class PriceBandResolver
             $limits = self::limits($groupConfig);
             $count = count($limits);
             for ($i = 0; $i <= $count; $i++) {
-                [$slug, $name] = self::band((string) $group, $groupConfig, $limits, $i);
+                [$slug, $name] = self::band((string) $group, $groupConfig, $limits, $i, $currency);
                 $terms[$slug] = $name;
             }
         }
@@ -58,7 +60,7 @@ final class PriceBandResolver
     /**
      * @return array{0: string, 1: string}|null [slug, nome] ou null se não houver faixa
      */
-    public static function resolve(CollectionPresetInterface $preset, ?float $price, bool $onRequest, ?string $groupSlug): ?array
+    public static function resolve(CollectionPresetInterface $preset, ?float $price, bool $onRequest, ?string $groupSlug, ?Currency $currency = null): ?array
     {
         $config = self::config($preset);
         if ($config === null) {
@@ -80,7 +82,7 @@ final class PriceBandResolver
                 break;
             }
         }
-        return self::band($groupSlug, $groupConfig, $limits, $index);
+        return self::band($groupSlug, $groupConfig, $limits, $index, $currency);
     }
 
     /** @return list<int|float> */
@@ -97,10 +99,12 @@ final class PriceBandResolver
      * @param list<int|float> $limits
      * @return array{0: string, 1: string}
      */
-    private static function band(string $group, array $groupConfig, array $limits, int $index): array
+    private static function band(string $group, array $groupConfig, array $limits, int $index, ?Currency $currency = null): array
     {
         $label = (string) ($groupConfig['label'] ?? ucfirst($group));
-        $suffix = (string) ($groupConfig['suffix'] ?? '€');
+        $currency ??= Currency::of(Currency::DEFAULT);
+        $per = (string) ($groupConfig['per'] ?? '');
+        $money = static fn (string $amount): string => $currency->wrap($amount) . $per;
         $count = count($limits);
 
         if ($count === 0) {
@@ -109,20 +113,20 @@ final class PriceBandResolver
         if ($index === 0) {
             return [
                 sprintf('%s-ate-%s', $group, self::slugNum($limits[0])),
-                sprintf('%s · Até %s %s', $label, self::human($limits[0]), $suffix),
+                sprintf('%s · Até %s', $label, $money(self::human($limits[0]))),
             ];
         }
         if ($index >= $count) {
             return [
                 sprintf('%s-mais-%s', $group, self::slugNum($limits[$count - 1])),
-                sprintf('%s · Mais de %s %s', $label, self::human($limits[$count - 1]), $suffix),
+                sprintf('%s · Mais de %s', $label, $money(self::human($limits[$count - 1]))),
             ];
         }
         $from = $limits[$index - 1];
         $to = $limits[$index];
         return [
             sprintf('%s-%s-%s', $group, self::slugNum($from), self::slugNum($to)),
-            sprintf('%s · %s a %s %s', $label, self::rangeHuman($from, $to), self::human($to), $suffix),
+            sprintf('%s · %s a %s', $label, self::rangeHuman($from, $to), $money(self::human($to))),
         ];
     }
 

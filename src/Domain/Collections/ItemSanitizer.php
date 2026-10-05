@@ -13,14 +13,18 @@ namespace FlashSite\Core\Domain\Collections;
  */
 final class ItemSanitizer
 {
+    public function __construct(private ?CollectionSettings $settings = null) {}
+
     public function sanitize(FieldDefinition $field, mixed $value): mixed
     {
+        $decimal = $this->settings?->currency()->decimalSeparator() ?? ',';
+
         return match ($field->type) {
             FieldType::Text, FieldType::Tel => $this->text($value, $field->maxLength),
             FieldType::Textarea => $this->textarea($value, $field->maxLength),
             FieldType::Richtext => is_scalar($value) ? wp_kses_post((string) $value) : '',
             FieldType::Number => self::parseNumber($value),
-            FieldType::Money => ($n = self::parseNumber($value)) === null ? null : round($n, 2),
+            FieldType::Money => ($n = self::parseNumber($value, $decimal)) === null ? null : round($n, 2),
             FieldType::Bool => $this->bool($value),
             FieldType::Select => $this->select($field, $value),
             FieldType::Multiselect => $this->multiselect($field, $value),
@@ -53,7 +57,12 @@ final class ItemSanitizer
         return $clean;
     }
 
-    public static function parseNumber(mixed $value): ?float
+    /**
+     * Interpreta números escritos à mão: "285.000,00", "285,000.00", "285 000", "1250,5".
+     * Com os dois separadores, o último é o decimal. Com um só, decide pelo separador decimal
+     * da moeda e pelo padrão de milhares (grupos de 3 dígitos).
+     */
+    public static function parseNumber(mixed $value, string $decimal = ','): ?float
     {
         if (is_int($value) || is_float($value)) {
             return is_finite((float) $value) ? (float) $value : null;
@@ -69,18 +78,20 @@ final class ItemSanitizer
             return null;
         }
 
-        $hasComma = str_contains($s, ',');
-        $dotCount = substr_count($s, '.');
+        $decimal = $decimal === '.' ? '.' : ',';
+        $other = $decimal === ',' ? '.' : ',';
+        $lastComma = strrpos($s, ',');
+        $lastDot = strrpos($s, '.');
 
-        if ($hasComma) {
-            // Formato PT: ponto = milhares, vírgula = decimal.
-            $s = str_replace('.', '', $s);
-            $s = str_replace(',', '.', $s);
-        } elseif ($dotCount > 1) {
-            $s = str_replace('.', '', $s);
-        } elseif ($dotCount === 1 && preg_match('/^-?\d{1,3}\.\d{3}$/', $s) === 1) {
-            // "285.000" em PT é duzentos e oitenta e cinco mil.
-            $s = str_replace('.', '', $s);
+        if ($lastComma !== false && $lastDot !== false) {
+            $dec = $lastComma > $lastDot ? ',' : '.';
+            $s = str_replace($dec === ',' ? '.' : ',', '', $s);
+            $s = str_replace($dec, '.', $s);
+        } elseif (str_contains($s, $decimal)) {
+            $s = substr_count($s, $decimal) > 1 ? str_replace($decimal, '', $s) : str_replace($decimal, '.', $s);
+        } elseif (str_contains($s, $other)) {
+            $isThousands = substr_count($s, $other) > 1 || preg_match('/^-?\d{1,3}' . preg_quote($other, '/') . '\d{3}$/', $s) === 1;
+            $s = $isThousands ? str_replace($other, '', $s) : str_replace($other, '.', $s);
         }
 
         if (! is_numeric($s)) {

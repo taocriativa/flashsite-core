@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace FlashSite\Core\Modules\Collections\Admin;
 
 use FlashSite\Core\Domain\Collections\CollectionPresetInterface;
+use FlashSite\Core\Domain\Collections\FieldFormatter;
 use FlashSite\Core\Domain\Collections\FieldType;
 use FlashSite\Core\Domain\Collections\ItemReader;
 
@@ -17,7 +18,7 @@ final class ListColumns
     /** @var array<string, CollectionPresetInterface> */
     private array $presets = [];
 
-    public function __construct(private ItemReader $reader) {}
+    public function __construct(private ItemReader $reader, private ?FieldFormatter $formatter = null) {}
 
     /** @param array<string, CollectionPresetInterface> $presets */
     public function register(array $presets): void
@@ -87,6 +88,6 @@ final class ListColumns
         if ($value === null) {
             return '—';
         }
-        return esc_html(number_format((float) $value, 2, ',', '.') . ' €');
+        return esc_html(FieldFormatter::money((float) $value, FieldFormatter::MONEY_CENTS, $this->formatter?->currency()));
     }
 }

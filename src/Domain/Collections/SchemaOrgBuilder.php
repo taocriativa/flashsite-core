@@ -13,7 +13,7 @@ namespace FlashSite\Core\Domain\Collections;
  */
 final class SchemaOrgBuilder
 {
-    public function __construct(private CollectionPublicSerializer $serializer) {}
+    public function __construct(private CollectionPublicSerializer $serializer, private ?CollectionSettings $settings = null) {}
 
     /** @return array<string, mixed>|null */
     public function build(CollectionPresetInterface $preset, \WP_Post $post): ?array
@@ -59,7 +59,7 @@ final class SchemaOrgBuilder
             $offer = [
                 '@type' => 'Offer',
                 'price' => number_format((float) $price, 2, '.', ''),
-                'priceCurrency' => 'EUR',
+                'priceCurrency' => $this->settings?->currency()->code ?? Currency::DEFAULT,
             ];
             $availability = $this->availability($preset, $item['terms']);
             if ($availability !== null) {

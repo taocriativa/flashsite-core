@@ -6,8 +6,9 @@ namespace FlashSite\Core\Domain\Collections;
 /**
  * Formata valores de itens para o site (pt-PT).
  *
- * Dinheiro: "285.000,00 €" por defeito (decisão do Ted: formato 00,00);
- * estilo "auto" omite ",00" quando o valor é inteiro ("285.000 €").
+ * Dinheiro na moeda do site (FlashSite › Coleções): "285.000,00 €", "R$ 285.000,00", "$285,000.00".
+ * Sempre com cêntimos por defeito (decisão do Ted: formato 00,00); estilo "auto" omite os
+ * cêntimos quando o valor é inteiro.
  *
  * Settings do preset usados:
  *   price_bands.flag           campo bool "sob consulta"
@@ -24,12 +25,17 @@ final class FieldFormatter
 
     private const MONTHS = ['jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.'];
 
-    public function __construct(private ItemReader $reader) {}
+    public function __construct(private ItemReader $reader, private ?CollectionSettings $settings = null) {}
 
-    public static function money(float $value, string $style = self::MONEY_CENTS, string $currency = '€'): string
+    public static function money(float $value, string $style = self::MONEY_CENTS, ?Currency $currency = null): string
     {
         $decimals = ($style === self::MONEY_AUTO && abs($value - round($value)) < 0.005) ? 0 : 2;
-        return number_format($value, $decimals, ',', '.') . ($currency !== '' ? ' ' . $currency : '');
+        return ($currency ?? Currency::of(Currency::DEFAULT))->format($value, $decimals);
+    }
+
+    public function currency(): Currency
+    {
+        return $this->settings?->currency() ?? Currency::of(Currency::DEFAULT);
     }
 
     public static function number(float $value): string
@@ -63,7 +69,7 @@ final class FieldFormatter
         $unit = $field->unit !== '' && $field->type !== FieldType::Money ? ' ' . $field->unit : '';
 
         return match ($field->type) {
-            FieldType::Money => is_float($value) ? self::money($value, $moneyStyle, $field->unit !== '' ? $field->unit : '€') : '',
+            FieldType::Money => is_float($value) ? self::money($value, $moneyStyle, $this->currency()) : '',
             FieldType::Number => is_float($value) ? self::number($value) . $unit : '',
             FieldType::Bool => $value === true ? 'Sim' : '',
             FieldType::Select => (string) ($field->options[(string) $value] ?? ''),
@@ -97,7 +103,7 @@ final class FieldFormatter
         if (! is_float($value)) {
             return '';
         }
-        return self::money($value, $moneyStyle, $field->unit !== '' ? $field->unit : '€') . $this->priceSuffix($preset, $postId);
+        return self::money($value, $moneyStyle, $this->currency()) . $this->priceSuffix($preset, $postId);
     }
 
     public function isOnRequest(CollectionPresetInterface $preset, int $postId): bool

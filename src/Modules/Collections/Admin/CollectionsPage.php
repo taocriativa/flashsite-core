@@ -6,6 +6,8 @@ namespace FlashSite\Core\Modules\Collections\Admin;
 use FlashSite\Core\Domain\Collections\ActivationRepository;
 use FlashSite\Core\Domain\Collections\CollectionCapabilities;
 use FlashSite\Core\Domain\Collections\CollectionRegistry;
+use FlashSite\Core\Domain\Collections\CollectionSettings;
+use FlashSite\Core\Domain\Collections\Currency;
 use FlashSite\Core\Modules\Collections\DemoKitImporter;
 
 /**
@@ -23,6 +25,7 @@ final class CollectionsPage
         private CollectionRegistry $registry,
         private ActivationRepository $activation,
         private DemoKitImporter $importer,
+        private ?CollectionSettings $settings = null,
     ) {}
 
     public function register(): void
@@ -55,24 +58,39 @@ final class CollectionsPage
         echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
         echo '<input type="hidden" name="action" value="flashsite_collections_save">';
         wp_nonce_field(self::NONCE);
-        echo '<table class="widefat striped" style="max-width:820px"><thead><tr><th style="width:60px">Ativa</th><th>Coleção</th><th>Endereço no site</th><th>Campos</th></tr></thead><tbody>';
+        $activeCount = count(array_filter($this->registry->keys(), fn (string $k): bool => $this->activation->isActive($k)));
+        if ($activeCount === 0) {
+            echo '<div class="notice notice-warning inline"><p><strong>Nenhuma coleção ativa.</strong> Marque a caixa da coleção que quer usar e carregue em "Guardar coleções".</p></div>';
+        }
+        echo '<h2>1. Coleções do site</h2>';
+        echo '<table class="widefat striped" style="max-width:820px"><thead><tr><th style="width:110px">Estado</th><th>Coleção</th><th>Endereço no site</th><th>Campos</th></tr></thead><tbody>';
         foreach ($this->registry->all() as $key => $preset) {
+            $isActive = $this->activation->isActive((string) $key);
             printf(
-                '<tr><td><input type="checkbox" name="active[]" value="%1$s" id="fs-col-%1$s"%2$s></td><td><label for="fs-col-%1$s"><strong>%3$s</strong></label></td><td><code>/%4$s/</code></td><td>%5$d</td></tr>',
+                '<tr><td><label style="display:inline-flex;gap:6px;align-items:center;font-weight:600"><input type="checkbox" name="active[]" value="%1$s" id="fs-col-%1$s"%2$s> %6$s</label></td><td><label for="fs-col-%1$s"><strong>%3$s</strong></label></td><td><code>/%4$s/</code></td><td>%5$d</td></tr>',
                 esc_attr((string) $key),
-                $this->activation->isActive((string) $key) ? ' checked' : '',
+                $isActive ? ' checked' : '',
                 esc_html($preset->labels()['plural']),
                 esc_html($preset->slug()),
-                count($preset->fields())
+                count($preset->fields()),
+                $isActive ? '<span style="color:#008a20">Ativa</span>' : '<span style="color:#8a8a8e">Desligada</span>'
             );
         }
         echo '</tbody></table>';
+
+        $current = $this->settings?->currency()->code ?? Currency::DEFAULT;
+        echo '<h2>2. Moeda dos preços</h2><p>Usada em todos os preços do site, nas faixas de preço e nos dados para o Google.</p>';
+        echo '<select name="currency" id="fs-currency">';
+        foreach (Currency::options() as $code => $label) {
+            printf('<option value="%s"%s>%s</option>', esc_attr($code), $code === $current ? ' selected' : '', esc_html($label));
+        }
+        echo '</select>';
         submit_button('Guardar coleções');
         echo '</form>';
 
         $withKit = array_filter($this->registry->all(), fn ($preset) => $this->activation->isActive($preset->key()) && $this->importer->hasKit($preset));
         if ($withKit !== []) {
-            echo '<h2>Exemplos para demonstração</h2><p>Cria registos fictícios para sites de demonstração. Não usar em sites de clientes.</p>';
+            echo '<h2>3. Exemplos para demonstração</h2><p>Cria registos fictícios para sites de demonstração. Não usar em sites de clientes.</p>';
             foreach ($withKit as $preset) {
                 echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" style="display:inline-block;margin:0 8px 8px 0">';
                 echo '<input type="hidden" name="action" value="flashsite_collections_demo">';
@@ -94,8 +112,14 @@ final class CollectionsPage
         check_admin_referer(self::NONCE);
         $active = isset($_POST['active']) && is_array($_POST['active']) ? array_map('sanitize_key', wp_unslash($_POST['active'])) : [];
         $this->activation->replace(array_values($active), $this->registry->keys());
+        $currency = sanitize_text_field(wp_unslash((string) ($_POST['currency'] ?? '')));
+        if ($currency !== '' && $this->settings !== null) {
+            $this->settings->setCurrency($currency);
+        }
         do_action('flashsite_collections_changed');
-        $this->redirect('Coleções guardadas. Os menus aparecem no painel a seguir.');
+        $this->redirect($active === []
+            ? 'Guardado. Nenhuma coleção ficou ativa: marque a caixa da coleção antes de guardar.'
+            : 'Coleções guardadas. Os menus aparecem no painel a seguir.');
     }
 
     public function handleDemo(): void
