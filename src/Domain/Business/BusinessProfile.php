@@ -145,10 +145,14 @@ final class BusinessProfile
     public function getGoogleMapsUrl(): string { return $this->data['location']['google_maps_url']; }
     public function getGoogleMapsEmbed(): string { return $this->data['location']['google_maps_embed']; }
 
+    /**
+     * Horário em texto, com dias seguidos iguais agrupados:
+     * "Seg a Sex: 7h–21h\nSáb e Dom: 9h–13h". Uma linha por grupo.
+     */
     public function getOpeningHours(): string
     {
         $hours = $this->getHours();
-        $ordered = [
+        $days = [
             'Seg' => $hours['monday'] ?? '',
             'Ter' => $hours['tuesday'] ?? '',
             'Qua' => $hours['wednesday'] ?? '',
@@ -157,11 +161,28 @@ final class BusinessProfile
             'Sáb' => $hours['saturday'] ?? '',
             'Dom' => $hours['sunday'] ?? '',
         ];
-        $lines = [];
-        foreach ($ordered as $label => $value) {
-            if ($value !== '') {
-                $lines[] = $label . ': ' . $value;
+        $groups = [];
+        foreach ($days as $label => $value) {
+            $value = trim((string) $value);
+            $last = count($groups) - 1;
+            if ($value !== '' && $last >= 0 && $groups[$last]['value'] === $value && $groups[$last]['open']) {
+                $groups[$last]['days'][] = $label;
+                continue;
             }
+            $groups[] = ['days' => [$label], 'value' => $value, 'open' => $value !== ''];
+        }
+        $lines = [];
+        foreach ($groups as $group) {
+            if (! $group['open']) {
+                continue;
+            }
+            $d = $group['days'];
+            $label = match (count($d)) {
+                1 => $d[0],
+                2 => $d[0] . ' e ' . $d[1],
+                default => $d[0] . ' a ' . $d[count($d) - 1],
+            };
+            $lines[] = $label . ': ' . $group['value'];
         }
         if (($hours['notes'] ?? '') !== '') {
             $lines[] = (string) $hours['notes'];

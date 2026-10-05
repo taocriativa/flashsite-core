@@ -98,7 +98,8 @@ abstract class BaseBusinessTag extends ElementorTagBase
             if ($container->has(BusinessRepository::class)) {
                 /** @var BusinessRepository $repository */
                 $repository = $container->make(BusinessRepository::class);
-                return $repository->getProfile()->getOpeningHours();
+                // Numa linha de texto do Elementor as quebras desaparecem: separar os grupos com " · ".
+                return str_replace("\n", ' · ', $repository->getProfile()->getOpeningHours());
             }
         }
 
