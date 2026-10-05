@@ -41,12 +41,12 @@
 
 .fs-collection-grid {
     display: grid; gap: var(--fs-col-gap);
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(var(--fs-col-columns, 3), minmax(0, 1fr));
 }
 .fs-collection-grid__item { display: flex; min-width: 0; }
 .fs-collection-grid__item > .elementor { width: 100%; display: flex; }
 .fs-collection-grid__item > .elementor > * { width: 100%; }
-@media (max-width: 1024px) { .fs-collection-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1024px) { .fs-collection-grid { grid-template-columns: repeat(min(2, var(--fs-col-columns, 3)), minmax(0, 1fr)); } }
 @media (max-width: 767px) {
     .fs-collection-archive { padding: 24px 16px 72px; }
     .fs-collection-grid { grid-template-columns: minmax(0, 1fr); }

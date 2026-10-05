@@ -393,7 +393,8 @@ final class ModelPages
         }
         $this->renderModel($this->pageId($preset, 'archive_top'), 0);
 
-        echo '<section class="fs-collection-archive fs-collection-archive--' . esc_attr($preset->key()) . '">';
+        $columns = max(1, min(4, (int) $preset->setting('archive_columns', 3)));
+        printf('<section class="fs-collection-archive fs-collection-archive--%s" style="--fs-col-columns:%d">', esc_attr($preset->key()), $columns);
         $this->renderFilters($preset);
 
         $cardId = $this->pageId($preset, 'card');

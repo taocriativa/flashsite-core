@@ -83,8 +83,16 @@ class ItemFieldTag extends CollectionTagBase
         if ($value === '') {
             return (string) ($this->get_settings('fallback') ?? '');
         }
-        return (string) ($this->get_settings('before') ?? '') . $value . (string) ($this->get_settings('after') ?? '');
+        $before = (string) ($this->get_settings('before') ?? '');
+        $after = (string) ($this->get_settings('after') ?? '');
+        // Campo sim/não com texto em "Antes"/"Depois": mostra só esse texto (ex.: "Vegetariano").
+        if ($this->boolField && ($before !== '' || $after !== '')) {
+            return trim($before . ' ' . $after);
+        }
+        return $before . $value . $after;
     }
+
+    private bool $boolField = false;
 
     protected function resolve(\FlashSite\Core\Domain\Collections\CollectionPresetInterface $preset, int $postId, FieldFormatter $formatter): string
     {
@@ -93,6 +101,7 @@ class ItemFieldTag extends CollectionTagBase
         if ($field === null) {
             return '';
         }
+        $this->boolField = $field->type === \FlashSite\Core\Domain\Collections\FieldType::Bool;
         $index = (int) ($this->get_settings('list_index') ?? 0);
         if ($index > 0 && $field->type === \FlashSite\Core\Domain\Collections\FieldType::ListOfText) {
             $reader = self::reader();

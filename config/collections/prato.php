@@ -98,6 +98,7 @@ return [
         'archive_group_by' => 'categoria',
         'archive_per_page' => -1,
         'archive_filters' => false,
+        'archive_columns' => 2,
         'model_pages' => [
             'item' => 'Modelo · Prato',
             'card' => 'Modelo · Cartão de prato',
