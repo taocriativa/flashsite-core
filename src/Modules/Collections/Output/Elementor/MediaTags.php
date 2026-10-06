@@ -150,7 +150,7 @@ class ItemUrlTag extends CollectionTagBase
             'label' => 'Campo',
             'type' => \Elementor\Controls_Manager::SELECT,
             'options' => ['__permalink' => 'Página do item'] + self::fieldOptions([FieldType::Url]),
-            'default' => '',
+            'default' => '__permalink',
         ]);
     }
 
@@ -163,7 +163,8 @@ class ItemUrlTag extends CollectionTagBase
             return '';
         }
         $key = (string) ($this->get_settings('field') ?? '');
-        if ($key === '__permalink') {
+        // Sem campo escolhido, o link vai para a página do item (o caso mais comum).
+        if ($key === '' || $key === '__permalink') {
             return get_post_status($postId) === 'publish' ? (string) get_permalink($postId) : '';
         }
         $field = $preset->field($key);
