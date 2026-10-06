@@ -32,6 +32,12 @@
     opacity: .75;
 }
 .fs-popup__close:hover, .fs-popup__close:focus-visible { opacity: 1; }
+/* O tema (ex.: Hello) pinta botões em :hover/:focus (rosa #c36). O X segue sempre as cores do site. */
+.fs-popup .fs-popup__close, .fs-popup .fs-popup__close:hover, .fs-popup .fs-popup__close:focus, .fs-popup .fs-popup__close:active {
+    background: var(--fs-popup-surface); color: var(--fs-popup-ink);
+    border: 0; box-shadow: none; outline: none; text-decoration: none;
+}
+.fs-popup .fs-popup__close:focus-visible { outline: 2px solid var(--fs-popup-ink); outline-offset: 2px; }
 .fs-popup__box > .elementor { margin: 0; }
 html.fs-popup-open { overflow: hidden; }
 @keyframes fs-popup-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
@@ -39,3 +45,4 @@ html.fs-popup-open { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
     .fs-popup[open], .fs-popup::backdrop { animation: none; }
 }
+.fs-popup:focus, .fs-popup:focus-visible { outline: none; }

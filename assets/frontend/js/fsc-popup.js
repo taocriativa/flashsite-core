@@ -56,6 +56,9 @@
         open = d;
         set(session, 'fs_popup_seen_' + c.id, '1');
         if (typeof d.showModal === 'function') { d.showModal(); } else { d.setAttribute('open', ''); }
+        // O foco vai para a caixa, não para o X (evita o anel de foco ao abrir).
+        if (!d.hasAttribute('tabindex')) { d.setAttribute('tabindex', '-1'); }
+        try { d.focus({ preventScroll: true }); } catch (err) { d.focus(); }
         document.documentElement.classList.add('fs-popup-open');
     }
 
