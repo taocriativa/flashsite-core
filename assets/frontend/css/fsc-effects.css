@@ -38,3 +38,9 @@ select.e-form-select-base {
     background-size: 12px 8px;
 }
 [dir="rtl"] select.e-form-select-base { background-position: left 18px center; }
+
+/* Imagem dinâmica sem ficheiro (ex.: prato sem foto): não deixa caixa vazia.
+   Se o bloco só tinha a imagem, o bloco também sai e o texto ocupa o espaço. */
+img.e-image-base:not([src]), img.e-image-base[src=""] { display: none !important; }
+.e-con:has(> img.e-image-base:not([src])):not(:has(> :not(img))),
+.e-con:has(> img.e-image-base[src=""]):not(:has(> :not(img))) { display: none !important; }
