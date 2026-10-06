@@ -26,3 +26,15 @@
 
 /* Textos dinâmicos vazios (ex.: selo "Vegano" desligado) não ocupam espaço. */
 .e-paragraph-base:empty, .e-heading-base:empty { display: none !important; }
+
+/* Seta das listas de opção (e-form-select): sai da borda e ganha respiro à direita. */
+select.e-form-select-base {
+    -webkit-appearance: none;
+    appearance: none;
+    padding-inline-end: 46px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23808080' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 18px center;
+    background-size: 12px 8px;
+}
+[dir="rtl"] select.e-form-select-base { background-position: left 18px center; }
