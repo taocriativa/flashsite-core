@@ -21,14 +21,18 @@ final class HoursFormattedTag extends AbstractBusinessTextTag
         ]);
     }
 
-    public function render(): void
+    /**
+     * Com Data_Tag (Elementor atual) o conteúdo vem de get_value(); com Tag vem de render().
+     * Os dois caminhos passam por aqui.
+     */
+    public function get_value(array $options = []): string
     {
+        $value = parent::get_value($options);
         if ((string) $this->get_settings('hours_layout') !== 'lines') {
-            parent::render();
-            return;
+            return $value;
         }
         $rows = [];
-        foreach (explode(' · ', $this->get_value()) as $line) {
+        foreach (explode(' · ', $value) as $line) {
             $line = trim($line);
             if ($line === '') {
                 continue;
@@ -38,6 +42,15 @@ final class HoursFormattedTag extends AbstractBusinessTextTag
                 ? '<strong>' . esc_html($parts[0]) . '</strong> ' . esc_html($parts[1])
                 : esc_html($line);
         }
-        echo implode('<br>', $rows); // phpcs:ignore WordPress.Security.EscapeOutput -- partes escapadas acima
+        return implode('<br>', $rows);
+    }
+
+    public function render(): void
+    {
+        if ((string) $this->get_settings('hours_layout') !== 'lines') {
+            parent::render();
+            return;
+        }
+        echo $this->get_value(); // phpcs:ignore WordPress.Security.EscapeOutput -- partes escapadas em get_value()
     }
 }
