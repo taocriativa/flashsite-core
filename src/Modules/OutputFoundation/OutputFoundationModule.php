@@ -222,7 +222,12 @@ final class OutputFoundationModule implements ModuleInterface
             if (! is_array($item) || ($item['type'] ?? '') !== 'global-font-variable' || ! empty($item['deleted'])) {
                 continue;
             }
-            $value = trim((string) ($item['value'] ?? ''));
+            // Guardado como {"$$type": "global-font-variable", "value": "…"} (formato v2) ou como texto.
+            $value = $item['value'] ?? '';
+            if (is_array($value)) {
+                $value = $value['value'] ?? '';
+            }
+            $value = trim(is_string($value) ? $value : '');
             if ($value === '' || ! in_array($value[0], ['"', "'"], true)) {
                 continue;
             }
