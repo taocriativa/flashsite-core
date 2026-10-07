@@ -80,6 +80,8 @@ final class MarketTest extends TestCase
         }
         $persist = new ItemPersistence(new ItemSanitizer($settings), new ItemValidator(), new ItemReader(), $settings);
         $fmt = new FieldFormatter(new ItemReader(), $settings);
+        $this->assertSame('', $fmt->value($imovel->field('suites'), 0.0), 'Zero não se mostra ("0 suítes").');
+        $this->assertSame('2', $fmt->value($imovel->field('suites'), 2.0));
         $persist->saveFields($imovel, 901, ['preco' => '350.000,00', 'preco_aluguel' => '3.500,00']);
         wp_set_object_terms(901, [$termIds['venda'], $termIds['aluguel']], $tax);
         $this->assertSame('R$ 350.000,00 · R$ 3.500,00/mês', $fmt->price($imovel, 901));

@@ -79,7 +79,8 @@ final class FieldFormatter
 
         return match ($field->type) {
             FieldType::Money => is_float($value) ? self::money($value, $moneyStyle, $this->currency()) : '',
-            FieldType::Number => is_float($value) ? self::number($value) . $unit : '',
+            // Zero não se mostra ("0 quartos", "0 vagas"): num campo de contagem é o mesmo que vazio. @since 3.0.0
+            FieldType::Number => is_float($value) && $value != 0.0 ? self::number($value) . $unit : '',
             FieldType::Bool => $value === true ? 'Sim' : '',
             FieldType::Select => (string) ($field->options[(string) $value] ?? ''),
             FieldType::Multiselect => implode(', ', array_filter(array_map(static fn ($v) => $field->options[(string) $v] ?? '', (array) $value))),

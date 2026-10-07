@@ -55,6 +55,52 @@ final class MarketsModule implements ModuleInterface
         add_action('wp_head', [$this, 'printHreflang'], 2);
         add_action('wp_enqueue_scripts', [$this, 'enqueue'], 20);
         add_shortcode('flashsite_market_switch', [$this, 'renderSwitch']);
+        add_action('rest_api_init', [$this, 'registerRest']);
+    }
+
+    /** GET/POST flashsite/v1/markets (só administradores): ler e gravar a configuração, ex.: pelo MCP. */
+    public function registerRest(): void
+    {
+        register_rest_route('flashsite/v1', '/markets', [
+            ['methods' => 'GET', 'callback' => fn () => self::config(), 'permission_callback' => fn () => current_user_can('manage_options')],
+            ['methods' => 'POST', 'callback' => [$this, 'restSave'], 'permission_callback' => fn () => current_user_can('manage_options')],
+        ]);
+    }
+
+    /** @param \WP_REST_Request $request */
+    public function restSave($request): array
+    {
+        $in = (array) $request->get_json_params();
+        $current = self::config();
+        $out = $current['settings'];
+        foreach (self::DEFAULTS as $key => $default) {
+            if (! array_key_exists($key, $in)) {
+                continue;
+            }
+            $value = sanitize_text_field((string) $in[$key]);
+            if (in_array($key, ['enabled', 'prompt_br', 'prompt_pt'], true)) {
+                $value = $value === '1' ? '1' : '0';
+            } elseif ($key === 'default_market') {
+                $value = isset(self::MARKETS[$value]) ? $value : 'PT';
+            } elseif ($value === '') {
+                $value = $default;
+            }
+            $out[$key] = $value;
+        }
+        $pairs = $current['pairs'];
+        if (isset($in['pairs']) && is_array($in['pairs'])) {
+            $pairs = [];
+            foreach ($in['pairs'] as $pair) {
+                $pt = absint($pair['PT'] ?? 0);
+                $br = absint($pair['BR'] ?? 0);
+                if ($pt > 0 && $br > 0 && $pt !== $br) {
+                    $pairs[] = ['PT' => $pt, 'BR' => $br];
+                }
+            }
+        }
+        $out['pairs'] = array_slice($pairs, 0, self::MAX_PAIRS);
+        update_option(self::OPTION, $out, false);
+        return self::config();
     }
 
     public function boot(): void {}

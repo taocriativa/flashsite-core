@@ -10,9 +10,11 @@ use FlashSite\Core\Core\Contracts\ModuleInterface;
  *
  *   flashsite_core_hardening_headers   cabeçalhos no site público: nosniff, SAMEORIGIN,
  *                                      Referrer-Policy, Permissions-Policy e HSTS (só em HTTPS)
+ *   flashsite_core_permissions_policy  valor do Permissions-Policy (padrão: camera=(), microphone=();
+ *                                      sem payment, para não bloquear Apple Pay / Google Pay)
  *   flashsite_core_hardening_users     /wp/v2/users e ?author=N fechados a visitantes
  *                                      (com sessão ou senha de aplicação continuam a funcionar)
- *   flashsite_core_hardening_xmlrpc    XML-RPC desligado
+ *   flashsite_core_hardening_xmlrpc    XML-RPC desligado (fica ligado se o Jetpack estiver ativo)
  *   flashsite_core_security_txt        /.well-known/security.txt (contacto: flashsite_core_security_contact)
  *
  * Ex.: add_filter('flashsite_core_hardening_xmlrpc', '__return_false');
@@ -36,7 +38,9 @@ final class HardeningModule implements ModuleInterface
             add_filter('rest_endpoints', [$this, 'hideUserEndpoints']);
             add_action('template_redirect', [$this, 'blockAuthorScan'], 1);
         }
-        if (apply_filters('flashsite_core_hardening_xmlrpc', true)) {
+        // O Jetpack liga-se ao WordPress.com pelo XML-RPC: com ele ativo, o XML-RPC fica ligado.
+        $jetpack = class_exists('Jetpack') || defined('JETPACK__VERSION');
+        if (apply_filters('flashsite_core_hardening_xmlrpc', ! $jetpack)) {
             add_filter('xmlrpc_enabled', '__return_false');
             add_filter('wp_headers', [$this, 'removePingback']);
             add_filter('xmlrpc_methods', '__return_empty_array');
@@ -66,7 +70,11 @@ final class HardeningModule implements ModuleInterface
         header('X-Content-Type-Options: nosniff');
         header('X-Frame-Options: SAMEORIGIN');
         header('Referrer-Policy: strict-origin-when-cross-origin');
-        header('Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()');
+        // Sem payment nem geolocation: Apple Pay / Google Pay (WooPayments, Stripe) e mapas precisam deles.
+        $policy = (string) apply_filters('flashsite_core_permissions_policy', 'camera=(), microphone=()');
+        if ($policy !== '') {
+            header('Permissions-Policy: ' . $policy);
+        }
         if (is_ssl()) {
             header('Strict-Transport-Security: max-age=31536000');
         }
