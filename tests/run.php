@@ -26,6 +26,7 @@ $files = [
     __DIR__ . '/Integration/ImovelPresetTest.php',
     __DIR__ . '/Unit/CurrencyTest.php',
     __DIR__ . '/Unit/MarketTest.php',
+    __DIR__ . '/Unit/MarketsModuleTest.php',
     __DIR__ . '/Integration/PlanoPresetTest.php',
     __DIR__ . '/Integration/PratoPresetTest.php',
 ];
@@ -57,6 +58,7 @@ $tests = [
     new ImovelPresetTest(),
     new CurrencyTest(),
     new MarketTest(),
+    new MarketsModuleTest(),
     new PlanoPresetTest(),
     new PratoPresetTest(),
 ];

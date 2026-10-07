@@ -13,4 +13,5 @@ return [
     FlashSite\Core\Modules\Collections\CollectionsModule::class,
     FlashSite\Core\Modules\Contact\ContactModule::class,
     FlashSite\Core\Modules\Hardening\HardeningModule::class,
+    FlashSite\Core\Modules\Markets\MarketsModule::class,
 ];
