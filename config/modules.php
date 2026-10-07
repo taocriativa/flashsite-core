@@ -12,4 +12,5 @@ return [
     FlashSite\Core\Modules\PrivacyPolicy\PrivacyPolicyModule::class,
     FlashSite\Core\Modules\Collections\CollectionsModule::class,
     FlashSite\Core\Modules\Contact\ContactModule::class,
+    FlashSite\Core\Modules\Hardening\HardeningModule::class,
 ];

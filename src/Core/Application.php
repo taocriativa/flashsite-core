@@ -158,6 +158,7 @@ final class Application
         $this->container->bind(CollectionsPage::class, fn (Container $c) => new CollectionsPage($c->make(CollectionRegistry::class), $c->make(ActivationRepository::class), $c->make(DemoKitImporter::class), $c->make(CollectionSettings::class)));
         $this->container->bind(CollectionsModule::class, fn (Container $c) => new CollectionsModule($c->make(CollectionRegistry::class), $c->make(ActivationRepository::class), $c->make(CollectionCapabilities::class), $c->make(ItemSanitizer::class), $c->make(OptionsStorage::class), $c->make(Logger::class), $c->make(ItemPersistence::class), $c->make(ItemEditor::class), $c->make(ListColumns::class), $c->make(CollectionsOutput::class), $c->make(PublicRestController::class), $c->make(CollectionsPage::class), $c->make(ModelPages::class)));
         $this->container->bind(\FlashSite\Core\Modules\Contact\ContactModule::class, fn (Container $c) => new \FlashSite\Core\Modules\Contact\ContactModule($c->make(BusinessData::class)));
+        $this->container->bind(\FlashSite\Core\Modules\Hardening\HardeningModule::class, fn () => new \FlashSite\Core\Modules\Hardening\HardeningModule());
         $this->container->bind(OutputFoundationModule::class, fn (Container $c) => new OutputFoundationModule($c->make(BusinessData::class), $c->make(Logger::class)));
     }
 
