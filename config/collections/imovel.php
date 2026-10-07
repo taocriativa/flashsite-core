@@ -177,10 +177,13 @@ return [
             ],
             'groups' => [
                 'areas' => 'Áreas e cômodos',
+                'lancamento' => 'Lançamento',
             ],
             'taxonomies' => [
                 'finalidade' => [
-                    'terms' => ['venda' => 'Venda', 'aluguel' => 'Aluguel'],
+                    'single' => false,
+                    'terms' => ['venda' => 'Venda', 'aluguel' => 'Aluguel', 'lancamento' => 'Lançamento'],
+                    'help' => 'Marque Venda e Aluguel quando o imóvel estiver disponível para os dois. Lançamento: empreendimento na planta ou em obras.',
                 ],
                 'tipo' => [
                     'terms' => [
@@ -195,10 +198,11 @@ return [
                     ],
                 ],
                 'tipologia' => [
+                    'single' => false,
                     'label' => 'Quartos',
                     'singular' => 'Quartos',
                     'terms' => ['studio' => 'Studio / kitnet', '1-quarto' => '1 quarto', '2-quartos' => '2 quartos', '3-quartos' => '3 quartos', '4-quartos' => '4 quartos ou mais'],
-                    'help' => 'Não se aplica a terrenos, salas e lojas.',
+                    'help' => 'Não se aplica a terrenos, salas e lojas. Em lançamentos, marque todas as opções de planta.',
                 ],
                 'estado' => [
                     'label' => 'Situação',
@@ -217,7 +221,8 @@ return [
             ],
             'fields' => [
                 'referencia' => ['placeholder' => 'Ex.: AP0042'],
-                'preco' => ['placeholder' => 'Ex.: 450.000,00', 'help' => 'No aluguel, informe o valor mensal.'],
+                'preco' => ['placeholder' => 'Ex.: 450.000,00', 'help' => 'Venda: valor de venda. Só aluguel: valor mensal. Lançamento: menor valor ("a partir de").'],
+                'preco_aluguel' => ['type' => 'money', 'label' => 'Valor do aluguel (mensal)', 'group' => 'principal', 'min' => 0, 'placeholder' => 'Ex.: 3.500,00', 'help' => 'Só quando o imóvel está à venda e para aluguel. O preço acima fica como valor de venda.', 'after' => 'preco'],
                 'valor_condominio' => ['type' => 'money', 'label' => 'Condomínio (mensal)', 'group' => 'principal', 'min' => 0, 'placeholder' => 'Ex.: 650,00', 'after' => 'preco_sob_consulta'],
                 'valor_iptu' => ['type' => 'money', 'label' => 'IPTU (anual)', 'group' => 'principal', 'min' => 0, 'placeholder' => 'Ex.: 1.200,00', 'after' => 'valor_condominio'],
                 'classe_energetica' => null,
@@ -248,9 +253,14 @@ return [
                 'morada' => ['label' => 'Endereço', 'help' => 'Uso interno. Não aparece no site.'],
                 'nome_condominio' => ['type' => 'text', 'label' => 'Condomínio ou edifício', 'group' => 'localizacao', 'max_length' => 80, 'placeholder' => 'Ex.: Condomínio Serra Verde', 'after' => 'morada'],
                 'video_url' => ['label' => 'Vídeo ou tour virtual (link)'],
+                'construtora' => ['type' => 'text', 'label' => 'Construtora', 'group' => 'lancamento', 'max_length' => 60, 'placeholder' => 'Ex.: Direcional'],
+                'previsao_entrega' => ['type' => 'text', 'label' => 'Previsão de entrega', 'group' => 'lancamento', 'max_length' => 40, 'placeholder' => 'Ex.: Dezembro de 2027'],
+                'unidades' => ['type' => 'text', 'label' => 'Plantas', 'group' => 'lancamento', 'max_length' => 80, 'placeholder' => 'Ex.: 2 e 3 quartos, de 45 a 62 m²'],
             ],
             'settings' => [
                 'price_suffix' => ['taxonomy' => 'finalidade', 'terms' => ['aluguel' => '/mês']],
+                'price_prefix' => ['taxonomy' => 'finalidade', 'terms' => ['lancamento' => 'a partir de ']],
+                'extra_price' => ['field' => 'preco_aluguel', 'taxonomy' => 'finalidade', 'term' => 'aluguel', 'suffix' => '/mês', 'separator' => ' · '],
                 'unavailable_terms' => ['taxonomy' => 'estado', 'terms' => ['vendido', 'alugado']],
                 'closed_terms' => ['taxonomy' => 'estado', 'terms' => ['reservado', 'vendido', 'alugado']],
                 'schema_availability' => [
@@ -269,6 +279,7 @@ return [
                     'groups' => [
                         'venda' => ['label' => 'Venda', 'limits' => [200000, 400000, 600000, 1000000, 2000000]],
                         'aluguel' => ['label' => 'Aluguel', 'per' => '/mês', 'limits' => [1000, 2000, 3000, 5000, 8000]],
+                        'lancamento' => ['label' => 'Lançamento', 'limits' => [200000, 400000, 600000, 1000000, 2000000]],
                     ],
                 ],
             ],

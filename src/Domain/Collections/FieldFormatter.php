@@ -15,6 +15,11 @@ namespace FlashSite\Core\Domain\Collections;
  *   price_suffix               ['taxonomy' => 'finalidade', 'terms' => ['arrendamento' => '/mês']]
  *                              ou ['field' => 'periodicidade', 'map' => ['mes' => '/mês']]
  *   price_prefix               ['field' => 'preco_desde', 'text' => 'desde ']
+ *                              ou ['taxonomy' => 'finalidade', 'terms' => ['lancamento' => 'a partir de ']]
+ *   extra_price                segundo preço no mesmo item (ex.: venda e aluguel):
+ *                              ['field' => 'preco_aluguel', 'taxonomy' => 'finalidade', 'term' => 'aluguel',
+ *                               'suffix' => '/mês', 'separator' => ' · ']. Só vale quando o item tem esse termo
+ *                              E outro termo da mesma lista; com só esse termo, o preço principal é o dele.
  *   price                      ['field' => 'preco', 'flag' => 'preco_sob_consulta'] (sem faixas de preço)
  *
  * @since 2.6.0
@@ -111,8 +116,42 @@ final class FieldFormatter
         if (! is_float($value)) {
             return '';
         }
-        $suffix = $part === self::PART_AMOUNT ? '' : $this->priceSuffix($preset, $postId);
-        return $this->pricePrefix($preset, $postId) . self::money($value, $moneyStyle, $this->currency()) . $suffix;
+        $extra = $this->extraPrice($preset, $postId);
+        $suffix = $part === self::PART_AMOUNT ? '' : $this->priceSuffix($preset, $postId, $extra !== null ? (string) $extra['term'] : null);
+        $main = $this->pricePrefix($preset, $postId) . self::money($value, $moneyStyle, $this->currency()) . $suffix;
+        if ($extra === null || $part === self::PART_AMOUNT) {
+            return $main;
+        }
+        return $main . $extra['separator'] . self::money($extra['value'], $moneyStyle, $this->currency()) . $extra['suffix'];
+    }
+
+    /**
+     * Segundo preço do item (settings.extra_price), quando se aplica.
+     *
+     * @return array{value: float, term: string, suffix: string, separator: string}|null
+     */
+    public function extraPrice(CollectionPresetInterface $preset, int $postId): ?array
+    {
+        $config = $preset->setting('extra_price');
+        if (! is_array($config) || ! isset($config['field'], $config['taxonomy'], $config['term'])) {
+            return null;
+        }
+        $field = $preset->field((string) $config['field']);
+        $value = $field !== null ? $this->reader->value($field, $postId) : null;
+        if (! is_float($value)) {
+            return null;
+        }
+        $slugs = $this->termSlugs($preset, (string) $config['taxonomy'], $postId);
+        $term = (string) $config['term'];
+        if (! in_array($term, $slugs, true) || count(array_diff($slugs, [$term])) === 0) {
+            return null;
+        }
+        return [
+            'value' => $value,
+            'term' => $term,
+            'suffix' => (string) ($config['suffix'] ?? ''),
+            'separator' => (string) ($config['separator'] ?? ' · '),
+        ];
     }
 
     public function isOnRequest(CollectionPresetInterface $preset, int $postId): bool
@@ -174,15 +213,23 @@ final class FieldFormatter
         return is_array($price) ? $price : [];
     }
 
-    /** settings.price_prefix ['field' => 'preco_desde', 'text' => 'desde ']: texto antes do preço quando o campo está ligado. */
+    /** settings.price_prefix: texto antes do preço quando o campo está ligado ou o item tem o termo. */
     private function pricePrefix(CollectionPresetInterface $preset, int $postId): string
     {
         $config = $preset->setting('price_prefix');
+        if (is_array($config) && isset($config['taxonomy'], $config['terms']) && is_array($config['terms'])) {
+            foreach ($this->termSlugs($preset, (string) $config['taxonomy'], $postId) as $slug) {
+                if (isset($config['terms'][$slug])) {
+                    return (string) $config['terms'][$slug];
+                }
+            }
+            return '';
+        }
         $field = is_array($config) && isset($config['field']) ? $preset->field((string) $config['field']) : null;
         return $field !== null && $this->reader->value($field, $postId) === true ? (string) ($config['text'] ?? '') : '';
     }
 
-    private function priceSuffix(CollectionPresetInterface $preset, int $postId): string
+    private function priceSuffix(CollectionPresetInterface $preset, int $postId, ?string $exclude = null): string
     {
         $config = $preset->setting('price_suffix');
         // Sufixo por campo: ['field' => 'periodicidade', 'map' => ['mes' => '/mês', ...]]
@@ -195,7 +242,7 @@ final class FieldFormatter
             return '';
         }
         foreach ($this->termSlugs($preset, (string) $config['taxonomy'], $postId) as $slug) {
-            if (isset($config['terms'][$slug])) {
+            if ($slug !== $exclude && isset($config['terms'][$slug])) {
                 return (string) $config['terms'][$slug];
             }
         }

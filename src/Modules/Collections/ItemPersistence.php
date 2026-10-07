@@ -143,20 +143,35 @@ final class ItemPersistence
         $flagField = isset($config['flag']) ? $preset->field((string) $config['flag']) : null;
         $onRequest = $flagField !== null && $this->reader->value($flagField, $postId) === true;
 
-        $groupSlug = null;
+        $groupSlugs = [];
         $groupTaxonomy = isset($config['group_taxonomy']) ? $this->taxonomyByKey($preset, (string) $config['group_taxonomy']) : null;
         if ($groupTaxonomy !== null) {
             $terms = wp_get_object_terms($postId, $groupTaxonomy->taxonomyName($preset->postType()), ['fields' => 'slugs']);
-            $groupSlug = is_array($terms) && $terms !== [] ? (string) $terms[0] : null;
+            $groupSlugs = is_array($terms) ? array_values(array_map('strval', $terms)) : [];
         }
 
-        $band = PriceBandResolver::resolve($preset, is_float($price) ? $price : null, $onRequest, $groupSlug, $this->settings?->currency());
-        if ($band === null) {
-            wp_set_object_terms($postId, [], $bandName, false);
-            return;
+        // Segundo preço (settings.extra_price, ex.: venda e aluguel): cada grupo recebe a sua faixa.
+        $extra = $preset->setting('extra_price');
+        $extraTerm = is_array($extra) && isset($extra['term'], $extra['field']) ? (string) $extra['term'] : '';
+        $extraField = $extraTerm !== '' ? $preset->field((string) $extra['field']) : null;
+        $extraValue = $extraField !== null ? $this->reader->value($extraField, $postId) : null;
+        $hasOther = count(array_diff($groupSlugs, [$extraTerm])) > 0;
+
+        $ids = [];
+        foreach ($groupSlugs === [] ? [null] : $groupSlugs as $groupSlug) {
+            $value = $price;
+            if ($extraTerm !== '' && $groupSlug === $extraTerm && $hasOther) {
+                $value = $extraValue;
+            }
+            $band = PriceBandResolver::resolve($preset, is_float($value) ? $value : null, $onRequest, $groupSlug, $this->settings?->currency());
+            if ($band !== null) {
+                $termId = $this->ensureTerm($bandName, $band[1], $band[0], 0, true);
+                if ($termId > 0) {
+                    $ids[] = $termId;
+                }
+            }
         }
-        $termId = $this->ensureTerm($bandName, $band[1], $band[0], 0, true);
-        wp_set_object_terms($postId, $termId > 0 ? [$termId] : [], $bandName, false);
+        wp_set_object_terms($postId, array_values(array_unique($ids)), $bandName, false);
     }
 
     /** A primeira foto da galeria passa a ser a imagem de capa (settings.cover_from). */

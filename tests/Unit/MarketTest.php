@@ -9,6 +9,11 @@ use FlashSite\Core\Domain\Collections\Market;
 use FlashSite\Core\Domain\Collections\MarketLayer;
 use FlashSite\Core\Domain\Collections\PriceBandResolver;
 use FlashSite\Core\Infrastructure\Storage\OptionsStorage;
+use FlashSite\Core\Domain\Collections\FieldFormatter;
+use FlashSite\Core\Domain\Collections\ItemReader;
+use FlashSite\Core\Domain\Collections\ItemSanitizer;
+use FlashSite\Core\Domain\Collections\ItemValidator;
+use FlashSite\Core\Modules\Collections\ItemPersistence;
 
 final class MarketTest extends TestCase
 {
@@ -45,7 +50,7 @@ final class MarketTest extends TestCase
         $this->assertSame([], $br->errors(), 'Presets BR sem erros: ' . json_encode($br->errors()));
         $this->assertSame('BR', $br->market());
         $imovel = $br->get('imovel');
-        $this->assertSame(['venda' => 'Venda', 'aluguel' => 'Aluguel'], $imovel->taxonomy('finalidade')->terms);
+        $this->assertSame(['venda' => 'Venda', 'aluguel' => 'Aluguel', 'lancamento' => 'Lançamento'], $imovel->taxonomy('finalidade')->terms);
         $this->assertSame('2 quartos', $imovel->taxonomy('tipologia')->terms['2-quartos']);
         $this->assertSame('Quartos', $imovel->taxonomy('tipologia')->label);
         $this->assertTrue($imovel->field('classe_energetica') === null, 'Sem classe energética no Brasil.');
@@ -57,9 +62,36 @@ final class MarketTest extends TestCase
         $this->assertFalse($imovel->field('morada')->public, 'Endereço continua privado.');
         $this->assertSame('aluguel-ate-1000', PriceBandResolver::resolve($imovel, 900.0, false, 'aluguel')[0]);
         $this->assertSame(['taxonomy' => 'estado', 'terms' => ['reservado', 'vendido', 'alugado']], $imovel->setting('closed_terms'));
+        $this->assertFalse($imovel->taxonomy('finalidade')->single, 'Venda e aluguel no mesmo imóvel.');
+        $this->assertSame('Lançamento', $imovel->taxonomy('finalidade')->terms['lancamento']);
+        $this->assertTrue($imovel->field('preco_aluguel') !== null && $imovel->field('construtora') !== null);
+        $this->assertSame('lancamento-ate-200000', PriceBandResolver::resolve($imovel, 180000.0, false, 'lancamento')[0]);
         $prato = $br->get('prato');
         $this->assertSame('cardapio', $prato->slug());
         $this->assertSame('Gergelim', $prato->field('alergenios')->options['sesamo']);
+
+        // Preços no Brasil: venda e aluguel juntos, só aluguel, lançamento.
+        $tax = $imovel->taxonomy('finalidade')->taxonomyName($imovel->postType());
+        $termIds = [];
+        foreach (['venda', 'aluguel', 'lancamento'] as $slug) {
+            $termIds[$slug] = wp_insert_term(ucfirst($slug), $tax, ['slug' => $slug])['term_id'];
+        }
+        $persist = new ItemPersistence(new ItemSanitizer($settings), new ItemValidator(), new ItemReader(), $settings);
+        $fmt = new FieldFormatter(new ItemReader(), $settings);
+        $persist->saveFields($imovel, 901, ['preco' => '350.000,00', 'preco_aluguel' => '3.500,00']);
+        wp_set_object_terms(901, [$termIds['venda'], $termIds['aluguel']], $tax);
+        $this->assertSame('R$ 350.000,00 · R$ 3.500,00/mês', $fmt->price($imovel, 901));
+        $this->assertSame('R$ 350.000,00', $fmt->price($imovel, 901, FieldFormatter::MONEY_CENTS, FieldFormatter::PART_AMOUNT));
+        $persist->syncPriceBand($imovel, 901);
+        $bands = wp_get_object_terms(901, $imovel->taxonomy('faixa')->taxonomyName($imovel->postType()), ['fields' => 'slugs']);
+        sort($bands);
+        $this->assertSame(2, count($bands), 'Uma faixa por finalidade: ' . implode(',', $bands)); $this->assertTrue(str_starts_with($bands[0], 'aluguel-') && str_starts_with($bands[1], 'venda-'), implode(',', $bands));
+        $persist->saveFields($imovel, 902, ['preco' => '3.500,00']);
+        wp_set_object_terms(902, [$termIds['aluguel']], $tax);
+        $this->assertSame('R$ 3.500,00/mês', $fmt->price($imovel, 902));
+        $persist->saveFields($imovel, 903, ['preco' => '180.000,00']);
+        wp_set_object_terms(903, [$termIds['lancamento']], $tax);
+        $this->assertSame('a partir de R$ 180.000,00', $fmt->price($imovel, 903));
 
         // Portugal mantém tudo como estava.
         $pt = CollectionRegistry::fromDirectory($dir, 'PT');
