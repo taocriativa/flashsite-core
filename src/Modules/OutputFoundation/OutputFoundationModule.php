@@ -190,6 +190,47 @@ final class OutputFoundationModule implements ModuleInterface
         add_shortcode('flashsite_accepted_plans', [$this, 'renderAcceptedPlansShortcode']);
         add_shortcode('flashsite_maps', [$this, 'renderMapsShortcode']);
         add_action('elementor/dynamic_tags/register', [$this, 'registerElementorTags']);
+        add_action('wp_enqueue_scripts', [$this, 'enqueueQuotedVariableFonts'], 20);
+    }
+
+    /**
+     * @since 3.0.0
+     * Variáveis de fonte do Elementor com aspas ("Source Sans 3"): o CSS só é válido com aspas quando o
+     * nome tem uma palavra que começa por número, mas com aspas o Elementor não reconhece a fonte e não a
+     * carrega. Aqui pedimos ao Elementor que carregue essas fontes (Google ou local, conforme o painel).
+     */
+    public function enqueueQuotedVariableFonts(): void
+    {
+        if (is_admin() || ! class_exists('\\Elementor\\Plugin')) {
+            return;
+        }
+        $elementor = \Elementor\Plugin::$instance;
+        if (! isset($elementor->kits_manager, $elementor->frontend) || ! method_exists($elementor->frontend, 'enqueue_font')) {
+            return;
+        }
+        $kitId = (int) $elementor->kits_manager->get_active_id();
+        if ($kitId <= 0) {
+            return;
+        }
+        $raw = get_post_meta($kitId, '_elementor_global_variables', true);
+        $meta = is_string($raw) ? json_decode($raw, true) : $raw;
+        if (! is_array($meta)) {
+            return;
+        }
+        $items = isset($meta['data']) && is_array($meta['data']) ? $meta['data'] : $meta;
+        foreach ($items as $item) {
+            if (! is_array($item) || ($item['type'] ?? '') !== 'global-font-variable' || ! empty($item['deleted'])) {
+                continue;
+            }
+            $value = trim((string) ($item['value'] ?? ''));
+            if ($value === '' || ! in_array($value[0], ['"', "'"], true)) {
+                continue;
+            }
+            $font = trim($value, "\"' ");
+            if ($font !== '') {
+                $elementor->frontend->enqueue_font($font);
+            }
+        }
     }
 
     public function boot(): void
