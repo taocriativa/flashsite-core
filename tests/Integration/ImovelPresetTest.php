@@ -41,7 +41,7 @@ final class ImovelPresetTest extends TestCase
         $this->assertSame(['venda-200000-300000', 'Venda · 200 a 300 mil €'], PriceBandResolver::resolve($preset, 285000.0, false, 'venda'));
         $this->assertSame(['venda-500000-1000000', 'Venda · 500 mil a 1 milhão €'], PriceBandResolver::resolve($preset, 750000.0, false, 'venda'));
         $this->assertSame(['venda-mais-1000000', 'Venda · Mais de 1 milhão €'], PriceBandResolver::resolve($preset, 1500000.0, false, 'venda'));
-        $this->assertSame(['arrendamento-750-1000', 'Arrendamento · 750 a 1000 €/mês'], PriceBandResolver::resolve($preset, 900.0, false, 'arrendamento'));
+        $this->assertSame(['arrendamento-750-1000', 'Arrendamento · 750 a 1.000 €/mês'], PriceBandResolver::resolve($preset, 900.0, false, 'arrendamento'));
         $this->assertSame(['sob-consulta', 'Preço sob consulta'], PriceBandResolver::resolve($preset, 900.0, true, 'venda'));
         $this->assertSame(null, PriceBandResolver::resolve($preset, null, false, 'venda'));
         $this->assertSame(null, PriceBandResolver::resolve($preset, 1000.0, false, null));

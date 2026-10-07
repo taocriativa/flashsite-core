@@ -7,6 +7,7 @@ use FlashSite\Core\Domain\Collections\CollectionRegistry;
 use FlashSite\Core\Domain\Collections\CollectionSettings;
 use FlashSite\Core\Domain\Collections\Market;
 use FlashSite\Core\Domain\Collections\MarketLayer;
+use FlashSite\Core\Domain\Collections\Currency;
 use FlashSite\Core\Domain\Collections\PriceBandResolver;
 use FlashSite\Core\Infrastructure\Storage\OptionsStorage;
 use FlashSite\Core\Domain\Collections\FieldFormatter;
@@ -61,6 +62,7 @@ final class MarketTest extends TestCase
         $this->assertTrue($imovel->field('valor_condominio') !== null && $imovel->field('valor_iptu') !== null);
         $this->assertFalse($imovel->field('morada')->public, 'Endereço continua privado.');
         $this->assertSame('aluguel-ate-1000', PriceBandResolver::resolve($imovel, 900.0, false, 'aluguel')[0]);
+        $this->assertSame('Aluguel · R$ 3.000 a R$ 5.000/mês', PriceBandResolver::resolve($imovel, 3500.0, false, 'aluguel', Currency::of('BRL'))[1]);
         $this->assertSame(['taxonomy' => 'estado', 'terms' => ['reservado', 'vendido', 'alugado']], $imovel->setting('closed_terms'));
         $this->assertFalse($imovel->taxonomy('finalidade')->single, 'Venda e aluguel no mesmo imóvel.');
         $this->assertSame('Lançamento', $imovel->taxonomy('finalidade')->terms['lancamento']);

@@ -47,8 +47,10 @@ final class CurrencyTest extends TestCase
 
         // Faixas de preço com a moeda do site.
         $this->assertSame(['venda-ate-100000', 'Venda · Até R$ 100 mil'], PriceBandResolver::resolve($preset, 90000.0, false, 'venda', Currency::of('BRL')));
-        $this->assertSame(['arrendamento-750-1000', 'Arrendamento · 750 a $1000/mês'], PriceBandResolver::resolve($preset, 900.0, false, 'arrendamento', Currency::of('USD')));
-        $this->assertSame(['arrendamento-750-1000', 'Arrendamento · 750 a 1000 €/mês'], PriceBandResolver::resolve($preset, 900.0, false, 'arrendamento'));
+        $this->assertSame(['arrendamento-750-1000', 'Arrendamento · $750 a $1,000/mês'], PriceBandResolver::resolve($preset, 900.0, false, 'arrendamento', Currency::of('USD')));
+        $this->assertSame(['arrendamento-750-1000', 'Arrendamento · 750 a 1.000 €/mês'], PriceBandResolver::resolve($preset, 900.0, false, 'arrendamento'));
+        $this->assertSame(['venda-100000-200000', 'Venda · R$ 100 mil a R$ 200 mil'], PriceBandResolver::resolve($preset, 150000.0, false, 'venda', Currency::of('BRL')));
+        $this->assertSame(['venda-100000-200000', 'Venda · 100 a 200 mil €'], PriceBandResolver::resolve($preset, 150000.0, false, 'venda'));
         $this->assertSame(FieldType::Money, $preset->field('preco')->type);
     }
 }

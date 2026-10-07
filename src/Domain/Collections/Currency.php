@@ -63,6 +63,12 @@ final class Currency
         return number_format($value, $decimals, $d['decimal'], $d['thousands']);
     }
 
+    /** Símbolo antes do valor ("R$ 100") ou depois ("100 €"). */
+    public function symbolBefore(): bool
+    {
+        return self::DEFINITIONS[$this->code]['before'];
+    }
+
     /** Coloca o símbolo no sítio certo de um texto já formatado ("100 mil" → "100 mil €" / "R$ 100 mil"). */
     public function wrap(string $amount): string
     {

@@ -113,20 +113,20 @@ final class PriceBandResolver
         if ($index === 0) {
             return [
                 sprintf('%s-ate-%s', $group, self::slugNum($limits[0])),
-                sprintf('%s · Até %s', $label, $money(self::human($limits[0]))),
+                sprintf('%s · Até %s', $label, $money(self::human($limits[0], $currency))),
             ];
         }
         if ($index >= $count) {
             return [
                 sprintf('%s-mais-%s', $group, self::slugNum($limits[$count - 1])),
-                sprintf('%s · Mais de %s', $label, $money(self::human($limits[$count - 1]))),
+                sprintf('%s · Mais de %s', $label, $money(self::human($limits[$count - 1], $currency))),
             ];
         }
         $from = $limits[$index - 1];
         $to = $limits[$index];
         return [
             sprintf('%s-%s-%s', $group, self::slugNum($from), self::slugNum($to)),
-            sprintf('%s · %s a %s', $label, self::rangeHuman($from, $to), $money(self::human($to))),
+            sprintf('%s · %s a %s', $label, self::rangeHuman($from, $to, $currency), $money(self::human($to, $currency))),
         ];
     }
 
@@ -135,8 +135,8 @@ final class PriceBandResolver
         return (string) (int) round($value);
     }
 
-    /** "100 mil", "1 milhão", "1,5 milhões"; valores abaixo de 10 000 ficam por extenso numérico. */
-    public static function human(int|float $value): string
+    /** "100 mil", "1 milhão", "1,5 milhões"; abaixo de 10 000 fica o número, com separador de milhar da moeda. */
+    public static function human(int|float $value, ?Currency $currency = null): string
     {
         if ($value >= 1000000) {
             $m = $value / 1000000;
@@ -147,13 +147,19 @@ final class PriceBandResolver
             $k = $value / 1000;
             return rtrim(rtrim(number_format($k, 1, ',', ''), '0'), ',') . ' mil';
         }
-        return (string) (int) round($value);
+        return $currency !== null ? $currency->number((float) $value, 0) : (string) (int) round($value);
     }
 
-    /** No início de um intervalo omite a unidade quando é igual à do fim: "100 a 200 mil". */
-    private static function rangeHuman(int|float $from, int|float $to): string
+    /**
+     * No início de um intervalo omite a unidade quando é igual à do fim: "100 a 200 mil".
+     * Moeda com símbolo antes do valor repete o símbolo: "R$ 3.000 a R$ 5.000/mês".
+     */
+    private static function rangeHuman(int|float $from, int|float $to, ?Currency $currency = null): string
     {
-        $fromText = self::human($from);
+        if ($currency !== null && $currency->symbolBefore()) {
+            return $currency->wrap(self::human($from, $currency));
+        }
+        $fromText = self::human($from, $currency);
         if ($from >= 10000 && $from < 1000000 && $to >= 10000 && $to < 1000000) {
             return str_replace(' mil', '', $fromText);
         }
