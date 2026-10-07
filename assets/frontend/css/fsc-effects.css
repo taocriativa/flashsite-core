@@ -44,3 +44,13 @@ select.e-form-select-base {
 img.e-image-base:not([src]), img.e-image-base[src=""] { display: none !important; }
 .e-con:has(> img.e-image-base:not([src])):not(:has(> :not(img))),
 .e-con:has(> img.e-image-base[src=""]):not(:has(> :not(img))) { display: none !important; }
+
+/* 2.6.0-beta.22 · Classes utilitárias (aplicar no Elementor, campo "Classes").
+   .fs-esconde-vazio  linha "rótulo + valor" que some quando o valor dinâmico vem vazio
+   .fs-so-com-link    botão que some quando o link dinâmico está vazio (ex.: vídeo do imóvel)
+   .fs-so-aberto      some nos itens fechados (body.fs-item-fechado), ex.: "Marcar visita"
+   .fs-so-fechado     só aparece nos itens fechados, ex.: "Este imóvel já não está disponível" */
+body:not(.elementor-editor-active) .fs-esconde-vazio:has(.e-paragraph-base:empty, .e-heading-base:empty) { display: none !important; }
+body:not(.elementor-editor-active) button.e-button-base.fs-so-com-link { display: none !important; }
+body.fs-item-fechado .fs-so-aberto { display: none !important; }
+body.fs-item:not(.fs-item-fechado) .fs-so-fechado { display: none !important; }

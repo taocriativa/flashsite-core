@@ -135,6 +135,8 @@ return [
         'price_suffix' => ['taxonomy' => 'finalidade', 'terms' => ['arrendamento' => '/mês']],
         // Query "flashsite_available" (Loop Grid) e disponibilidade no JSON-LD.
         'unavailable_terms' => ['taxonomy' => 'estado', 'terms' => ['vendido', 'arrendado']],
+        // Página do imóvel: sem "Marcar visita" (classe .fs-so-aberto) quando reservado, vendido ou arrendado.
+        'closed_terms' => ['taxonomy' => 'estado', 'terms' => ['reservado', 'vendido', 'arrendado']],
         'schema_availability' => [
             'taxonomy' => 'estado',
             'map' => ['disponivel' => 'InStock', 'reservado' => 'LimitedAvailability', 'vendido' => 'SoldOut', 'arrendado' => 'SoldOut'],

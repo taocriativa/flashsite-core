@@ -76,7 +76,25 @@
         if (next) { window.setTimeout(function () { show(next, false); }, 800); }
     }
 
+    var uid = 0;
     dialogs.forEach(function (d) {
+        // Acessibilidade: o popup tem nome (1.º título) e os links "#fechar" comportam-se como botões.
+        if (!d.hasAttribute('aria-label') && !d.hasAttribute('aria-labelledby')) {
+            var h = d.querySelector('h1, h2, h3, h4, h5, h6');
+            if (h) {
+                if (!h.id) { h.id = 'fs-popup-titulo-' + (++uid); }
+                d.setAttribute('aria-labelledby', h.id);
+            }
+        }
+        Array.prototype.forEach.call(d.querySelectorAll('a[href$="#fechar"]'), function (a) {
+            a.setAttribute('role', 'button');
+        });
+        d.addEventListener('keydown', function (e) {
+            if ((e.key === ' ' || e.key === 'Spacebar') && e.target.closest && e.target.closest('a[href$="#fechar"]')) {
+                e.preventDefault();
+                close(d);
+            }
+        });
         d.addEventListener('cancel', function (e) { e.preventDefault(); close(d); });
         d.addEventListener('click', function (e) {
             var closer = e.target.closest('[data-fs-popup-close], a[href$="#fechar"]');

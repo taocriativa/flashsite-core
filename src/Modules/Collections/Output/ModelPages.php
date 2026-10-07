@@ -79,6 +79,7 @@ final class ModelPages
             return;
         }
         add_action('pre_get_posts', [$this, 'archiveQuery']);
+        add_filter('body_class', [$this, 'itemBodyClasses']);
         CollectionTagBase::setPreviewResolver(fn (int $postId): int => $this->previewItemFor($postId));
     }
 
@@ -600,6 +601,45 @@ final class ModelPages
             return (string) $object->slug;
         }
         return '';
+    }
+
+    /**
+     * Página de um item: classes no <body> com os termos do item, para o design reagir ao estado
+     * sem lógica no Elementor.
+     *   fs-item fs-item-<taxonomia>-<termo>   ex.: fs-item-estado-reservado, fs-item-finalidade-venda
+     *   fs-item-fechado                        termo em settings.closed_terms (ou unavailable_terms)
+     * Classes utilitárias (fsc-effects.css): .fs-so-aberto some nos itens fechados (ex.: "Marcar visita"),
+     * .fs-so-fechado só aparece neles (ex.: "Este imóvel já não está disponível").
+     *
+     * @param list<string> $classes
+     * @return list<string>
+     */
+    public function itemBodyClasses(array $classes): array
+    {
+        $preset = $this->presetForRequest();
+        if ($preset === null || ! is_singular($preset->postType())) {
+            return $classes;
+        }
+        $postId = (int) get_queried_object_id();
+        $classes[] = 'fs-item';
+        $closed = $preset->setting('closed_terms') ?? $preset->setting('unavailable_terms');
+        $isClosed = false;
+        foreach ($preset->taxonomies() as $taxonomy) {
+            $terms = get_the_terms($postId, $taxonomy->taxonomyName($preset->postType()));
+            if (! is_array($terms)) {
+                continue;
+            }
+            foreach ($terms as $term) {
+                $classes[] = sanitize_html_class('fs-item-' . $taxonomy->key . '-' . $term->slug);
+                if (is_array($closed) && ($closed['taxonomy'] ?? '') === $taxonomy->key && in_array($term->slug, (array) ($closed['terms'] ?? []), true)) {
+                    $isClosed = true;
+                }
+            }
+        }
+        if ($isClosed) {
+            $classes[] = 'fs-item-fechado';
+        }
+        return $classes;
     }
 
     private function presetForRequest(): ?CollectionPresetInterface
