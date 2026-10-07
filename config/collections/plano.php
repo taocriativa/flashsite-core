@@ -97,4 +97,16 @@ return [
             ['required_unless' => ['preco', 'preco_sob_consulta']],
         ],
     ],
+
+    // Brasil: textos.
+    'markets' => [
+        'BR' => [
+            'fields' => [
+                'preco' => ['placeholder' => 'Ex.: 350,00'],
+                'periodicidade' => ['help' => 'Aparece junto do preço: "R$ 350,00/mês".'],
+                'resumo' => ['placeholder' => 'Ex.: Treino no estúdio e acompanhamento pelo app.'],
+                'botao_link' => ['help' => 'Vazio: o botão leva ao formulário de contato.'],
+            ],
+        ],
+    ],
 ];

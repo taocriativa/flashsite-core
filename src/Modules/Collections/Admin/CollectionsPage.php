@@ -8,6 +8,7 @@ use FlashSite\Core\Domain\Collections\CollectionCapabilities;
 use FlashSite\Core\Domain\Collections\CollectionRegistry;
 use FlashSite\Core\Domain\Collections\CollectionSettings;
 use FlashSite\Core\Domain\Collections\Currency;
+use FlashSite\Core\Domain\Collections\Market;
 use FlashSite\Core\Modules\Collections\DemoKitImporter;
 
 /**
@@ -82,8 +83,15 @@ final class CollectionsPage
         }
         echo '</tbody></table></div>';
 
+        $market = $this->settings?->market() ?? Market::DEFAULT;
+        echo '<div class="fsc-card"><h2>2. País do site</h2><p>Define os termos e os campos das coleções (ex.: "T2" em Portugal, "2 quartos" no Brasil). Escolha antes de cadastrar conteúdos: os termos das listas são criados para este país.</p>';
+        echo '<select name="market" id="fs-market">';
+        foreach (Market::options() as $code => $label) {
+            printf('<option value="%s"%s>%s</option>', esc_attr($code), $code === $market ? ' selected' : '', esc_html($label));
+        }
+        echo '</select>';
         $current = $this->settings?->currency()->code ?? Currency::DEFAULT;
-        echo '<div class="fsc-card"><h2>2. Moeda dos preços</h2><p>Usada em todos os preços do site, nas faixas de preço e nos dados para o Google.</p>';
+        echo '<h2 style="margin-top:18px">3. Moeda dos preços</h2><p>Usada em todos os preços do site, nas faixas de preço e nos dados para o Google.</p>';
         echo '<select name="currency" id="fs-currency">';
         foreach (Currency::options() as $code => $label) {
             printf('<option value="%s"%s>%s</option>', esc_attr($code), $code === $current ? ' selected' : '', esc_html($label));
@@ -96,7 +104,7 @@ final class CollectionsPage
 
         $withKit = array_filter($this->registry->all(), fn ($preset) => $this->activation->isActive($preset->key()) && $this->importer->hasKit($preset));
         if ($withKit !== []) {
-            echo '<div class="fsc-card-grid" style="grid-template-columns:1fr;margin-top:20px"><div class="fsc-card"><h2>3. Exemplos para demonstração</h2><p>Cria registos fictícios para sites de demonstração. Não usar em sites de clientes.</p>';
+            echo '<div class="fsc-card-grid" style="grid-template-columns:1fr;margin-top:20px"><div class="fsc-card"><h2>4. Exemplos para demonstração</h2><p>Cria registos fictícios para sites de demonstração. Não usar em sites de clientes.</p>';
             foreach ($withKit as $preset) {
                 echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" style="display:inline-block;margin:0 8px 8px 0">';
                 echo '<input type="hidden" name="action" value="flashsite_collections_demo">';
@@ -120,6 +128,15 @@ final class CollectionsPage
         $active = isset($_POST['active']) && is_array($_POST['active']) ? array_map('sanitize_key', wp_unslash($_POST['active'])) : [];
         $this->activation->replace(array_values($active), $this->registry->keys());
         $currency = sanitize_text_field(wp_unslash((string) ($_POST['currency'] ?? '')));
+        $market = sanitize_text_field(wp_unslash((string) ($_POST['market'] ?? '')));
+        if ($this->settings !== null && Market::isValid($market)) {
+            $before = $this->settings->market();
+            $this->settings->setMarket($market);
+            // Mudou de país e a moeda era a do país anterior: passa à do novo.
+            if (Market::normalize($market) !== $before && $currency === Market::defaultCurrency($before)) {
+                $currency = Market::defaultCurrency(Market::normalize($market));
+            }
+        }
         if ($currency !== '' && $this->settings !== null) {
             $this->settings->setCurrency($currency);
         }

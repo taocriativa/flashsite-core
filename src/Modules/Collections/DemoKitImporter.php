@@ -4,7 +4,9 @@ declare(strict_types=1);
 namespace FlashSite\Core\Modules\Collections;
 
 use FlashSite\Core\Domain\Collections\CollectionPresetInterface;
+use FlashSite\Core\Domain\Collections\CollectionSettings;
 use FlashSite\Core\Domain\Collections\FieldType;
+use FlashSite\Core\Domain\Collections\Market;
 
 /**
  * Importa/remove o kit de itens fictícios de um preset (<pasta>/<key>.php).
@@ -23,7 +25,7 @@ final class DemoKitImporter
 {
     public const MARKER = '_fs_demo_kit';
 
-    public function __construct(private ItemPersistence $persistence, private string $kitDirectory = '') {}
+    public function __construct(private ItemPersistence $persistence, private string $kitDirectory = '', private ?CollectionSettings $settings = null) {}
 
     public function hasKit(CollectionPresetInterface $preset): bool
     {
@@ -128,10 +130,15 @@ final class DemoKitImporter
     private function kitFile(CollectionPresetInterface $preset): string
     {
         $dirs = (array) apply_filters('flashsite/collections/demo_kit_dirs', $this->kitDirectory !== '' ? [$this->kitDirectory] : []);
-        foreach ($dirs as $dir) {
-            $file = rtrim((string) $dir, '/\\') . DIRECTORY_SEPARATOR . $preset->key() . '.php';
-            if ($dir !== '' && is_file($file)) {
-                return $file;
+        // Kit do país do site primeiro (ex.: imovel-br.php no Brasil); senão, o kit base.
+        $market = $this->settings?->market() ?? Market::DEFAULT;
+        $names = $market === Market::DEFAULT ? [$preset->key()] : [$preset->key() . '-' . strtolower($market), $preset->key()];
+        foreach ($names as $name) {
+            foreach ($dirs as $dir) {
+                $file = rtrim((string) $dir, '/\\') . DIRECTORY_SEPARATOR . $name . '.php';
+                if ($dir !== '' && is_file($file)) {
+                    return $file;
+                }
             }
         }
         return '';

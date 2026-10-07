@@ -20,9 +20,17 @@ final class CollectionRegistry
     /** @var array<string, string> ficheiro => mensagem */
     private array $errors = [];
 
-    public static function fromDirectory(string $directory): self
+    private string $market = Market::DEFAULT;
+
+    public function market(): string
+    {
+        return $this->market;
+    }
+
+    public static function fromDirectory(string $directory, string $market = Market::DEFAULT): self
     {
         $registry = new self();
+        $registry->market = Market::normalize($market);
         $files = glob(rtrim($directory, '/\\') . DIRECTORY_SEPARATOR . '*.php') ?: [];
         sort($files);
 
@@ -38,7 +46,7 @@ final class CollectionRegistry
                     $registry->errors[$basename] = 'O ficheiro não devolve um array.';
                     continue;
                 }
-                $registry->add(CollectionPreset::fromArray($config));
+                $registry->add(CollectionPreset::fromArray(MarketLayer::apply($config, $registry->market)));
             } catch (Throwable $e) {
                 $registry->errors[$basename] = $e->getMessage();
             }

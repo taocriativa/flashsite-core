@@ -35,6 +35,7 @@ final class CollectionsOutput
         Elementor\ItemUrlTag::class,
         Elementor\ItemTitleTag::class,
         Elementor\ItemContentTag::class,
+        Elementor\ItemLabelTag::class,
     ];
 
     /** @var array<string, CollectionPresetInterface> */
@@ -66,6 +67,7 @@ final class CollectionsOutput
         require_once __DIR__ . '/Elementor/ItemFieldTag.php';
         require_once __DIR__ . '/Elementor/ShortcutTags.php';
         require_once __DIR__ . '/Elementor/MediaTags.php';
+        require_once __DIR__ . '/Elementor/LabelTag.php';
     }
 
     public function registerTags($dynamicTags): void

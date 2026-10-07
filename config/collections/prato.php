@@ -114,4 +114,63 @@ return [
             ['required_unless' => ['preco', 'preco_sob_consulta']],
         ],
     ],
+
+    // Brasil: cardápio, alergênicos (RDC 26/2015 da Anvisa) e textos.
+    'markets' => [
+        'BR' => [
+            'slug' => 'cardapio',
+            'labels' => [
+                'plural' => 'Cardápio',
+                'not_found' => 'Ainda não há pratos no cardápio.',
+                'title_placeholder' => 'Ex.: Moqueca de camarão',
+            ],
+            'groups' => [
+                'alergenios' => 'Alergênicos e dieta',
+            ],
+            'taxonomies' => [
+                'categoria' => [
+                    'label' => 'Categorias do cardápio',
+                    'terms' => [
+                        'entradas' => 'Entradas',
+                        'pratos' => 'Pratos principais',
+                        'sobremesas' => 'Sobremesas',
+                        'bebidas' => 'Bebidas',
+                    ],
+                    'help' => 'Pode criar outras categorias (ex.: Porções, Drinks).',
+                ],
+            ],
+            'fields' => [
+                'preco' => ['placeholder' => 'Ex.: 49,90'],
+                'preco_sob_consulta' => ['help' => 'Ex.: peixe por quilo.'],
+                'resumo' => ['placeholder' => 'Ex.: Camarão, leite de coco e azeite de dendê.'],
+                'porcao' => ['placeholder' => 'Ex.: Serve 2 pessoas'],
+                'alergenios' => [
+                    'label' => 'Alergênicos',
+                    'options' => [
+                        'gluten' => 'Glúten',
+                        'crustaceos' => 'Crustáceos',
+                        'ovos' => 'Ovos',
+                        'peixe' => 'Peixes',
+                        'amendoins' => 'Amendoim',
+                        'soja' => 'Soja',
+                        'leite' => 'Leite e derivados',
+                        'frutos_casca_rija' => 'Castanhas e nozes',
+                        'aipo' => 'Aipo',
+                        'mostarda' => 'Mostarda',
+                        'sesamo' => 'Gergelim',
+                        'sulfitos' => 'Sulfitos',
+                        'tremoco' => 'Tremoço',
+                        'moluscos' => 'Moluscos',
+                    ],
+                    'help' => 'Os principais alergênicos (RDC 26/2015 da Anvisa).',
+                ],
+            ],
+            'settings' => [
+                'archive_texts' => [
+                    'empty' => 'O cardápio está sendo atualizado.',
+                    'show_all' => 'Ver o cardápio',
+                ],
+            ],
+        ],
+    ],
 ];

@@ -168,4 +168,110 @@ return [
             ],
         ],
     ],
+
+    // Brasil: só o que muda (terminologia, campos e regras). As chaves dos campos são as mesmas.
+    'markets' => [
+        'BR' => [
+            'labels' => [
+                'title_placeholder' => 'Ex.: Apartamento 2 quartos com varanda na Pituba',
+            ],
+            'groups' => [
+                'areas' => 'Áreas e cômodos',
+            ],
+            'taxonomies' => [
+                'finalidade' => [
+                    'terms' => ['venda' => 'Venda', 'aluguel' => 'Aluguel'],
+                ],
+                'tipo' => [
+                    'terms' => [
+                        'apartamento' => 'Apartamento',
+                        'casa' => 'Casa',
+                        'casa-em-condominio' => 'Casa em condomínio',
+                        'cobertura' => 'Cobertura',
+                        'terreno' => 'Terreno',
+                        'sala-comercial' => 'Sala comercial',
+                        'loja' => 'Loja',
+                        'galpao' => 'Galpão',
+                    ],
+                ],
+                'tipologia' => [
+                    'label' => 'Quartos',
+                    'singular' => 'Quartos',
+                    'terms' => ['studio' => 'Studio / kitnet', '1-quarto' => '1 quarto', '2-quartos' => '2 quartos', '3-quartos' => '3 quartos', '4-quartos' => '4 quartos ou mais'],
+                    'help' => 'Não se aplica a terrenos, salas e lojas.',
+                ],
+                'estado' => [
+                    'label' => 'Situação',
+                    'terms' => [
+                        'disponivel' => 'Disponível',
+                        'reservado' => 'Reservado',
+                        'vendido' => 'Vendido',
+                        'alugado' => 'Alugado',
+                    ],
+                ],
+                'zona' => [
+                    'label' => 'Cidades e bairros',
+                    'singular' => 'Localização',
+                    'help' => 'Cidade e, abaixo dela, o bairro. Pode criar novos.',
+                ],
+            ],
+            'fields' => [
+                'referencia' => ['placeholder' => 'Ex.: AP0042'],
+                'preco' => ['placeholder' => 'Ex.: 450.000,00', 'help' => 'No aluguel, informe o valor mensal.'],
+                'valor_condominio' => ['type' => 'money', 'label' => 'Condomínio (mensal)', 'group' => 'principal', 'min' => 0, 'placeholder' => 'Ex.: 650,00', 'after' => 'preco_sob_consulta'],
+                'valor_iptu' => ['type' => 'money', 'label' => 'IPTU (anual)', 'group' => 'principal', 'min' => 0, 'placeholder' => 'Ex.: 1.200,00', 'after' => 'valor_condominio'],
+                'classe_energetica' => null,
+                'area_bruta' => ['label' => 'Área total'],
+                'quartos' => null,
+                'suites' => ['type' => 'number', 'label' => 'Suítes', 'group' => 'areas', 'min' => 0, 'max' => 50, 'after' => 'area_bruta'],
+                'wc' => ['label' => 'Banheiros'],
+                'estacionamento' => null,
+                'vagas' => ['type' => 'number', 'label' => 'Vagas de garagem', 'group' => 'areas', 'min' => 0, 'max' => 50, 'after' => 'wc'],
+                'comodidades' => [
+                    'type' => 'multiselect', 'label' => 'Comodidades', 'group' => 'areas', 'after' => 'vagas',
+                    'options' => [
+                        'piscina' => 'Piscina',
+                        'churrasqueira' => 'Churrasqueira',
+                        'area_gourmet' => 'Área gourmet',
+                        'academia' => 'Academia',
+                        'salao_festas' => 'Salão de festas',
+                        'playground' => 'Playground',
+                        'portaria_24h' => 'Portaria 24h',
+                        'elevador' => 'Elevador',
+                        'varanda' => 'Varanda',
+                        'ar_condicionado' => 'Ar-condicionado',
+                        'armarios' => 'Armários planejados',
+                        'mobiliado' => 'Mobiliado',
+                        'aceita_pet' => 'Aceita pet',
+                    ],
+                ],
+                'morada' => ['label' => 'Endereço', 'help' => 'Uso interno. Não aparece no site.'],
+                'nome_condominio' => ['type' => 'text', 'label' => 'Condomínio ou edifício', 'group' => 'localizacao', 'max_length' => 80, 'placeholder' => 'Ex.: Condomínio Serra Verde', 'after' => 'morada'],
+                'video_url' => ['label' => 'Vídeo ou tour virtual (link)'],
+            ],
+            'settings' => [
+                'price_suffix' => ['taxonomy' => 'finalidade', 'terms' => ['aluguel' => '/mês']],
+                'unavailable_terms' => ['taxonomy' => 'estado', 'terms' => ['vendido', 'alugado']],
+                'closed_terms' => ['taxonomy' => 'estado', 'terms' => ['reservado', 'vendido', 'alugado']],
+                'schema_availability' => [
+                    'taxonomy' => 'estado',
+                    'map' => ['disponivel' => 'InStock', 'reservado' => 'LimitedAvailability', 'vendido' => 'SoldOut', 'alugado' => 'SoldOut'],
+                ],
+                'archive_texts' => [
+                    'empty' => 'Não encontramos imóveis com esses filtros.',
+                    'show_all' => 'Ver todos os imóveis',
+                ],
+                'price_bands' => [
+                    'field' => 'preco',
+                    'flag' => 'preco_sob_consulta',
+                    'taxonomy' => 'faixa',
+                    'group_taxonomy' => 'finalidade',
+                    'groups' => [
+                        'venda' => ['label' => 'Venda', 'limits' => [200000, 400000, 600000, 1000000, 2000000]],
+                        'aluguel' => ['label' => 'Aluguel', 'per' => '/mês', 'limits' => [1000, 2000, 3000, 5000, 8000]],
+                    ],
+                ],
+            ],
+        ],
+    ],
 ];

@@ -128,7 +128,7 @@ final class Application
         $this->container->bind(OnboardingRepository::class, fn (Container $c) => new OnboardingRepository($c->make(OptionsStorage::class)));
         $this->container->bind(DependencyRegistry::class, fn () => DependencyRegistry::fromConfig(FLASHSITE_CORE_PATH . 'config/dependencies.php'));
         $this->container->bind(RoleManager::class, fn () => new RoleManager(FLASHSITE_CORE_PATH . 'config/capabilities.php'));
-        $this->container->bind(CollectionRegistry::class, fn () => CollectionRegistry::fromDirectory(FLASHSITE_CORE_PATH . 'config/collections'));
+        $this->container->bind(CollectionRegistry::class, fn (Container $c) => CollectionRegistry::fromDirectory(FLASHSITE_CORE_PATH . 'config/collections', $c->make(CollectionSettings::class)->market()));
         $this->container->bind(ActivationRepository::class, fn (Container $c) => new ActivationRepository($c->make(OptionsStorage::class)));
         $this->container->bind(CollectionCapabilities::class, fn (Container $c) => new CollectionCapabilities($c->make(OptionsStorage::class)));
         $this->container->bind(CollectionSettings::class, fn (Container $c) => new CollectionSettings($c->make(OptionsStorage::class)));
@@ -154,7 +154,7 @@ final class Application
         $this->container->bind(CollectionsOutput::class, fn (Container $c) => new CollectionsOutput($c->make(CollectionRegistry::class), $c->make(FieldFormatter::class), $c->make(SchemaOrgBuilder::class)));
         $this->container->bind(ModelPages::class, fn () => new ModelPages());
         $this->container->bind(PublicRestController::class, fn (Container $c) => new PublicRestController($c->make(CollectionPublicSerializer::class)));
-        $this->container->bind(DemoKitImporter::class, fn (Container $c) => new DemoKitImporter($c->make(ItemPersistence::class)));
+        $this->container->bind(DemoKitImporter::class, fn (Container $c) => new DemoKitImporter($c->make(ItemPersistence::class), '', $c->make(CollectionSettings::class)));
         $this->container->bind(CollectionsPage::class, fn (Container $c) => new CollectionsPage($c->make(CollectionRegistry::class), $c->make(ActivationRepository::class), $c->make(DemoKitImporter::class), $c->make(CollectionSettings::class)));
         $this->container->bind(CollectionsModule::class, fn (Container $c) => new CollectionsModule($c->make(CollectionRegistry::class), $c->make(ActivationRepository::class), $c->make(CollectionCapabilities::class), $c->make(ItemSanitizer::class), $c->make(OptionsStorage::class), $c->make(Logger::class), $c->make(ItemPersistence::class), $c->make(ItemEditor::class), $c->make(ListColumns::class), $c->make(CollectionsOutput::class), $c->make(PublicRestController::class), $c->make(CollectionsPage::class), $c->make(ModelPages::class)));
         $this->container->bind(\FlashSite\Core\Modules\Contact\ContactModule::class, fn (Container $c) => new \FlashSite\Core\Modules\Contact\ContactModule($c->make(BusinessData::class)));
