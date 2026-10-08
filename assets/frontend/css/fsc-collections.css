@@ -99,3 +99,9 @@
     color: var(--fs-cor-texto, inherit);
     border-bottom: 1px solid var(--fs-col-line);
 }
+
+/* Busca (?s=) como listagem da coleção (3.1.0) */
+.fs-collection-search { max-width: var(--fs-col-max); margin: 0 auto 24px; }
+.fs-collection-search__title { margin: 0 0 4px; font-size: 1.25em; font-weight: 600; }
+.fs-collection-search__meta { margin: 0; font-size: 14px; opacity: .8; }
+.fs-collection-search__meta a { color: inherit; font-weight: 600; }

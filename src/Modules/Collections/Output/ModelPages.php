@@ -215,8 +215,9 @@ final class ModelPages
         if (! is_object($query) || is_admin() || ! $query->is_main_query()) {
             return;
         }
+        $search = $query->is_search() ? $this->searchPreset() : null;
         foreach ($this->presets as $preset) {
-            if (! $query->is_post_type_archive($preset->postType()) && ! $this->isPresetTaxQuery($query, $preset)) {
+            if ($preset !== $search && ! $query->is_post_type_archive($preset->postType()) && ! $this->isPresetTaxQuery($query, $preset)) {
                 continue;
             }
             $query->set('post_type', $preset->postType());
@@ -408,6 +409,7 @@ final class ModelPages
         $navSetting = (string) ($topSettings['fs_archive_nav'] ?? '');
         $this->groupNav = $navSetting === '' ? (bool) $preset->setting('archive_group_nav', false) : $navSetting === 'yes';
         printf('<section class="fs-collection-archive fs-collection-archive--%s" style="--fs-col-columns:%d">', esc_attr($preset->key()), $columns);
+        $this->renderSearchSummary($preset);
         $this->renderFilters($preset);
 
         $cardId = $this->pageId($preset, 'card');
@@ -427,7 +429,7 @@ final class ModelPages
         } else {
             printf(
                 '<div class="fs-collection-empty"><p>%s</p><a href="%s">%s</a></div>',
-                esc_html($this->text($preset, 'empty')),
+                esc_html($this->text($preset, is_search() ? 'search_empty' : 'empty')),
                 esc_url((string) get_post_type_archive_link($preset->postType())),
                 esc_html($this->text($preset, 'show_all'))
             );
@@ -539,6 +541,9 @@ final class ModelPages
             $this->renderOptions($terms, 0, $current, $taxonomy->hierarchical, 0);
             echo '</select></label>';
         }
+        if (is_search()) {
+            printf('<input type="hidden" name="s" value="%s">', esc_attr(get_search_query()));
+        }
         printf('<div class="fs-collection-filters__actions"><button type="submit" class="fs-collection-filters__submit">%s</button>', esc_html($this->text($preset, 'filter')));
         if ($active) {
             printf('<a class="fs-collection-filters__reset" href="%s">%s</a>', esc_url((string) get_post_type_archive_link($preset->postType())), esc_html($this->text($preset, 'reset')));
@@ -577,6 +582,9 @@ final class ModelPages
             'reset' => 'Limpar',
             'prev' => '← Anteriores',
             'next' => 'Seguintes →',
+            'search_results' => 'Resultados para “%s”',
+            'search_count' => '%d encontrado(s)',
+            'search_empty' => 'Nada encontrado para esta busca.',
         ];
         $texts = (array) $preset->setting('archive_texts', []);
         $value = $texts[$key] ?? $defaults[$key] ?? '';
@@ -661,8 +669,41 @@ final class ModelPages
         $query->set('post__not_in', array_values(array_unique(array_map('intval', $exclude))));
     }
 
+    /**
+     * Busca do site (?s=): mostrada como listagem da coleção principal (a primeira com cartão), com o
+     * cabeçalho, os filtros e os cartões da coleção, em vez do modelo cru do tema. @since 3.1.0
+     */
+    public function searchPreset(): ?CollectionPresetInterface
+    {
+        foreach ($this->presets as $preset) {
+            if ($this->pageId($preset, 'card') > 0) {
+                return $preset;
+            }
+        }
+        return null;
+    }
+
+    /** Linha "Resultados para “termo”: N encontrado(s) · Ver todos" no topo da busca. */
+    private function renderSearchSummary(CollectionPresetInterface $preset): void
+    {
+        if (! is_search()) {
+            return;
+        }
+        global $wp_query;
+        printf(
+            '<div class="fs-collection-search"><p class="fs-collection-search__title">%s</p><p class="fs-collection-search__meta">%s · <a href="%s">%s</a></p></div>',
+            esc_html(sprintf($this->text($preset, 'search_results'), get_search_query())),
+            esc_html(sprintf($this->text($preset, 'search_count'), (int) ($wp_query->found_posts ?? 0))),
+            esc_url((string) get_post_type_archive_link($preset->postType())),
+            esc_html($this->text($preset, 'show_all'))
+        );
+    }
+
     private function presetForRequest(): ?CollectionPresetInterface
     {
+        if (is_search() && ! is_admin()) {
+            return $this->searchPreset();
+        }
         foreach ($this->presets as $preset) {
             if (is_singular($preset->postType()) || is_post_type_archive($preset->postType())) {
                 return $preset;
