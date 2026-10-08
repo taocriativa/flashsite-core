@@ -74,10 +74,16 @@ abstract class CollectionTagBase extends \FlashSite\Core\Modules\OutputFoundatio
         if ($source === 'featured' || $source === 'latest' || $source === 'ordered') {
             return $this->listedPostId($source, max(1, (int) ($this->get_settings('position') ?: 1)));
         }
+        $id = function_exists('get_the_ID') ? (int) get_the_ID() : 0;
         if (self::$contextPostId > 0) {
+            // Dentro de uma lista na página de um item (ex.: "outros imóveis"), o post do loop é outro
+            // item da mesma coleção: vale esse, e não o item da página. @since 3.1.0
+            if ($id > 0 && $id !== self::$contextPostId && function_exists('get_post_type')
+                && get_post_type($id) === get_post_type(self::$contextPostId)) {
+                return $id;
+            }
             return self::$contextPostId;
         }
-        $id = function_exists('get_the_ID') ? (int) get_the_ID() : 0;
         // A editar/pré-visualizar uma página modelo: mostra um item real como exemplo.
         if ($id > 0 && self::$previewResolver !== null) {
             $preview = (int) (self::$previewResolver)($id);

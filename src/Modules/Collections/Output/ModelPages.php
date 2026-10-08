@@ -80,6 +80,7 @@ final class ModelPages
         }
         add_action('pre_get_posts', [$this, 'archiveQuery']);
         add_filter('body_class', [$this, 'itemBodyClasses']);
+        add_action('elementor/query/flashsite_outros', [$this, 'excludeCurrentItem']);
         CollectionTagBase::setPreviewResolver(fn (int $postId): int => $this->previewItemFor($postId));
     }
 
@@ -640,6 +641,24 @@ final class ModelPages
             $classes[] = 'fs-item-fechado';
         }
         return $classes;
+    }
+
+    /**
+     * Listas do Elementor com o ID de consulta "flashsite_outros" (ex.: "outros imóveis" na página de um
+     * item) não mostram o item da página. @since 3.1.0
+     */
+    public function excludeCurrentItem($query): void
+    {
+        if (! is_object($query) || ! method_exists($query, 'set') || ! is_singular()) {
+            return;
+        }
+        $current = (int) get_queried_object_id();
+        if ($current <= 0) {
+            return;
+        }
+        $exclude = (array) $query->get('post__not_in');
+        $exclude[] = $current;
+        $query->set('post__not_in', array_values(array_unique(array_map('intval', $exclude))));
     }
 
     private function presetForRequest(): ?CollectionPresetInterface
