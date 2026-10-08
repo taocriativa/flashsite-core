@@ -34,6 +34,7 @@ use FlashSite\Core\Modules\Collections\Output\PublicRestController;
 final class CollectionsModule implements ModuleInterface
 {
     public const FLUSH_FLAG = 'flashsite_collections_flush_rewrite';
+    public const SEED_VERSION = 'flashsite_collections_seed_version';
 
     /** @var array<string, CollectionPresetInterface> */
     private array $registered = [];
@@ -137,14 +138,24 @@ final class CollectionsModule implements ModuleInterface
     public function maybeFlushRewriteRules(): void
     {
         // update_option(true) volta da BD como '1': ler como booleano.
-        if (! filter_var($this->storage->get(self::FLUSH_FLAG, false), FILTER_VALIDATE_BOOLEAN)) {
+        // Termos fixos e faixas de preço: semeados quando o conjunto ativo muda e, desde a 3.1.0,
+        // também quando a versão do Core muda (termos novos de um preset chegam com a atualização).
+        $version = defined('FLASHSITE_CORE_VERSION') ? (string) FLASHSITE_CORE_VERSION : '';
+        $versionChanged = $version !== '' && (string) $this->storage->get(self::SEED_VERSION, '') !== $version;
+        $flush = filter_var($this->storage->get(self::FLUSH_FLAG, false), FILTER_VALIDATE_BOOLEAN);
+        if (! $flush && ! $versionChanged) {
             return;
         }
-        $this->storage->update(self::FLUSH_FLAG, '0', true);
-        // Termos fixos e faixas de preço só são semeados quando o conjunto ativo muda.
         foreach ($this->registered as $preset) {
             $this->persistence->seedTerms($preset);
         }
+        if ($versionChanged) {
+            $this->storage->update(self::SEED_VERSION, $version, true);
+        }
+        if (! $flush) {
+            return;
+        }
+        $this->storage->update(self::FLUSH_FLAG, '0', true);
         flush_rewrite_rules(false);
     }
 

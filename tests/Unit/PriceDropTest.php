@@ -24,6 +24,15 @@ final class PriceDropTest extends TestCase
         $this->assertSame('Mostrar baixa de preço no site', $imovel->field('mostrar_baixa')->label);
         $this->assertSame('Preço anterior', $imovel->field('preco_anterior')->label);
 
+        // Tipos (3.1.0): lista do Brasil ampliada e criação de tipos novos na ficha.
+        $tipo = $imovel->taxonomy('tipo');
+        $this->assertSame('Sítio / chácara', $tipo->terms['sitio-chacara']);
+        $this->assertSame('Terreno em condomínio', $tipo->terms['terreno-em-condominio']);
+        $this->assertFalse($tipo->locked, 'Tipo aceita termos novos, como a localização.');
+        $pt = CollectionRegistry::fromDirectory(dirname(__DIR__, 2) . '/config/collections', 'PT')->get('imovel')->taxonomy('tipo');
+        $this->assertSame('Quinta / herdade', $pt->terms['quinta']);
+        $this->assertFalse($pt->locked);
+
         $persist = new ItemPersistence(new ItemSanitizer($settings), new ItemValidator(), new ItemReader(), $settings);
         $fmt = new FieldFormatter(new ItemReader(), $settings);
         $meta = fn (string $key) => get_post_meta(950, $imovel->field($key)->metaKey(), true);
