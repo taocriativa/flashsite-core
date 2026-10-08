@@ -25,6 +25,7 @@ final class CollectionsOutput
     public const TAG_CLASSES = [
         Elementor\ItemFieldTag::class,
         Elementor\ItemPriceTag::class,
+        Elementor\ItemPriceDropTag::class,
         Elementor\ItemAreaTag::class,
         Elementor\ItemTermsTag::class,
         Elementor\ItemStatusTag::class,

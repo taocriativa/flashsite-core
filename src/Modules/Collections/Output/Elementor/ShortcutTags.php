@@ -41,6 +41,41 @@ class ItemPriceTag extends ItemFieldTag
     }
 }
 
+/**
+ * Baixa de preço (@since 3.1.0): selo "Preço reduzido" ou o preço anterior ("R$ 780.000").
+ * Fica vazia quando não há baixa a mostrar; com a classe fs-esconde-vazio o bloco some.
+ */
+class ItemPriceDropTag extends ItemFieldTag
+{
+    protected function slug(): string { return 'flashsite-item-price-drop'; }
+    protected function title(): string { return 'Item · Baixa de preço'; }
+    protected function fixedField(): ?string { return 'preco_anterior'; }
+
+    protected function register_controls(): void
+    {
+        parent::register_controls();
+        $this->add_control('drop_part', [
+            'label' => 'Mostrar',
+            'type' => \Elementor\Controls_Manager::SELECT,
+            'options' => ['badge' => 'Selo (Preço reduzido)', 'previous' => 'Preço anterior'],
+            'default' => 'badge',
+        ]);
+        $this->add_control('badge_text', ['label' => 'Texto do selo', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Preço reduzido']);
+    }
+
+    protected function resolve(CollectionPresetInterface $preset, int $postId, FieldFormatter $formatter): string
+    {
+        if ($formatter->previousPrice($preset, $postId) === null) {
+            return '';
+        }
+        if ((string) ($this->get_settings('drop_part') ?: 'badge') === 'badge') {
+            return (string) ($this->get_settings('badge_text') ?: 'Preço reduzido');
+        }
+        $style = (string) ($this->get_settings('money') ?: FieldFormatter::MONEY_CENTS);
+        return $formatter->previousPriceText($preset, $postId, $style);
+    }
+}
+
 /** "92 m²" (área útil). */
 class ItemAreaTag extends ItemFieldTag
 {

@@ -37,6 +37,18 @@ final class ItemPersistence
     {
         $clean = $this->sanitizer->sanitizeAll($preset, $input);
 
+        // Baixa de preço: o formulário reenvia o preço anterior e a opção "mostrar" que estavam no ecrã.
+        // Se não foram mexidos, não se gravam, para não apagar o que trackPriceChange() acabou de guardar.
+        $drop = $preset->setting('price_drop');
+        if (is_array($drop)) {
+            foreach ([(string) ($drop['previous'] ?? ''), (string) ($drop['show'] ?? '')] as $key) {
+                $field = $key !== '' ? $preset->field($key) : null;
+                if ($field !== null && array_key_exists($key, $clean) && $clean[$key] == $this->reader->value($field, $postId)) {
+                    unset($clean[$key]);
+                }
+            }
+        }
+
         foreach ($clean as $key => $value) {
             $field = $preset->field($key);
             if ($field === null) {
@@ -123,6 +135,32 @@ final class ItemPersistence
 
         $this->syncPriceBand($preset, $postId);
         return $errors;
+    }
+
+    /**
+     * Baixa de preço (settings.price_drop, @since 3.1.0): quando o preço muda, o valor antigo fica como
+     * "preço anterior". Numa subida, a opção "mostrar" é desligada (subidas nunca aparecem no site).
+     * Chamado antes de gravar o novo preço, em qualquer caminho (painel, REST, importação).
+     */
+    public function trackPriceChange(CollectionPresetInterface $preset, int $postId, mixed $oldPrice, mixed $newPrice): void
+    {
+        $config = $preset->setting('price_drop');
+        if (! is_array($config)) {
+            return;
+        }
+        $old = is_numeric($oldPrice) ? (float) $oldPrice : 0.0;
+        $new = is_numeric($newPrice) ? (float) $newPrice : 0.0;
+        if ($old <= 0.0 || $new <= 0.0 || abs($old - $new) < 0.005) {
+            return;
+        }
+        $previous = $preset->field((string) ($config['previous'] ?? ''));
+        if ($previous !== null) {
+            update_post_meta($postId, $previous->metaKey(), $old);
+        }
+        $show = $preset->field((string) ($config['show'] ?? ''));
+        if ($show !== null && $new > $old) {
+            update_post_meta($postId, $show->metaKey(), false);
+        }
     }
 
     /** Atribui a faixa de preço automática. Seguro chamar em qualquer gravação (painel, REST, import). */

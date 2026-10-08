@@ -98,6 +98,8 @@ return [
         'referencia' => ['type' => 'text', 'label' => 'Referência', 'group' => 'principal', 'max_length' => 30, 'placeholder' => 'Ex.: IMO-0042', 'admin_column' => true],
         'preco' => ['type' => 'money', 'label' => 'Preço', 'group' => 'principal', 'min' => 0, 'placeholder' => 'Ex.: 285.000,00', 'help' => 'No arrendamento, indique o valor mensal.', 'admin_column' => true],
         'preco_sob_consulta' => ['type' => 'bool', 'label' => 'Preço sob consulta', 'group' => 'principal', 'help' => 'O preço deixa de aparecer no site.'],
+        'preco_anterior' => ['type' => 'money', 'label' => 'Preço anterior', 'group' => 'principal', 'min' => 0, 'help' => 'Guardado sozinho quando o preço muda. Pode corrigir à mão.'],
+        'mostrar_baixa' => ['type' => 'bool', 'label' => 'Mostrar redução de preço no site', 'group' => 'principal', 'help' => 'Mostra o preço anterior riscado e o selo "Preço reduzido". Só aparece quando o preço anterior é maior do que o atual.'],
         'classe_energetica' => [
             'type' => 'select', 'label' => 'Classe energética', 'group' => 'principal',
             'options' => ['a+' => 'A+', 'a' => 'A', 'b' => 'B', 'b-' => 'B-', 'c' => 'C', 'd' => 'D', 'e' => 'E', 'f' => 'F', 'isento' => 'Isento', 'em_curso' => 'Em curso'],
@@ -157,6 +159,8 @@ return [
         'rules' => [
             ['required_unless' => ['preco', 'preco_sob_consulta']],
         ],
+        // Baixa de preço (@since 3.1.0): o preço anterior é guardado sozinho; só aparece no site se "show" estiver ligado.
+        'price_drop' => ['field' => 'preco', 'previous' => 'preco_anterior', 'show' => 'mostrar_baixa'],
         'price_bands' => [
             'field' => 'preco',
             'flag' => 'preco_sob_consulta',
@@ -222,6 +226,8 @@ return [
             'fields' => [
                 'referencia' => ['placeholder' => 'Ex.: AP0042'],
                 'preco' => ['placeholder' => 'Ex.: 450.000,00', 'help' => 'Venda: valor de venda. Só aluguel: valor mensal. Lançamento: menor valor ("a partir de").'],
+                'mostrar_baixa' => ['label' => 'Mostrar baixa de preço no site', 'help' => 'Mostra o preço anterior riscado e o selo "Preço reduzido". Só aparece quando o preço anterior é maior que o atual.'],
+                'preco_anterior' => ['help' => 'Guardado automaticamente quando o preço muda. Pode corrigir à mão.'],
                 'preco_aluguel' => ['type' => 'money', 'label' => 'Valor do aluguel (mensal)', 'group' => 'principal', 'min' => 0, 'placeholder' => 'Ex.: 3.500,00', 'help' => 'Só quando o imóvel está à venda e para aluguel. O preço acima fica como valor de venda.', 'after' => 'preco'],
                 'valor_condominio' => ['type' => 'money', 'label' => 'Condomínio (mensal)', 'group' => 'principal', 'min' => 0, 'placeholder' => 'Ex.: 650,00', 'after' => 'preco_sob_consulta'],
                 'valor_iptu' => ['type' => 'money', 'label' => 'IPTU (anual)', 'group' => 'principal', 'min' => 0, 'placeholder' => 'Ex.: 1.200,00', 'after' => 'valor_condominio'],

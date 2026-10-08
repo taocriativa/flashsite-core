@@ -127,6 +127,44 @@ final class FieldFormatter
     }
 
     /**
+     * Preço anterior de uma baixa de preço (settings.price_drop, @since 3.1.0).
+     * Só devolve valor quando o campo "show" está ligado, o item não está "sob consulta"
+     * e o preço anterior é maior do que o atual. Subidas nunca aparecem.
+     */
+    public function previousPrice(CollectionPresetInterface $preset, int $postId): ?float
+    {
+        $config = $preset->setting('price_drop');
+        if (! is_array($config) || ! isset($config['previous'], $config['show'])) {
+            return null;
+        }
+        $show = $preset->field((string) $config['show']);
+        if ($show === null || $this->reader->value($show, $postId) !== true) {
+            return null;
+        }
+        $priceConfig = self::priceConfig($preset);
+        $flagKey = (string) ($priceConfig['flag'] ?? '');
+        $flag = $flagKey !== '' ? $preset->field($flagKey) : null;
+        if ($flag !== null && $this->reader->value($flag, $postId) === true) {
+            return null;
+        }
+        $current = $preset->field((string) ($config['field'] ?? $priceConfig['field'] ?? 'preco'));
+        $previous = $preset->field((string) $config['previous']);
+        $currentValue = $current !== null ? $this->reader->value($current, $postId) : null;
+        $previousValue = $previous !== null ? $this->reader->value($previous, $postId) : null;
+        if (! is_float($currentValue) || ! is_float($previousValue) || $previousValue <= $currentValue) {
+            return null;
+        }
+        return $previousValue;
+    }
+
+    /** "R$ 780.000" quando há baixa de preço a mostrar; vazio nos outros casos. */
+    public function previousPriceText(CollectionPresetInterface $preset, int $postId, string $moneyStyle = self::MONEY_CENTS): string
+    {
+        $value = $this->previousPrice($preset, $postId);
+        return $value === null ? '' : self::money($value, $moneyStyle, $this->currency());
+    }
+
+    /**
      * Segundo preço do item (settings.extra_price), quando se aplica.
      *
      * @return array{value: float, term: string, suffix: string, separator: string}|null

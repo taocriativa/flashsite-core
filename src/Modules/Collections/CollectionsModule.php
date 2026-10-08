@@ -61,6 +61,7 @@ final class CollectionsModule implements ModuleInterface
         add_action('init', [$this, 'maybeFlushRewriteRules'], 99);
         add_filter('use_block_editor_for_post_type', [$this, 'disableBlockEditor'], 10, 2);
         add_action('flashsite_collections_changed', [$this, 'onActivationChanged']);
+        add_filter('update_post_metadata', [$this, 'trackPriceChange'], 10, 4);
         $this->page?->register();
     }
 
@@ -73,6 +74,35 @@ final class CollectionsModule implements ModuleInterface
     }
 
     public function isActive(): bool { return true; }
+
+    /**
+     * Antes de gravar o preço de um item, guarda o valor antigo como "preço anterior" (settings.price_drop).
+     * Vale para o painel, a REST e as importações. Não altera a gravação: devolve $check como veio.
+     *
+     * @since 3.1.0
+     */
+    public function trackPriceChange(mixed $check, int $objectId, string $metaKey, mixed $metaValue): mixed
+    {
+        static $busy = false;
+        if ($busy || $check !== null) {
+            return $check;
+        }
+        $postType = get_post_type($objectId);
+        foreach ($this->activePresets() as $preset) {
+            if ($preset->postType() !== $postType) {
+                continue;
+            }
+            $config = $preset->setting('price_drop');
+            $price = is_array($config) ? $preset->field((string) ($config['field'] ?? 'preco')) : null;
+            if ($price === null || $price->metaKey() !== $metaKey) {
+                continue;
+            }
+            $busy = true;
+            $this->persistence->trackPriceChange($preset, $objectId, get_post_meta($objectId, $metaKey, true), $metaValue);
+            $busy = false;
+        }
+        return $check;
+    }
     public function getSlug(): string { return 'collections'; }
 
     public function registerContent(): void
