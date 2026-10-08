@@ -557,7 +557,7 @@ final class ModelPages
                 '<option value="%s"%s>%s%s</option>',
                 esc_attr((string) $term->slug),
                 $current === (string) $term->slug ? ' selected' : '',
-                $depth > 0 ? str_repeat('— ', $depth) : '',
+                $depth > 0 ? str_repeat("\u{00A0}\u{00A0}\u{00A0}", $depth) : '', // recuo sem travessão
                 esc_html((string) $term->name)
             );
             if ($hierarchical) {

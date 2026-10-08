@@ -59,6 +59,7 @@ final class CollectionsOutput
         add_action('elementor/query/flashsite_available', [$this, 'queryAvailable']);
         add_action('pre_get_posts', [$this, 'hideUnavailableItems']);
         add_filter('rank_math/json_ld', [$this, 'rankMathJsonLd'], 99, 2);
+        add_filter('elementor/widget/render_content', [$this, 'lightenGalleryImage'], 10, 2);
         add_action('wp_head', [$this, 'printJsonLd'], 30);
     }
 
@@ -237,6 +238,51 @@ final class CollectionsOutput
             $value = $field !== null ? $this->formatter->field($preset, $field, $postId, $style) : '';
         }
         return esc_html($value !== '' ? $value : (string) $atts['fallback']);
+    }
+
+    /**
+     * Fotos 2..n da galeria (miniaturas): carregam só quando chegam à tela e no
+     * tamanho exibido. Sem "sizes", o navegador baixa a foto inteira para uma miniatura.
+     *
+     * @param mixed $content
+     * @param mixed $widget
+     * @return mixed
+     */
+    public function lightenGalleryImage($content, $widget)
+    {
+        if (!is_string($content) || !is_object($widget) || !method_exists($widget, 'get_name') || $widget->get_name() !== 'e-image') {
+            return $content;
+        }
+        $settings = method_exists($widget, 'get_data') ? (array) $widget->get_data('settings') : [];
+        return self::galleryImageMarkup($content, $settings);
+    }
+
+    /**
+     * @param array<string, mixed> $settings settings crus do e-image
+     * @since 3.1.0
+     */
+    public static function galleryImageMarkup(string $html, array $settings): string
+    {
+        $src = $settings['image']['value']['src'] ?? null;
+        if (!is_array($src) || ($src['$$type'] ?? '') !== 'dynamic' || ($src['value']['name'] ?? '') !== 'flashsite-item-image') {
+            return $html;
+        }
+        $tag = (array) ($src['value']['settings'] ?? []);
+        $source = $tag['source']['value'] ?? $tag['source'] ?? '';
+        $index = (int) ($tag['index']['value'] ?? $tag['index'] ?? 1);
+        if ($source !== 'gallery' || $index < 2) {
+            return $html;
+        }
+        return (string) preg_replace_callback('/<img\b[^>]*>/i', static function (array $m): string {
+            $img = $m[0];
+            if (stripos($img, ' loading=') === false) {
+                $img = preg_replace('/^<img\b/i', '<img loading="lazy"', $img);
+            }
+            if (stripos($img, ' srcset=') !== false && stripos($img, ' sizes=') === false) {
+                $img = preg_replace('/^<img\b/i', '<img sizes="auto, (max-width: 767px) 50vw, 25vw"', (string) $img);
+            }
+            return (string) $img;
+        }, $html, 1);
     }
 
     /**
