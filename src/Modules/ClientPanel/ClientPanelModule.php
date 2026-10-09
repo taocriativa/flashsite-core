@@ -30,7 +30,7 @@ final class ClientPanelModule implements ModuleInterface
     /** Botões flutuantes de assistentes da hospedagem (ex.: Kodee, "Pergunte à IA" da Hostinger). */
     public const HIDDEN_WIDGETS = ['.kodee-fab', '[class^="kodee-"]', '[id^="kodee"]', '#hostinger-ai-assistant'];
 
-    public const HIDDEN_BAR_NODES = ['wp-logo', 'comments', 'new-content', 'updates', 'elementor_edit_page', 'elementor', 'litespeed-menu', 'rank-math', 'hostinger_admin_bar', 'hostinger-ai-assistant', 'search', 'customize', 'edit', 'cookie-law-info'];
+    public const HIDDEN_BAR_NODES = ['wp-logo', 'comments', 'new-content', 'updates', 'elementor_edit_page', 'elementor', 'litespeed-menu', 'rank-math', 'hostinger_admin_bar', 'hostinger-ai-assistant', 'search', 'customize', 'edit', 'cookie-law-info', 'command-palette', 'edit_home_page', 'simple-history'];
 
     private MediaGuard $media;
 
@@ -47,6 +47,8 @@ final class ClientPanelModule implements ModuleInterface
         add_action('admin_init', [$this, 'redirectDashboard']);
         add_filter('login_redirect', [$this, 'loginRedirect'], 10, 3);
         add_action('admin_bar_menu', [$this, 'trimAdminBar'], 999);
+        // Plugins que põem itens na barra depois do admin_bar_menu (ex.: Hostinger).
+        add_action('wp_before_admin_bar_render', [$this, 'trimAdminBarLate'], 999);
         add_action('in_admin_header', [$this, 'silenceNotices'], 1);
         add_action('admin_head', [$this, 'hideAssistants']);
         add_action('admin_notices', [$this, 'adminWarning']);
@@ -135,6 +137,12 @@ final class ClientPanelModule implements ModuleInterface
     }
 
     /** @param mixed $bar */
+    public function trimAdminBarLate(): void
+    {
+        global $wp_admin_bar;
+        $this->trimAdminBar($wp_admin_bar);
+    }
+
     public function trimAdminBar($bar): void
     {
         if (! self::isClient() || ! is_object($bar) || ! method_exists($bar, 'remove_node')) {

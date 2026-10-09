@@ -10,7 +10,7 @@ $headerActions = isset($headerActions) && is_array($headerActions) ? $headerActi
 <div class="fsc-admin-header">
     <div class="fsc-admin-header__brand">
         <div class="fsc-admin-header__logo-wrap">
-            <img class="fsc-admin-header__logo" src="<?php echo esc_url(FLASHSITE_CORE_URL . 'assets/admin/img/flashsite-logo.png'); ?>" alt="FlashSite">
+            <img class="fsc-admin-header__logo" src="<?php echo esc_url(FLASHSITE_CORE_URL . 'assets/admin/img/flashsite-logo.svg'); ?>" alt="Flash Site">
         </div>
         <div class="fsc-admin-header__titles">
             <span class="fsc-admin-header__eyebrow">FlashSite · Painel de Gestão</span>
