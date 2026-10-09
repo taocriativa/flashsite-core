@@ -27,6 +27,9 @@ final class ClientPanelModule implements ModuleInterface
     public const HIDDEN_SUBMENUS = ['flashsite-core', 'flashsite-shortcodes', 'flashsite-setup-wizard', 'flashsite-data-safety', 'flashsite-markets', 'flashsite-collections'];
 
     /** Itens da barra superior que somem para o cliente. */
+    /** Botões flutuantes de assistentes da hospedagem (ex.: Kodee, "Pergunte à IA" da Hostinger). */
+    public const HIDDEN_WIDGETS = ['.kodee-fab', '[class^="kodee-"]', '[id^="kodee"]', '#hostinger-ai-assistant'];
+
     public const HIDDEN_BAR_NODES = ['wp-logo', 'comments', 'new-content', 'updates', 'elementor_edit_page', 'elementor', 'litespeed-menu', 'rank-math', 'hostinger_admin_bar', 'hostinger-ai-assistant', 'search', 'customize', 'edit', 'cookie-law-info'];
 
     private MediaGuard $media;
@@ -45,6 +48,8 @@ final class ClientPanelModule implements ModuleInterface
         add_filter('login_redirect', [$this, 'loginRedirect'], 10, 3);
         add_action('admin_bar_menu', [$this, 'trimAdminBar'], 999);
         add_action('in_admin_header', [$this, 'silenceNotices'], 1);
+        add_action('admin_head', [$this, 'hideAssistants']);
+        add_action('wp_head', [$this, 'hideAssistants']);
         add_action('current_screen', [$this, 'maybeTranslateScreen']);
         add_filter('map_meta_cap', [$this, 'protectMediaInUse'], 10, 4);
         foreach (['save_post', 'deleted_post', 'elementor/document/after_save'] as $hook) {
@@ -133,6 +138,15 @@ final class ClientPanelModule implements ModuleInterface
         foreach (self::HIDDEN_BAR_NODES as $node) {
             $bar->remove_node($node);
         }
+    }
+
+    /** Cliente não vê assistentes de IA da hospedagem (não editam o site do jeito certo). */
+    public function hideAssistants(): void
+    {
+        if (! self::isClient() || (! is_admin() && ! (function_exists('is_admin_bar_showing') && is_admin_bar_showing()))) {
+            return;
+        }
+        echo '<style id="fsc-hide-assistants">' . implode(',', self::HIDDEN_WIDGETS) . '{display:none!important}</style>';
     }
 
     /** Avisos de plugins (licenças, promoções, atualizações) não são para o cliente. */
