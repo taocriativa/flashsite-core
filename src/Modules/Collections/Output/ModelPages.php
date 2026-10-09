@@ -237,6 +237,8 @@ final class ModelPages
         if (! is_admin()) {
             wp_enqueue_style('flashsite-core-effects', FLASHSITE_CORE_URL . 'assets/frontend/css/fsc-effects.css', [], FLASHSITE_CORE_VERSION);
             wp_enqueue_script('flashsite-core-effects', FLASHSITE_CORE_URL . 'assets/frontend/js/fsc-effects.js', [], FLASHSITE_CORE_VERSION, ['in_footer' => true, 'strategy' => 'defer']);
+            // Fundo molecular e topo fixo (4 KB, só age onde houver .fs-moleculas / .fs-topo-fixo).
+            wp_enqueue_script('flashsite-core-moleculas', FLASHSITE_CORE_URL . 'assets/frontend/js/fsc-moleculas.js', [], FLASHSITE_CORE_VERSION, ['in_footer' => true, 'strategy' => 'defer']);
         }
         if ($this->popups() !== []) {
             wp_enqueue_style('flashsite-core-popup', FLASHSITE_CORE_URL . 'assets/frontend/css/fsc-popup.css', [], FLASHSITE_CORE_VERSION);
