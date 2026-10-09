@@ -787,3 +787,12 @@
 }
 .flashsite-core-wrap .fsc-texts-savebar__status { color: var(--fsc-color-text-muted); font-size: 13px; }
 .flashsite-core-wrap .fsc-texts-savebar.is-dirty .fsc-texts-savebar__status { color: var(--fsc-color-primary-strong); font-weight: 600; }
+
+/* Textos do site: tamanho previsto (3.1.0-beta.9) */
+.fsc-texts-field__limit { display: flex; gap: 10px; align-items: baseline; margin: 4px 0 0; font-size: 12px; color: #6b6b6b; }
+.fsc-texts-field__count { font-variant-numeric: tabular-nums; }
+.fsc-texts-field__warn { display: none; color: #b42318; }
+.fsc-texts-field.is-over .fsc-texts-field__count { color: #b42318; font-weight: 600; }
+.fsc-texts-field.is-over .fsc-texts-field__warn { display: inline; }
+.fsc-texts-field.is-over input, .fsc-texts-field.is-over textarea { border-color: #e5a29b; }
+.fsc-admin-warning { border-left-color: #b42318 !important; }

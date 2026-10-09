@@ -59,6 +59,15 @@ final class SiteTextsTest extends TestCase
         $this->assertSame('Fale comigo', $registry->text('rodape_frase', 'Fale comigo'));
         $this->assertSame(false, isset($registry->values()['invasor']));
 
+        // Tamanho previsto: sai do texto padrão (+30%, mínimo 20 numa linha); trava com 20% de folga.
+        $this->assertSame(['max' => 25, 'hard' => 30], SiteTextsRegistry::limit(['type' => 'line', 'default' => 'Seu próximo imóvel']));
+        $this->assertSame(['max' => 70, 'hard' => 84], SiteTextsRegistry::limit(['type' => 'line', 'default' => 'x', 'max' => 70]));
+        $this->assertSame(80, SiteTextsRegistry::limit(['type' => 'paragraph', 'default' => ''])['max']);
+        $registry->saveValues(['inicio_titulo' => str_repeat('a', 26)]);
+        $this->assertSame(['inicio_titulo'], $registry->overLimit());
+        $registry->saveValues(['inicio_titulo' => str_repeat('b', 50)]);
+        $this->assertSame(30, mb_strlen($registry->text('inicio_titulo')));
+
         // Campo vazio volta ao padrão.
         $registry->saveValues(['inicio_titulo' => '']);
         $this->assertSame('Seu próximo imóvel', $registry->text('inicio_titulo', 'Seu próximo imóvel'));

@@ -203,7 +203,8 @@ final class SiteTextsModule implements ModuleInterface
         $input = isset($_POST['fs_text']) && is_array($_POST['fs_text']) ? wp_unslash($_POST['fs_text']) : []; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
         $changed = $this->registry->saveValues($input);
         $this->purge($changed);
-        wp_safe_redirect(add_query_arg(['page' => self::SLUG, 'saved' => count($changed)], admin_url('admin.php')));
+        $over = array_values(array_intersect($changed, $this->registry->overLimit()));
+        wp_safe_redirect(add_query_arg(['page' => self::SLUG, 'saved' => count($changed), 'over' => implode(',', $over)], admin_url('admin.php')));
         exit;
     }
 

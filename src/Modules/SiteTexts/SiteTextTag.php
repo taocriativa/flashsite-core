@@ -43,6 +43,11 @@ class SiteTextTag extends \FlashSite\Core\Modules\OutputFoundation\Elementor\Ele
             'options' => ['line' => 'Uma linha', 'paragraph' => 'Parágrafo'],
             'default' => 'line',
         ]);
+        $this->add_control('max', [
+            'label' => 'Tamanho máximo (caracteres; vazio = calcula pelo texto padrão)',
+            'type' => \Elementor\Controls_Manager::NUMBER,
+            'min' => 0,
+        ]);
         $this->add_control('default', [
             'label' => 'Texto padrão',
             'type' => \Elementor\Controls_Manager::TEXTAREA,

@@ -89,7 +89,46 @@ final class SiteTextsRegistry
             'default' => $get('default'),
             'section' => $get('section'),
             'element' => $element,
+            'max' => max(0, (int) $get('max')),
         ];
+    }
+
+    /** Folga acima do tamanho previsto antes de travar (20%). */
+    public const LIMIT_MARGIN = 1.2;
+
+    /**
+     * Tamanho previsto de um campo e o limite que trava (@since 3.1.0-beta.9).
+     * Sem "max" na tag, o previsto sai do texto padrão (o layout foi desenhado para ele) com 30% de folga.
+     *
+     * @param array<string, mixed> $field
+     * @return array{max: int, hard: int}
+     */
+    public static function limit(array $field): array
+    {
+        $max = (int) ($field['max'] ?? 0);
+        if ($max <= 0) {
+            $paragraph = ($field['type'] ?? 'line') === 'paragraph';
+            $length = function_exists('mb_strlen') ? mb_strlen((string) ($field['default'] ?? '')) : strlen((string) ($field['default'] ?? ''));
+            $max = max($paragraph ? 80 : 20, (int) ceil($length * 1.3 / 5) * 5);
+        }
+        return ['max' => $max, 'hard' => (int) ceil($max * self::LIMIT_MARGIN)];
+    }
+
+    /**
+     * Chaves cujo valor guardado passou do tamanho previsto (dentro da folga).
+     *
+     * @return list<string>
+     */
+    public function overLimit(): array
+    {
+        $fields = $this->fields();
+        $over = [];
+        foreach ($this->values() as $key => $value) {
+            if (isset($fields[$key]) && mb_strlen($value) > self::limit($fields[$key])['max']) {
+                $over[] = $key;
+            }
+        }
+        return $over;
     }
 
     public static function sanitizeKey(string $key): string
@@ -173,6 +212,11 @@ final class SiteTextsRegistry
             $value = $fields[$key]['type'] === 'paragraph'
                 ? self::cleanParagraph((string) $raw)
                 : self::cleanLine((string) $raw);
+            // Acima da folga o layout quebra: corta no limite (o campo já não deixa escrever mais).
+            $hard = self::limit($fields[$key])['hard'];
+            if (mb_strlen($value) > $hard) {
+                $value = rtrim(mb_substr($value, 0, $hard));
+            }
             // Igual ao padrão: não guarda (assim uma mudança do padrão continua a valer).
             if ($value === trim((string) $fields[$key]['default'])) {
                 $value = '';

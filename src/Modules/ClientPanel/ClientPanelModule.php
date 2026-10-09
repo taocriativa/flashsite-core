@@ -49,6 +49,7 @@ final class ClientPanelModule implements ModuleInterface
         add_action('admin_bar_menu', [$this, 'trimAdminBar'], 999);
         add_action('in_admin_header', [$this, 'silenceNotices'], 1);
         add_action('admin_head', [$this, 'hideAssistants']);
+        add_action('admin_notices', [$this, 'adminWarning']);
         add_action('wp_head', [$this, 'hideAssistants']);
         add_action('current_screen', [$this, 'maybeTranslateScreen']);
         add_filter('map_meta_cap', [$this, 'protectMediaInUse'], 10, 4);
@@ -147,6 +148,28 @@ final class ClientPanelModule implements ModuleInterface
             return;
         }
         echo '<style id="fsc-hide-assistants">' . implode(',', self::HIDDEN_WIDGETS) . '{display:none!important}</style>';
+    }
+
+    /** Telas onde o administrador vê o aviso de acesso administrativo (@since 3.1.0-beta.9). */
+    public const ADMIN_WARNING_SCREENS = ['dashboard', 'plugins', 'themes', 'theme-editor', 'plugin-editor', 'options-general', 'users', 'toplevel_page_flashsite-edit'];
+
+    /**
+     * Site entregue (há um usuário Cliente): o administrador vê, nas telas sensíveis, que este
+     * acesso mexe na base do site e que o dia a dia é pelo acesso de gestão.
+     */
+    public function adminWarning(): void
+    {
+        if (self::isClient() || ! current_user_can('manage_options') || ! apply_filters('flashsite/admin_warning', true)) {
+            return;
+        }
+        $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+        if (! is_object($screen) || ! in_array((string) $screen->id, self::ADMIN_WARNING_SCREENS, true)) {
+            return;
+        }
+        if (get_users(['role' => self::ROLE, 'number' => 1, 'fields' => 'ID']) === []) {
+            return;
+        }
+        echo '<div class="notice notice-error fsc-admin-warning"><p><strong>Acesso administrativo.</strong> Alterações feitas aqui mexem na base do site e podem comprometer o seu funcionamento. Para textos, fotos e itens, use o acesso de gestão.</p></div>';
     }
 
     /** Avisos de plugins (licenças, promoções, atualizações) não são para o cliente. */

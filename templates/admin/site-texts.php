@@ -11,6 +11,7 @@ if (! defined('ABSPATH')) exit;
  */
 
 $saved   = isset($_GET['saved']) ? (int) $_GET['saved'] : null; // phpcs:ignore WordPress.Security.NonceVerification
+$over    = isset($_GET['over']) && $_GET['over'] !== '' ? array_map('sanitize_key', explode(',', (string) wp_unslash($_GET['over']))) : []; // phpcs:ignore WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput
 $scanned = isset($_GET['scanned']) ? (int) $_GET['scanned'] : null; // phpcs:ignore WordPress.Security.NonceVerification
 
 $headerTitle    = 'Textos do site';
@@ -25,6 +26,11 @@ $headerActions  = [
     <?php if ($saved !== null) : ?>
         <div class="notice notice-success is-dismissible">
             <p><?php echo $saved > 0 ? esc_html(sprintf('Textos atualizados (%d). Já estão no site.', $saved)) : 'Nada mudou.'; ?></p>
+        </div>
+    <?php endif; ?>
+    <?php if ($over !== []) : ?>
+        <div class="notice notice-warning fsc-texts-over-notice">
+            <p><strong>Confira o site.</strong> <?php echo esc_html(count($over) === 1 ? 'Um texto passou do tamanho previsto para o layout' : sprintf('%d textos passaram do tamanho previsto para o layout', count($over))); ?>. Abra a página e veja se tudo continua alinhado; se não, encurte o texto.</p>
         </div>
     <?php endif; ?>
     <?php if ($scanned !== null) : ?>
@@ -69,8 +75,11 @@ $headerActions  = [
                             $value = $values[$key] ?? '';
                             $default = (string) $field['default'];
                             $current = $value !== '' ? $value : $default;
+                            $limit = \FlashSite\Core\Domain\SiteTexts\SiteTextsRegistry::limit($field);
+                            $isOver = mb_strlen($current) > $limit['max'];
+                            $limitAttrs = sprintf(' maxlength="%d" data-max="%d"', $limit['hard'], $limit['max']);
                             ?>
-                            <div class="fsc-texts-field">
+                            <div class="fsc-texts-field<?php echo $isOver ? ' is-over' : ''; ?>">
                                 <div class="fsc-texts-field__label">
                                     <label for="<?php echo esc_attr($id); ?>"><?php echo esc_html((string) $field['label']); ?></label>
                                     <?php if (($field['show_url'] ?? '') !== '') : ?>
@@ -78,10 +87,14 @@ $headerActions  = [
                                     <?php endif; ?>
                                 </div>
                                 <?php if ($field['type'] === 'paragraph') : ?>
-                                    <textarea id="<?php echo esc_attr($id); ?>" name="fs_text[<?php echo esc_attr($key); ?>]" rows="<?php echo esc_attr((string) max(2, min(6, (int) ceil(mb_strlen($current) / 110)))); ?>" placeholder="<?php echo esc_attr($default); ?>" data-original="<?php echo esc_attr($current); ?>"><?php echo esc_textarea($current); ?></textarea>
+                                    <textarea id="<?php echo esc_attr($id); ?>" name="fs_text[<?php echo esc_attr($key); ?>]" rows="<?php echo esc_attr((string) max(2, min(6, (int) ceil(mb_strlen($current) / 110)))); ?>" placeholder="<?php echo esc_attr($default); ?>" data-original="<?php echo esc_attr($current); ?>"<?php echo $limitAttrs; // phpcs:ignore ?>><?php echo esc_textarea($current); ?></textarea>
                                 <?php else : ?>
-                                    <input type="text" id="<?php echo esc_attr($id); ?>" name="fs_text[<?php echo esc_attr($key); ?>]" placeholder="<?php echo esc_attr($default); ?>" value="<?php echo esc_attr($current); ?>" data-original="<?php echo esc_attr($current); ?>">
+                                    <input type="text" id="<?php echo esc_attr($id); ?>" name="fs_text[<?php echo esc_attr($key); ?>]" placeholder="<?php echo esc_attr($default); ?>" value="<?php echo esc_attr($current); ?>" data-original="<?php echo esc_attr($current); ?>"<?php echo $limitAttrs; // phpcs:ignore ?>>
                                 <?php endif; ?>
+                                <p class="fsc-texts-field__limit">
+                                    <span class="fsc-texts-field__count"><?php echo esc_html(mb_strlen($current) . '/' . $limit['max']); ?></span>
+                                    <span class="fsc-texts-field__warn">Passou do tamanho previsto. Depois de salvar, confira a página: o layout pode desalinhar.</span>
+                                </p>
                                 <?php if ($value !== '') : ?>
                                     <p class="description" style="margin-top:4px;">Texto original: <?php echo esc_html($default); ?></p>
                                 <?php endif; ?>
@@ -107,7 +120,13 @@ $headerActions  = [
             form.addEventListener('input', function (event) {
                 var field = event.target;
                 if (!field.hasAttribute('data-original')) { return; }
-                field.closest('.fsc-texts-field').classList.toggle('is-changed', field.value !== field.getAttribute('data-original'));
+                var box = field.closest('.fsc-texts-field');
+                box.classList.toggle('is-changed', field.value !== field.getAttribute('data-original'));
+                var max = parseInt(field.getAttribute('data-max') || '0', 10);
+                if (max) {
+                    box.querySelector('.fsc-texts-field__count').textContent = field.value.length + '/' + max;
+                    box.classList.toggle('is-over', field.value.length > max);
+                }
                 dirty = form.querySelectorAll('.fsc-texts-field.is-changed').length > 0;
                 bar.classList.toggle('is-dirty', dirty);
                 clean.hidden = dirty;
