@@ -57,3 +57,48 @@
 
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 })();
+
+/* FlashSite Core 3.1.0 · .fs-contador: o número do texto conta de 0 até o valor quando aparece na tela.
+   Mantém o que vem antes e depois ("+500.000", "100 mil+", "98%"). Separador de milhar "." ou ",".
+   Com "reduzir movimento" o número fica fixo. Duração: --fs-contador-duracao (ms) no elemento, padrão 2000. */
+(function () {
+    'use strict';
+    var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function setup(el) {
+        if (el.getAttribute('data-fs-contador')) { return; }
+        el.setAttribute('data-fs-contador', '1');
+        var text = el.textContent || '';
+        var m = text.match(/^(\D*?)(\d{1,3}(?:[.,]\d{3})+|\d+)(.*)$/s);
+        if (!m || still) { return; }
+        var sep = (m[2].match(/[.,]/) || [''])[0];
+        var target = parseInt(m[2].replace(/[.,]/g, ''), 10);
+        if (!target) { return; }
+        var fmt = function (n) {
+            var s = String(n);
+            return sep ? s.replace(/\B(?=(\d{3})+(?!\d))/g, sep) : s;
+        };
+        var dur = parseFloat(getComputedStyle(el).getPropertyValue('--fs-contador-duracao')) || 2000;
+        var node = el;
+        while (node.firstElementChild && node.children.length === 1) { node = node.firstElementChild; }
+        var write = function (n) { node.textContent = m[1] + fmt(n) + m[3]; };
+        write(0);
+        var run = function () {
+            var t0 = performance.now();
+            var step = function (now) {
+                var p = Math.min(1, (now - t0) / dur);
+                write(Math.round(target * (1 - Math.pow(1 - p, 3))));
+                if (p < 1) { requestAnimationFrame(step); }
+            };
+            requestAnimationFrame(step);
+        };
+        if (!('IntersectionObserver' in window)) { write(target); return; }
+        var io = new IntersectionObserver(function (entries) {
+            if (entries[0].isIntersecting) { io.disconnect(); run(); }
+        }, { threshold: 0.4 });
+        io.observe(el);
+    }
+
+    function init() { Array.prototype.forEach.call(document.querySelectorAll('.fs-contador'), setup); }
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
+})();
