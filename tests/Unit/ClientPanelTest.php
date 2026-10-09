@@ -24,6 +24,10 @@ final class ClientPanelTest extends TestCase
         // Botão de IA da Hostinger (Kodee) escondido para o Cliente.
         $this->assertTrue(in_array('.kodee-fab', ClientPanelModule::HIDDEN_WIDGETS, true));
 
+        // Registro de alterações: só administradores, guardado por um ano.
+        $this->assertSame('manage_options', ClientPanelModule::historyCapability());
+        $this->assertSame(365, ClientPanelModule::historyDays());
+
         // Fotos em uso: ids de imagens no JSON do Elementor (atómico e clássico).
         $json = '{"image":{"$$type":"image","value":{"src":{"$$type":"image-src","value":{"id":{"$$type":"image-attachment-id","value":270}}}}},"bg":{"url":"https://x/y.jpg","id":"264"},"logo":{"id":40,"url":"https://x/l.png"},"n":{"id":7}}';
         $ids = MediaGuard::extractIds($json);

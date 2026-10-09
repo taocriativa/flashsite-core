@@ -6,4 +6,5 @@ return [
     ['slug' => 'elementor-pro/elementor-pro.php', 'label' => 'Elementor Pro', 'level' => 'optional', 'min_version' => null],
     ['slug' => 'seo-by-rank-math/rank-math.php', 'label' => 'Rank Math', 'level' => 'recommended', 'min_version' => null],
     ['slug' => 'wps-hide-login/wps-hide-login.php', 'label' => 'WPS Hide Login', 'level' => 'recommended', 'min_version' => null],
+    ['slug' => 'simple-history/index.php', 'label' => 'Simple History (registro de alterações)', 'level' => 'recommended', 'min_version' => null],
 ];

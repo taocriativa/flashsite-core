@@ -50,6 +50,10 @@ final class ClientPanelModule implements ModuleInterface
         add_action('in_admin_header', [$this, 'silenceNotices'], 1);
         add_action('admin_head', [$this, 'hideAssistants']);
         add_action('admin_notices', [$this, 'adminWarning']);
+        // Registro de alterações (Simple History): base de segurança da Flash Site, só para administradores.
+        add_filter('simple_history/view_history_capability', [self::class, 'historyCapability']);
+        add_filter('simple_history/view_settings_capability', [self::class, 'historyCapability']);
+        add_filter('simple_history/db_purge_days_interval', [self::class, 'historyDays']);
         add_action('wp_head', [$this, 'hideAssistants']);
         add_action('current_screen', [$this, 'maybeTranslateScreen']);
         add_filter('map_meta_cap', [$this, 'protectMediaInUse'], 10, 4);
@@ -148,6 +152,19 @@ final class ClientPanelModule implements ModuleInterface
             return;
         }
         echo '<style id="fsc-hide-assistants">' . implode(',', self::HIDDEN_WIDGETS) . '{display:none!important}</style>';
+    }
+
+    /** Dias que o registro de alterações guarda (o padrão do Simple History é 60). */
+    public const HISTORY_DAYS = 365;
+
+    public static function historyCapability(): string
+    {
+        return 'manage_options';
+    }
+
+    public static function historyDays(): int
+    {
+        return self::HISTORY_DAYS;
     }
 
     /** Telas onde o administrador vê o aviso de acesso administrativo (@since 3.1.0-beta.9). */
