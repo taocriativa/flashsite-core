@@ -189,6 +189,8 @@ final class OutputFoundationModule implements ModuleInterface
         add_shortcode('flashsite_hours_list', [$this, 'renderHoursListShortcode']);
         add_shortcode('flashsite_accepted_plans', [$this, 'renderAcceptedPlansShortcode']);
         add_shortcode('flashsite_maps', [$this, 'renderMapsShortcode']);
+        // Classe utilitária fs-mapa: o elemento atómico recebe o mapa dos Dados do negócio (@since 3.1.0-beta.13).
+        add_filter('elementor/widget/render_content', [$this, 'injectMap'], 20, 2);
         add_action('elementor/dynamic_tags/register', [$this, 'registerElementorTags']);
         add_action('wp_enqueue_scripts', [$this, 'enqueueQuotedVariableFonts'], 20);
     }
@@ -584,6 +586,34 @@ final class OutputFoundationModule implements ModuleInterface
         );
 
         return sprintf('<ul class="%s">%s</ul>', esc_attr((string) $atts['class']), implode('', $itens));
+    }
+
+    /**
+     * Elemento com a classe global "fs-mapa" (ex.: um parágrafo vazio) passa a mostrar o mapa do
+     * Google guardado nos Dados do negócio. O e-paragraph não aceita iframe; assim o mapa entra sem
+     * widget HTML.
+     *
+     * @since 3.1.0-beta.13
+     */
+    public function injectMap($content, $widget = null)
+    {
+        if (! is_string($content) || ! str_contains($content, 'fs-mapa')) {
+            return $content;
+        }
+        $map = $this->renderMapsShortcode();
+        return $map === '' ? $content : self::mapMarkup($content, $map);
+    }
+
+    /** Põe o mapa dentro do primeiro elemento com a classe fs-mapa (substitui o conteúdo dele). */
+    public static function mapMarkup(string $html, string $map): string
+    {
+        $out = preg_replace_callback(
+            '/(<([a-z0-9]+)\b[^>]*\bclass="[^"]*\bfs-mapa\b[^"]*"[^>]*>)(.*?)(<\/\2>)/s',
+            static fn (array $m): string => $m[1] . $map . $m[4],
+            $html,
+            1
+        );
+        return is_string($out) ? $out : $html;
     }
 
     /**

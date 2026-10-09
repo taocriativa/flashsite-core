@@ -24,6 +24,9 @@ final class ClientPanelTest extends TestCase
         // Botão de IA da Hostinger (Kodee) escondido para o Cliente.
         $this->assertTrue(in_array('.kodee-fab', ClientPanelModule::HIDDEN_WIDGETS, true));
 
+        // Mapa por classe fs-mapa (OutputFoundation).
+        $this->assertSame('<span class="x fs-mapa e-paragraph-base"><iframe src="m"></iframe></span><p>ok</p>', \FlashSite\Core\Modules\OutputFoundation\OutputFoundationModule::mapMarkup('<span class="x fs-mapa e-paragraph-base"></span><p>ok</p>', '<iframe src="m"></iframe>'));
+
         // Registro de alterações: só administradores, guardado por um ano.
         $this->assertSame('manage_options', ClientPanelModule::historyCapability());
         $this->assertSame(365, ClientPanelModule::historyDays());
