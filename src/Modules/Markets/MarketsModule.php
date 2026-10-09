@@ -203,6 +203,10 @@ final class MarketsModule implements ModuleInterface
         if (is_admin() || isset($_GET['elementor-preview'])) { // phpcs:ignore WordPress.Security.NonceVerification
             return;
         }
+        // Abas pelo endereço (#brasil) e pelo país do visitante; só onde a página tem abas.
+        if (self::pageHasTabs()) {
+            wp_enqueue_script('flashsite-core-tabs', FLASHSITE_CORE_URL . 'assets/frontend/js/fsc-tabs.js', [], FLASHSITE_CORE_VERSION, ['in_footer' => true, 'strategy' => 'defer']);
+        }
         $pair = $this->currentPair();
         if ($pair === null) {
             return;
@@ -224,6 +228,17 @@ final class MarketsModule implements ModuleInterface
                 'flag' => self::MARKETS[$other]['flag'],
             ],
         ]) . ';', 'before');
+    }
+
+    /** A página atual usa o widget e-tabs do Elementor? */
+    public static function pageHasTabs(): bool
+    {
+        $id = function_exists('get_queried_object_id') ? (int) get_queried_object_id() : 0;
+        if ($id <= 0) {
+            return false;
+        }
+        $data = get_post_meta($id, '_elementor_data', true);
+        return is_string($data) && str_contains($data, '"elType":"e-tabs"');
     }
 
     /** [flashsite_market_switch] → "🇵🇹 Portugal · 🇧🇷 Brasil", com o mercado atual marcado. */
