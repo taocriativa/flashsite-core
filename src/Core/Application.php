@@ -137,6 +137,7 @@ final class Application
         $this->container->bind(ItemReader::class, fn () => new ItemReader());
         $this->container->bind(FieldFormatter::class, fn (Container $c) => new FieldFormatter($c->make(ItemReader::class), $c->make(CollectionSettings::class)));
         $this->container->bind(CollectionPublicSerializer::class, fn (Container $c) => new CollectionPublicSerializer($c->make(ItemReader::class), $c->make(FieldFormatter::class)));
+        $this->container->bind(\FlashSite\Core\Domain\SiteTexts\SiteTextsRegistry::class, fn (Container $c) => new \FlashSite\Core\Domain\SiteTexts\SiteTextsRegistry($c->make(OptionsStorage::class)));
         $this->container->bind(SchemaOrgBuilder::class, fn (Container $c) => new SchemaOrgBuilder($c->make(CollectionPublicSerializer::class), $c->make(CollectionSettings::class)));
     }
 
@@ -160,6 +161,8 @@ final class Application
         $this->container->bind(\FlashSite\Core\Modules\Contact\ContactModule::class, fn (Container $c) => new \FlashSite\Core\Modules\Contact\ContactModule($c->make(BusinessData::class)));
         $this->container->bind(\FlashSite\Core\Modules\Hardening\HardeningModule::class, fn () => new \FlashSite\Core\Modules\Hardening\HardeningModule());
         $this->container->bind(\FlashSite\Core\Modules\Markets\MarketsModule::class, fn () => new \FlashSite\Core\Modules\Markets\MarketsModule());
+        $this->container->bind(\FlashSite\Core\Modules\SiteTexts\SiteTextsModule::class, fn (Container $c) => new \FlashSite\Core\Modules\SiteTexts\SiteTextsModule($c->make(\FlashSite\Core\Domain\SiteTexts\SiteTextsRegistry::class)));
+        $this->container->bind(\FlashSite\Core\Modules\ClientPanel\ClientPanelModule::class, fn (Container $c) => new \FlashSite\Core\Modules\ClientPanel\ClientPanelModule($c->make(CollectionsModule::class), $c->make(\FlashSite\Core\Domain\SiteTexts\SiteTextsRegistry::class), $c->make(CollectionSettings::class)));
         $this->container->bind(OutputFoundationModule::class, fn (Container $c) => new OutputFoundationModule($c->make(BusinessData::class), $c->make(Logger::class)));
     }
 

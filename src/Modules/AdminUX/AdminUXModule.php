@@ -31,6 +31,8 @@ final class AdminUXModule implements ModuleInterface
             'flashsite-core_page_flashsite-data-safety',
             'flashsite-core_page_flashsite-shortcodes',
             'flashsite-core_page_flashsite-privacy-policy',
+            'toplevel_page_flashsite-edit',
+            'flashsite-core_page_flashsite-site-texts',
         ]);
     }
 

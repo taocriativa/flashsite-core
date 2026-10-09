@@ -14,4 +14,6 @@ return [
     FlashSite\Core\Modules\Contact\ContactModule::class,
     FlashSite\Core\Modules\Hardening\HardeningModule::class,
     FlashSite\Core\Modules\Markets\MarketsModule::class,
+    FlashSite\Core\Modules\SiteTexts\SiteTextsModule::class,
+    FlashSite\Core\Modules\ClientPanel\ClientPanelModule::class,
 ];
