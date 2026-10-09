@@ -78,20 +78,23 @@ final class PtBrAdmin
         'seleccionar' => 'selecionar',
         'facto' => 'fato',
         'por publicar' => 'não publicados',
+        'Há alterações por guardar.' => 'Há alterações não salvas.',
     ];
 
     public static function convert(string $html): string
     {
-        // Partes que não se tocam: scripts, estilos e atributos técnicos (name, id, href, src, value de campos ocultos).
-        $parts = preg_split('/(<script\b.*?<\/script>|<style\b.*?<\/style>|<textarea\b.*?<\/textarea>|\s(?:name|id|href|src|action|for|class|data-[\w-]+)="[^"]*")/is', $html, -1, PREG_SPLIT_DELIM_CAPTURE);
+        // Não se tocam: scripts, estilos, conteúdo de campos (textarea, value e placeholder dos inputs,
+        // que são textos do cliente) e atributos técnicos. Botões (<input type="submit">) são traduzidos.
+        $parts = preg_split('/(<script\b.*?<\/script>|<style\b.*?<\/style>|<textarea\b.*?<\/textarea>|<input\b[^>]*>|\s(?:name|id|href|src|action|for|class|value|placeholder|data-[\w-]+)="[^"]*")/is', $html, -1, PREG_SPLIT_DELIM_CAPTURE);
         if (! is_array($parts)) {
             return $html;
         }
         foreach ($parts as $i => $part) {
-            if ($i % 2 === 1) {
-                continue; // delimitador capturado: fica como está
+            if ($i % 2 === 0) {
+                $parts[$i] = self::convertText($part);
+            } elseif (stripos($part, '<input') === 0 && preg_match('/\stype="(submit|button|reset)"/i', $part)) {
+                $parts[$i] = (string) preg_replace_callback('/(\svalue=")([^"]*)(")/i', static fn (array $m): string => $m[1] . self::convertText($m[2]) . $m[3], $part);
             }
-            $parts[$i] = self::convertText($part);
         }
         return implode('', $parts);
     }

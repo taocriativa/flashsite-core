@@ -5,7 +5,7 @@ if (! defined('ABSPATH')) exit;
 /**
  * FlashSite › Textos do site (@since 3.1.0).
  *
- * @var array<string, array{url: string, sections: array<string, list<array<string, mixed>>>}> $groups
+ * @var list<array{title: string, anchor: string, url: string, sections: array<string, list<array<string, mixed>>>}> $groups
  * @var array<string, string> $values
  * @var bool $canRescan
  */
@@ -14,12 +14,12 @@ $saved   = isset($_GET['saved']) ? (int) $_GET['saved'] : null; // phpcs:ignore 
 $scanned = isset($_GET['scanned']) ? (int) $_GET['scanned'] : null; // phpcs:ignore WordPress.Security.NonceVerification
 
 $headerTitle    = 'Textos do site';
-$headerSubtitle = 'Mude os textos das páginas aqui. O layout não muda. Campo vazio volta ao texto original.';
+$headerSubtitle = 'Os textos estão na ordem em que aparecem em cada página. Use "Mostrar no site" para ver onde fica cada um. Campo vazio volta ao texto original.';
 $headerActions  = [
     ['label' => 'Ver o site', 'url' => home_url('/'), 'variant' => 'secondary'],
 ];
 ?>
-<div class="wrap flashsite-core-wrap">
+<div class="wrap flashsite-core-wrap fsc-site-texts-page">
     <?php include FLASHSITE_CORE_PATH . 'templates/admin/partials/admin-header.php'; ?>
 
     <?php if ($saved !== null) : ?>
@@ -39,34 +39,48 @@ $headerActions  = [
             <?php endif; ?>
         </div>
     <?php else : ?>
-        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="fsc-site-texts">
+        <?php if (count($groups) > 1) : ?>
+            <nav class="fsc-texts-nav" aria-label="Páginas">
+                <?php foreach ($groups as $group) : ?>
+                    <a href="#<?php echo esc_attr($group['anchor']); ?>"><?php echo esc_html($group['title']); ?></a>
+                <?php endforeach; ?>
+            </nav>
+        <?php endif; ?>
+
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="fsc-site-texts" id="fsc-site-texts">
             <?php wp_nonce_field('flashsite_site_texts_save'); ?>
             <input type="hidden" name="action" value="flashsite_site_texts_save">
 
-            <?php foreach ($groups as $pageTitle => $group) : ?>
-                <div class="fsc-card" style="margin-bottom:20px;">
-                    <h2 style="margin-top:0;display:flex;justify-content:space-between;align-items:baseline;gap:12px;">
-                        <span><?php echo esc_html($pageTitle); ?></span>
+            <?php foreach ($groups as $group) : ?>
+                <section class="fsc-card fsc-texts-page" id="<?php echo esc_attr($group['anchor']); ?>">
+                    <div class="fsc-texts-page__head">
+                        <h2><?php echo esc_html($group['title']); ?></h2>
                         <?php if ($group['url'] !== '') : ?>
-                            <a href="<?php echo esc_url($group['url']); ?>" target="_blank" rel="noopener" style="font-size:13px;font-weight:400;">Ver página ↗</a>
+                            <a href="<?php echo esc_url($group['url']); ?>" target="_blank" rel="noopener">Abrir página ↗</a>
                         <?php endif; ?>
-                    </h2>
+                    </div>
                     <?php foreach ($group['sections'] as $sectionTitle => $fields) : ?>
                         <?php if (count($group['sections']) > 1 || $sectionTitle !== 'Textos') : ?>
-                            <h3 style="margin:20px 0 8px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#646970;"><?php echo esc_html($sectionTitle); ?></h3>
+                            <h3 class="fsc-texts-section"><?php echo esc_html($sectionTitle); ?></h3>
                         <?php endif; ?>
                         <?php foreach ($fields as $field) :
                             $key = (string) $field['key'];
                             $id = 'fs-text-' . $key;
                             $value = $values[$key] ?? '';
                             $default = (string) $field['default'];
+                            $current = $value !== '' ? $value : $default;
                             ?>
-                            <div class="fsc-site-texts__field" style="margin-bottom:16px;">
-                                <label for="<?php echo esc_attr($id); ?>" style="display:block;font-weight:600;margin-bottom:6px;"><?php echo esc_html((string) $field['label']); ?></label>
+                            <div class="fsc-texts-field">
+                                <div class="fsc-texts-field__label">
+                                    <label for="<?php echo esc_attr($id); ?>"><?php echo esc_html((string) $field['label']); ?></label>
+                                    <?php if (($field['show_url'] ?? '') !== '') : ?>
+                                        <a class="fsc-texts-field__show" href="<?php echo esc_url((string) $field['show_url']); ?>" target="fs-site-preview">Mostrar no site ↗</a>
+                                    <?php endif; ?>
+                                </div>
                                 <?php if ($field['type'] === 'paragraph') : ?>
-                                    <textarea id="<?php echo esc_attr($id); ?>" name="fs_text[<?php echo esc_attr($key); ?>]" rows="4" class="large-text" placeholder="<?php echo esc_attr($default); ?>"><?php echo esc_textarea($value !== '' ? $value : $default); ?></textarea>
+                                    <textarea id="<?php echo esc_attr($id); ?>" name="fs_text[<?php echo esc_attr($key); ?>]" rows="<?php echo esc_attr((string) max(2, min(6, (int) ceil(mb_strlen($current) / 110)))); ?>" placeholder="<?php echo esc_attr($default); ?>" data-original="<?php echo esc_attr($current); ?>"><?php echo esc_textarea($current); ?></textarea>
                                 <?php else : ?>
-                                    <input type="text" id="<?php echo esc_attr($id); ?>" name="fs_text[<?php echo esc_attr($key); ?>]" class="large-text" placeholder="<?php echo esc_attr($default); ?>" value="<?php echo esc_attr($value !== '' ? $value : $default); ?>">
+                                    <input type="text" id="<?php echo esc_attr($id); ?>" name="fs_text[<?php echo esc_attr($key); ?>]" placeholder="<?php echo esc_attr($default); ?>" value="<?php echo esc_attr($current); ?>" data-original="<?php echo esc_attr($current); ?>">
                                 <?php endif; ?>
                                 <?php if ($value !== '') : ?>
                                     <p class="description" style="margin-top:4px;">Texto original: <?php echo esc_html($default); ?></p>
@@ -74,13 +88,37 @@ $headerActions  = [
                             </div>
                         <?php endforeach; ?>
                     <?php endforeach; ?>
-                </div>
+                </section>
             <?php endforeach; ?>
 
-            <div class="fsc-card-actions">
+            <div class="fsc-texts-savebar">
+                <span class="fsc-texts-savebar__status"><span class="fsc-texts-savebar__clean">As alterações aparecem no site assim que guardar.</span><span class="fsc-texts-savebar__dirty" hidden>Há alterações por guardar.</span></span>
                 <?php submit_button('Guardar textos', 'primary fsc-btn', 'submit', false); ?>
             </div>
         </form>
+        <script>
+        (function () {
+            var form = document.getElementById('fsc-site-texts');
+            if (!form) { return; }
+            var bar = form.querySelector('.fsc-texts-savebar');
+            var clean = bar.querySelector('.fsc-texts-savebar__clean');
+            var changed = bar.querySelector('.fsc-texts-savebar__dirty');
+            var dirty = false;
+            form.addEventListener('input', function (event) {
+                var field = event.target;
+                if (!field.hasAttribute('data-original')) { return; }
+                field.closest('.fsc-texts-field').classList.toggle('is-changed', field.value !== field.getAttribute('data-original'));
+                dirty = form.querySelectorAll('.fsc-texts-field.is-changed').length > 0;
+                bar.classList.toggle('is-dirty', dirty);
+                clean.hidden = dirty;
+                changed.hidden = !dirty;
+            });
+            form.addEventListener('submit', function () { dirty = false; });
+            window.addEventListener('beforeunload', function (event) {
+                if (dirty) { event.preventDefault(); event.returnValue = ''; }
+            });
+        })();
+        </script>
     <?php endif; ?>
 
     <?php if ($canRescan) : ?>

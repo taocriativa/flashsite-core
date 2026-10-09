@@ -25,24 +25,24 @@ final class SiteTextsRegistry
      * Campos encontrados nos dados de uma página do Elementor (widgets atómicos e clássicos).
      *
      * @param array<mixed> $data _elementor_data decodificado
-     * @return list<array{key: string, label: string, type: string, default: string, section: string}>
+     * @return list<array{key: string, label: string, type: string, default: string, section: string, element: string}>
      */
     public static function extract(array $data): array
     {
         $found = [];
-        self::walk($data, $found);
+        self::walk($data, $found, '');
         return array_values($found);
     }
 
     /** @param array<string, array{key: string, label: string, type: string, default: string, section: string}> $found */
-    private static function walk(mixed $node, array &$found): void
+    private static function walk(mixed $node, array &$found, string $element): void
     {
         if (is_string($node)) {
             // Widgets clássicos: __dynamic__ = [elementor-tag id="…" name="flashsite-site-text" settings="%7B…%7D"]
             if (str_contains($node, 'name="' . self::TAG . '"') && preg_match('/settings="([^"]*)"/', $node, $m)) {
                 $settings = json_decode(urldecode($m[1]), true);
                 if (is_array($settings)) {
-                    self::add($settings, $found);
+                    self::add($settings, $found, $element);
                 }
             }
             return;
@@ -52,11 +52,15 @@ final class SiteTextsRegistry
         }
         // Widgets atómicos: {"$$type": "dynamic", "value": {"name": "flashsite-site-text", "settings": {…}}}
         if (($node['$$type'] ?? '') === 'dynamic' && is_array($node['value'] ?? null) && ($node['value']['name'] ?? '') === self::TAG) {
-            self::add((array) ($node['value']['settings'] ?? []), $found);
+            self::add((array) ($node['value']['settings'] ?? []), $found, $element);
             return;
         }
+        // Elemento do Elementor: o id serve para o "Mostrar no site".
+        if (isset($node['id']) && is_string($node['id']) && (isset($node['elType']) || isset($node['widgetType']))) {
+            $element = $node['id'];
+        }
         foreach ($node as $child) {
-            self::walk($child, $found);
+            self::walk($child, $found, $element);
         }
     }
 
@@ -64,7 +68,7 @@ final class SiteTextsRegistry
      * @param array<string, mixed> $settings
      * @param array<string, array{key: string, label: string, type: string, default: string, section: string}> $found
      */
-    private static function add(array $settings, array &$found): void
+    private static function add(array $settings, array &$found, string $element = ''): void
     {
         $get = static function (string $name) use ($settings): string {
             $value = $settings[$name] ?? '';
@@ -84,6 +88,7 @@ final class SiteTextsRegistry
             'type' => in_array($type, self::TYPES, true) ? $type : 'line',
             'default' => $get('default'),
             'section' => $get('section'),
+            'element' => $element,
         ];
     }
 

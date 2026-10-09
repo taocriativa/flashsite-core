@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../TestCase.php';
 
 use FlashSite\Core\Modules\ClientPanel\ClientPanelModule;
+use FlashSite\Core\Modules\ClientPanel\MediaGuard;
 use FlashSite\Core\Modules\ClientPanel\PtBrAdmin;
 
 /** Painel do cliente (@since 3.1.0): PT-BR nas telas e quem é "Cliente". */
@@ -17,8 +18,14 @@ final class ClientPanelTest extends TestCase
         // Palavras inteiras apenas; identificadores ficam.
         $this->assertSame('guardarias fs_guardar guardar-x', PtBrAdmin::convertText('guardarias fs_guardar guardar-x'));
 
-        $html = '<form><input name="guardar" value="Guardar"><a href="/contacto/">Contacto</a><script>var guardar = 1;</script><textarea>Morada do cliente</textarea></form>';
-        $this->assertSame('<form><input name="guardar" value="Salvar"><a href="/contacto/">Contato</a><script>var guardar = 1;</script><textarea>Morada do cliente</textarea></form>', PtBrAdmin::convert($html));
+        $html = '<form><input type="submit" name="guardar" value="Guardar"><input type="text" value="Contacto do cliente" placeholder="Morada"><a href="/contacto/">Contacto</a><script>var guardar = 1;</script><textarea>Morada do cliente</textarea></form>';
+        $this->assertSame('<form><input type="submit" name="guardar" value="Salvar"><input type="text" value="Contacto do cliente" placeholder="Morada"><a href="/contacto/">Contato</a><script>var guardar = 1;</script><textarea>Morada do cliente</textarea></form>', PtBrAdmin::convert($html));
+
+        // Fotos em uso: ids de imagens no JSON do Elementor (atómico e clássico).
+        $json = '{"image":{"$$type":"image","value":{"src":{"$$type":"image-src","value":{"id":{"$$type":"image-attachment-id","value":270}}}}},"bg":{"url":"https://x/y.jpg","id":"264"},"logo":{"id":40,"url":"https://x/l.png"},"n":{"id":7}}';
+        $ids = MediaGuard::extractIds($json);
+        sort($ids);
+        $this->assertSame([40, 264, 270], $ids);
 
         $client = (object) ['roles' => ['flashsite_site_manager']];
         $admin = (object) ['roles' => ['administrator', 'flashsite_site_manager']];

@@ -27,6 +27,7 @@ final class SiteTextsModule implements ModuleInterface
         add_action('admin_init', [$this, 'maybeRescan']);
         add_action('admin_post_flashsite_site_texts_save', [$this, 'handleSave']);
         add_action('admin_post_flashsite_site_texts_rescan', [$this, 'handleRescan']);
+        add_action('wp_footer', [$this, 'printHighlightScript'], 50);
     }
 
     public function boot(): void {}
@@ -107,21 +108,51 @@ final class SiteTextsModule implements ModuleInterface
     }
 
     /**
-     * Campos agrupados por página (título) e parte da página, pela ordem em que aparecem.
+     * Campos agrupados por página, na ordem do site: página inicial, outras páginas (ordem do
+     * menu de páginas), páginas modelo e, por fim, o que aparece em todas as páginas. Dentro de
+     * cada página, as partes e os campos seguem a ordem em que aparecem na página.
      *
-     * @return array<string, array{url: string, sections: array<string, list<array<string, mixed>>>}>
+     * @return list<array{title: string, anchor: string, url: string, sections: array<string, list<array<string, mixed>>>}>
      */
     public function groupedFields(): array
     {
         $groups = [];
         foreach ($this->registry->fields() as $field) {
             $pageId = (int) (($field['pages'] ?? [])[0] ?? 0);
-            $title = $pageId > 0 ? $this->pageLabel($pageId) : 'Outros';
-            $groups[$title]['url'] ??= $pageId > 0 && get_post_type($pageId) === 'page' ? (string) get_permalink($pageId) : '';
+            if (! isset($groups[$pageId])) {
+                $isPage = $pageId > 0 && get_post_type($pageId) === 'page';
+                $groups[$pageId] = [
+                    'title' => $pageId > 0 ? $this->pageLabel($pageId) : 'Outros',
+                    'anchor' => 'fs-pagina-' . $pageId,
+                    'url' => $isPage && ! str_starts_with((string) get_the_title($pageId), 'Modelo · ') ? (string) get_permalink($pageId) : '',
+                    'order' => $this->pageOrder($pageId),
+                    'sections' => [],
+                ];
+            }
             $section = (string) ($field['section'] ?? '');
-            $groups[$title]['sections'][$section !== '' ? $section : 'Textos'][] = $field;
+            $field['show_url'] = $groups[$pageId]['url'] !== '' && (string) ($field['element'] ?? '') !== ''
+                ? add_query_arg('fs_mostrar', rawurlencode((string) $field['element']), $groups[$pageId]['url'])
+                : '';
+            $groups[$pageId]['sections'][$section !== '' ? $section : 'Textos'][] = $field;
         }
-        return $groups;
+        uasort($groups, static fn (array $a, array $b): int => $a['order'] <=> $b['order']);
+        return array_values(array_map(static function (array $group): array {
+            unset($group['order']);
+            return $group;
+        }, $groups));
+    }
+
+    /** @return array{int, int, int} */
+    private function pageOrder(int $pageId): array
+    {
+        if ($pageId > 0 && (int) get_option('page_on_front') === $pageId) {
+            return [0, 0, 0];
+        }
+        if ($pageId > 0 && get_post_type($pageId) === 'page') {
+            $model = str_starts_with((string) get_the_title($pageId), 'Modelo · ') ? 2 : 1;
+            return [$model, (int) get_post_field('menu_order', $pageId), $pageId];
+        }
+        return [3, 0, $pageId];
     }
 
     private function pageLabel(int $pageId): string
@@ -135,6 +166,32 @@ final class SiteTextsModule implements ModuleInterface
         }
         // Páginas modelo das coleções ("Modelo · Imóveis topo"): mostra só a parte depois do prefixo.
         return str_starts_with($title, 'Modelo · ') ? substr($title, strlen('Modelo · ')) : $title;
+    }
+
+    /**
+     * "Mostrar no site": a página abre em ?fs_mostrar=<id do elemento> e o texto fica marcado.
+     * Só para quem pode editar os textos (sessão iniciada, sem cache).
+     */
+    public function printHighlightScript(): void
+    {
+        if (empty($_GET['fs_mostrar']) || ! current_user_can(self::CAP)) { // phpcs:ignore WordPress.Security.NonceVerification
+            return;
+        }
+        $id = preg_replace('/[^a-zA-Z0-9]/', '', (string) wp_unslash($_GET['fs_mostrar'])); // phpcs:ignore WordPress.Security
+        if ($id === '') {
+            return;
+        }
+        ?>
+<style>.fs-mostrar{outline:3px solid #E8A33D!important;outline-offset:6px;border-radius:4px;animation:fs-mostrar 1.2s ease-in-out 3}@keyframes fs-mostrar{50%{outline-color:transparent}}</style>
+<script>
+(function () {
+    var el = document.querySelector('[data-id="<?php echo esc_js($id); ?>"]');
+    if (!el) { return; }
+    el.classList.add('fs-mostrar');
+    setTimeout(function () { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 300);
+})();
+</script>
+        <?php
     }
 
     public function handleSave(): void

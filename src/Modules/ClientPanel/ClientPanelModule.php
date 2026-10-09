@@ -29,7 +29,12 @@ final class ClientPanelModule implements ModuleInterface
     /** Itens da barra superior que somem para o cliente. */
     public const HIDDEN_BAR_NODES = ['wp-logo', 'comments', 'new-content', 'updates', 'elementor_edit_page', 'elementor', 'litespeed-menu', 'rank-math', 'hostinger_admin_bar', 'hostinger-ai-assistant', 'search', 'customize', 'edit', 'cookie-law-info'];
 
-    public function __construct(private CollectionsModule $collections, private SiteTextsRegistry $texts, private ?CollectionSettings $settings = null) {}
+    private MediaGuard $media;
+
+    public function __construct(private CollectionsModule $collections, private SiteTextsRegistry $texts, private ?CollectionSettings $settings = null)
+    {
+        $this->media = new MediaGuard();
+    }
 
     public function register(): void
     {
@@ -41,6 +46,13 @@ final class ClientPanelModule implements ModuleInterface
         add_action('admin_bar_menu', [$this, 'trimAdminBar'], 999);
         add_action('in_admin_header', [$this, 'silenceNotices'], 1);
         add_action('current_screen', [$this, 'maybeTranslateScreen']);
+        add_filter('map_meta_cap', [$this, 'protectMediaInUse'], 10, 4);
+        foreach (['save_post', 'deleted_post', 'elementor/document/after_save'] as $hook) {
+            add_action($hook, [MediaGuard::class, 'forget']);
+        }
+        foreach (['update_option_site_icon', 'update_option_flashsite_business_profile'] as $hook) {
+            add_action($hook, [MediaGuard::class, 'forget']);
+        }
     }
 
     public function boot(): void {}
@@ -132,6 +144,49 @@ final class ClientPanelModule implements ModuleInterface
         remove_all_actions('admin_notices');
         remove_all_actions('all_admin_notices');
         remove_all_actions('network_admin_notices');
+        $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+        if (is_object($screen) && in_array((string) $screen->id, ['upload', 'attachment'], true)) {
+            add_action('admin_notices', [$this, 'mediaNotice']);
+        }
+    }
+
+    /**
+     * Cliente: arquivo em uso no site não pode ser excluído (ver MediaGuard).
+     *
+     * @param list<string> $caps
+     * @param string $cap
+     * @param int $userId
+     * @param array<int, mixed> $args
+     * @return list<string>
+     */
+    public function protectMediaInUse($caps, $cap, $userId, $args): array
+    {
+        $caps = (array) $caps;
+        if ($cap !== 'delete_post' || empty($args[0]) || get_post_type((int) $args[0]) !== 'attachment') {
+            return $caps;
+        }
+        $user = get_userdata((int) $userId);
+        if ($user && self::isClient($user) && $this->media->isInUse((int) $args[0])) {
+            $caps[] = 'do_not_allow';
+        }
+        return $caps;
+    }
+
+    public function mediaNotice(): void
+    {
+        $names = [];
+        foreach ($this->collections->activePresets() as $preset) {
+            $object = get_post_type_object($preset->postType());
+            if ($object !== null) {
+                $names[] = mb_strtolower((string) $object->labels->name);
+            }
+        }
+        $items = $names !== [] ? ' e fotos de ' . implode(', ', $names) : '';
+        printf(
+            '<div class="notice notice-info"><p><strong>Fotos em uso no site ficam protegidas</strong> e não podem ser excluídas daqui (logos, ícones, imagens das páginas%s). %sPode adicionar fotos novas e excluir as que não estão em uso.</p></div>',
+            esc_html($items),
+            $names !== [] ? 'Para trocar ou tirar a foto de um item, faça na ficha dele. ' : ''
+        );
     }
 
     /**
