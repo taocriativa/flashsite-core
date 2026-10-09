@@ -112,6 +112,8 @@ final class CollectionsModule implements ModuleInterface
             $this->registerPreset($preset);
         }
         if ($this->registered === []) {
+            // Sem coleções o site continua a ter efeitos (.fs-marquee, .fs-mapa), popups e modelos do site.
+            $this->modelPages?->register([]);
             return;
         }
         // A ficha também trata gravações REST (faixa de preço e capa), por isso regista sempre.
