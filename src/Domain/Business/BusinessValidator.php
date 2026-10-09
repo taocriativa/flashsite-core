@@ -33,7 +33,7 @@ final class BusinessValidator
                 'postal_code' => sanitize_text_field((string) $this->value($input, 'postal_code', $existing, ['location', 'postal_code'], '')),
                 'country' => sanitize_text_field((string) $this->value($input, 'country', $existing, ['location', 'country'], '')),
                 'google_maps_url' => esc_url_raw((string) $this->value($input, 'google_maps_url', $existing, ['location', 'google_maps_url'], '')),
-                'google_maps_embed' => wp_kses_post((string) $this->value($input, 'google_maps_embed', $existing, ['location', 'google_maps_embed'], '')),
+                'google_maps_embed' => self::mapsEmbedUrl((string) $this->value($input, 'google_maps_embed', $existing, ['location', 'google_maps_embed'], '')),
             ],
             'social' => [
                 'website_url' => esc_url_raw((string) $this->value($input, 'website_url', $existing, ['social', 'website_url'], '')),
@@ -173,7 +173,8 @@ final class BusinessValidator
     private function sanitizeList(string $value): array
     {
         $lines = preg_split('/
-||
+|
+|
 /', $value) ?: [];
         $items = [];
         foreach ($lines as $line) {
@@ -210,5 +211,26 @@ final class BusinessValidator
             'branding_accent_color' => ['branding', 'accent_color'],
             default => ['branding'],
         };
+    }
+
+    /**
+     * Mapa do Google: guarda só o endereço do embed. Aceita o código <iframe> copiado do Google
+     * Maps (Partilhar › Incorporar) ou o próprio endereço. Outra coisa é descartada.
+     *
+     * @since 3.1.0-beta.14 (antes o wp_kses_post apagava o iframe e o campo ficava vazio)
+     */
+    public static function mapsEmbedUrl(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+        if (preg_match('/<iframe[^>]+src=["\']([^"\']+)["\']/i', $value, $m)) {
+            $value = html_entity_decode($m[1], ENT_QUOTES);
+        }
+        if (! preg_match('#^https://(www\.)?google\.[a-z.]+/maps/embed\?#i', $value)) {
+            return '';
+        }
+        return function_exists('esc_url_raw') ? esc_url_raw($value) : $value;
     }
 }

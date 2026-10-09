@@ -27,6 +27,10 @@ final class ClientPanelTest extends TestCase
         // Mapa por classe fs-mapa (OutputFoundation).
         $this->assertSame('<span class="x fs-mapa e-paragraph-base"><iframe src="m"></iframe></span><p>ok</p>', \FlashSite\Core\Modules\OutputFoundation\OutputFoundationModule::mapMarkup('<span class="x fs-mapa e-paragraph-base"></span><p>ok</p>', '<iframe src="m"></iframe>'));
 
+        // Mapa: aceita o iframe do Google ou o endereço; guarda só o endereço do embed.
+        $this->assertSame('https://www.google.com/maps/embed?pb=!1m18!2sX', \FlashSite\Core\Domain\Business\BusinessValidator::mapsEmbedUrl('<iframe src="https://www.google.com/maps/embed?pb=!1m18!2sX" width="600"></iframe>'));
+        $this->assertSame('', \FlashSite\Core\Domain\Business\BusinessValidator::mapsEmbedUrl('<iframe src="https://evil.example/x"></iframe>'));
+
         // Registro de alterações: só administradores, guardado por um ano.
         $this->assertSame('manage_options', ClientPanelModule::historyCapability());
         $this->assertSame(365, ClientPanelModule::historyDays());

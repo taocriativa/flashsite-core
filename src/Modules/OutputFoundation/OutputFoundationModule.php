@@ -634,6 +634,14 @@ final class OutputFoundationModule implements ModuleInterface
         if (strpos($embed, 'google.com/maps') === false) {
             return '';
         }
+        // 3.1.0-beta.14+: o campo guarda só o endereço do embed; o iframe é montado aqui.
+        if (str_starts_with($embed, 'https://')) {
+            return sprintf(
+                '<iframe src="%s" width="100%%" height="100%%" style="border:0" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="%s"></iframe>',
+                esc_url($embed),
+                esc_attr__('Mapa', 'flashsite-core')
+            );
+        }
 
         return wp_kses($embed, [
             'iframe' => [
