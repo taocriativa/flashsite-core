@@ -8,6 +8,8 @@ use FlashSite\Core\Domain\Collections\CollectionCapabilities;
 use FlashSite\Core\Domain\Collections\CollectionSettings;
 use FlashSite\Core\Domain\SiteTexts\SiteTextsRegistry;
 use FlashSite\Core\Modules\Collections\CollectionsModule;
+use FlashSite\Core\Domain\I18n\Language;
+use FlashSite\Core\Domain\I18n\Strings;
 
 /**
  * Painel do cliente (@since 3.1.0).
@@ -65,6 +67,18 @@ final class ClientPanelModule implements ModuleInterface
         foreach (['update_option_site_icon', 'update_option_flashsite_business_profile'] as $hook) {
             add_action($hook, [MediaGuard::class, 'forget']);
         }
+    }
+
+    /**
+     * Idiomas do site, o principal primeiro (@since 3.2.0-beta.8). Só com o Polylang ativo.
+     *
+     * @return list<string>
+     */
+    public static function siteLanguages(): array
+    {
+        $multilingual = function_exists('apply_filters') && (bool) apply_filters('flashsite/multilingual_active', false);
+        $context = Strings::context();
+        return $multilingual && $context !== null ? $context->available() : [];
     }
 
     public function boot(): void {}
@@ -332,6 +346,23 @@ final class ClientPanelModule implements ModuleInterface
                 'title' => 'Política de privacidade',
                 'text' => 'O texto legal do site. A data de atualização muda sozinha.',
                 'links' => [['label' => 'Editar política', 'url' => admin_url('admin.php?page=flashsite-privacy-policy')]],
+            ];
+        }
+        $languages = self::siteLanguages();
+        if (count($languages) > 1 && current_user_can('flashsite_manage_business_data')) {
+            $names = array_map(static fn (string $code): string => Language::SUPPORTED[$code] ?? $code, $languages);
+            $links = [];
+            if ($this->texts->fields() !== []) {
+                foreach ($this->texts->languages() as $code) {
+                    $links[] = ['label' => 'Textos em ' . (Language::SUPPORTED[$code] ?? $code), 'url' => admin_url('admin.php?page=flashsite-site-texts&idioma=' . rawurlencode($code)), 'primary' => $links === []];
+                }
+            }
+            $links[] = ['label' => 'Dados por idioma', 'url' => admin_url('admin.php?page=flashsite-business-languages')];
+            $cards[] = [
+                'icon' => 'dashicons-translation',
+                'title' => 'Idiomas do site',
+                'text' => implode(', ', $names) . '. Cada idioma tem a sua página: mude os textos de cada um em separado. Nos itens com versão por idioma, use o botão + da lista para criar ou abrir a tradução.',
+                'links' => $links,
             ];
         }
         if (current_user_can('upload_files')) {
