@@ -12,7 +12,7 @@ use FlashSite\Core\Domain\Fonts\FontPlan;
  *
  * Ao preparar: lê as fontes das variáveis do Elementor (e da tipografia do kit), baixa do Google só
  * os pesos da hierarquia (títulos 700/800, texto 400/600/700, ajustáveis) e só o alfabeto latino,
- * guarda em uploads/flashsite-fonts/ e monta o CSS. No site: pré-carrega a fonte do texto e a dos
+ * guarda em uploads/flashsite-fonts/ e monta o CSS (e limpa a cache página a página). No site: pré-carrega a fonte do texto e a dos
  * títulos, escreve o CSS no <head> e desliga as fontes do Google do Elementor. Cada fonte ganha uma
  * reserva com as mesmas medidas (config/fonts/metrics.php). Desligar volta tudo ao que era.
  */
@@ -167,7 +167,7 @@ final class FontsModule implements ModuleInterface
             'css' => FontPlan::css($families, $found['variables'], $metrics),
             'updated' => gmdate('c'),
         ], true);
-        do_action('litespeed_purge_all');
+        self::purgePages();
         $message = 'Fontes preparadas: ' . implode(', ', array_keys($families)) . '.';
         return ['ok' => true, 'message' => $errors === [] ? $message : $message . ' Sem sucesso: ' . implode(', ', array_unique($errors)) . '.'];
     }
@@ -177,7 +177,19 @@ final class FontsModule implements ModuleInterface
         $state = self::state();
         $state['enabled'] = false;
         update_option(self::OPTION, $state, true);
-        do_action('litespeed_purge_all');
+        self::purgePages();
+    }
+
+    /**
+     * As fontes estão no <head> de todas as páginas: limpa a cache página a página (regra do processo:
+     * nunca "limpar tudo" do LiteSpeed).
+     */
+    private static function purgePages(): void
+    {
+        $ids = get_posts(['post_type' => 'any', 'post_status' => 'publish', 'posts_per_page' => 500, 'fields' => 'ids', 'suppress_filters' => true]);
+        foreach ((array) $ids as $id) {
+            do_action('litespeed_purge_post', (int) $id);
+        }
     }
 
     /** @return array<string, array{fallback: string, size_adjust: float, ascent: float, descent: float, line_gap: float}> */
