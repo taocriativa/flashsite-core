@@ -16,5 +16,6 @@ return [
     FlashSite\Core\Modules\Hardening\HardeningModule::class,
     FlashSite\Core\Modules\Markets\MarketsModule::class,
     FlashSite\Core\Modules\SiteTexts\SiteTextsModule::class,
+    FlashSite\Core\Modules\Fonts\FontsModule::class,
     FlashSite\Core\Modules\ClientPanel\ClientPanelModule::class,
 ];
