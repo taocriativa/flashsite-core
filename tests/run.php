@@ -33,6 +33,7 @@ $files = [
     __DIR__ . '/Unit/MarketsModuleTest.php',
     __DIR__ . '/Integration/PlanoPresetTest.php',
     __DIR__ . '/Integration/PratoPresetTest.php',
+    __DIR__ . '/Unit/I18nTest.php',
 ];
 
 foreach ($files as $file) {
@@ -69,6 +70,7 @@ $tests = [
     new MarketsModuleTest(),
     new PlanoPresetTest(),
     new PratoPresetTest(),
+    new I18nTest(),
 ];
 
 $failures = [];

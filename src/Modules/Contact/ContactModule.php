@@ -5,6 +5,7 @@ namespace FlashSite\Core\Modules\Contact;
 
 use FlashSite\Core\Core\Contracts\ModuleInterface;
 use FlashSite\Core\Domain\Business\BusinessData;
+use FlashSite\Core\Domain\I18n\Strings;
 
 /**
  * FlashSite › WhatsApp e formulários.
@@ -125,8 +126,14 @@ final class ContactModule implements ModuleInterface
         wp_localize_script('flashsite-core-forms-whatsapp', 'flashsiteFormsWhatsapp', [
             'number' => $s['forms_whatsapp'] !== 'off' ? $digits : '',
             'mode' => $s['forms_whatsapp'],
-            'intro' => $s['forms_intro'],
+            'intro' => Strings::t((string) $s['forms_intro']),
             'phoneCountry' => $this->phoneCountry(),
+            'messages' => [
+                'PT' => Strings::t('Indique um número português com 9 dígitos (ex.: 912 345 678).'),
+                'BR' => Strings::t('Informe DDD + número, só algarismos (ex.: 71 99999 9999).'),
+                'INT' => Strings::t('Indique um número de telefone válido.'),
+                'digits' => Strings::t('Use só números.'),
+            ],
         ]);
         if ($this->showFloat($s)) {
             wp_enqueue_style('flashsite-core-whatsapp-float', FLASHSITE_CORE_URL . 'assets/frontend/css/fsc-whatsapp-float.css', [], FLASHSITE_CORE_VERSION);

@@ -6,6 +6,7 @@ namespace FlashSite\Core\Modules\Collections\Output;
 use FlashSite\Core\Domain\Collections\CollectionPresetInterface;
 use FlashSite\Core\Domain\Collections\TaxonomyDefinition;
 use FlashSite\Core\Modules\Collections\Output\Elementor\CollectionTagBase;
+use FlashSite\Core\Domain\I18n\Strings;
 
 /**
  * Páginas modelo: o design das páginas de uma coleção é feito em páginas normais do Elementor
@@ -359,7 +360,7 @@ final class ModelPages
             $id = $popup['id'];
             $s = $popup['settings'];
             printf(
-                '<dialog class="fs-popup" id="fs-popup-%1$d" data-popup="%1$d" data-trigger="%2$s" data-delay="%3$d" data-scroll="%4$d" data-frequency="%5$s" data-days="%6$d" data-device="%7$s" data-version="%8$s" aria-label="%9$s"><div class="fs-popup__box"><button type="button" class="fs-popup__close" aria-label="Fechar" data-fs-popup-close>&times;</button>',
+                '<dialog class="fs-popup" id="fs-popup-%1$d" data-popup="%1$d" data-trigger="%2$s" data-delay="%3$d" data-scroll="%4$d" data-frequency="%5$s" data-days="%6$d" data-device="%7$s" data-version="%8$s" aria-label="%9$s"><div class="fs-popup__box"><button type="button" class="fs-popup__close" aria-label="' . esc_attr(Strings::t('Fechar')) . '" data-fs-popup-close>&times;</button>',
                 $id,
                 esc_attr((string) $s['fs_popup_trigger']),
                 (int) $s['fs_popup_delay'],
@@ -474,7 +475,7 @@ final class ModelPages
             $terms = $name !== '' ? wp_get_object_terms((int) get_the_ID(), $name) : [];
             $term = is_array($terms) && $terms !== [] ? $terms[0] : null;
             $slug = $term !== null ? (string) $term->slug : '_outros';
-            $labels[$slug] = $term !== null ? (string) $term->name : 'Outros';
+            $labels[$slug] = Strings::t($term !== null ? (string) $term->name : 'Outros');
             $groups[$slug][] = (int) get_the_ID();
         }
         $order = $taxonomy !== null ? array_keys($taxonomy->terms) : [];
@@ -486,7 +487,7 @@ final class ModelPages
             return $ia <=> $ib;
         });
         if ($this->groupNav && count($groups) > 1) {
-            echo '<nav class="fs-collection-nav" aria-label="Categorias">';
+            echo '<nav class="fs-collection-nav" aria-label="' . esc_attr(Strings::t('Categorias')) . '">';
             foreach (array_keys($groups) as $slug) {
                 printf('<a class="fs-collection-nav__link" href="#%s">%s</a>', esc_attr('grupo-' . $slug), esc_html($labels[$slug] ?? (string) $slug));
             }
@@ -538,7 +539,7 @@ final class ModelPages
             } elseif ($taxonomy->auto && $name !== '') {
                 usort($terms, static fn ($a, $b) => (int) $a->term_id <=> (int) $b->term_id);
             }
-            printf('<label class="fs-collection-filters__field"><span class="fs-collection-filters__label">%s</span><select name="%s">', esc_html($taxonomy->singularLabel), esc_attr($name));
+            printf('<label class="fs-collection-filters__field"><span class="fs-collection-filters__label">%s</span><select name="%s">', esc_html(Strings::t($taxonomy->singularLabel)), esc_attr($name));
             printf('<option value="">%s</option>', esc_html($this->text($preset, 'any')));
             $this->renderOptions($terms, 0, $current, $taxonomy->hierarchical, 0);
             echo '</select></label>';
@@ -565,7 +566,7 @@ final class ModelPages
                 esc_attr((string) $term->slug),
                 $current === (string) $term->slug ? ' selected' : '',
                 $depth > 0 ? str_repeat("\u{00A0}\u{00A0}\u{00A0}", $depth) : '', // recuo sem travessão
-                esc_html((string) $term->name)
+                esc_html(Strings::t((string) $term->name))
             );
             if ($hierarchical) {
                 $this->renderOptions($terms, (int) $term->term_id, $current, true, $depth + 1);
@@ -589,7 +590,7 @@ final class ModelPages
             'search_empty' => 'Nada encontrado para esta busca.',
         ];
         $texts = (array) $preset->setting('archive_texts', []);
-        $value = $texts[$key] ?? $defaults[$key] ?? '';
+        $value = Strings::t((string) ($texts[$key] ?? $defaults[$key] ?? ''));
         return (string) apply_filters('flashsite/collections/archive_text', $value, $key, $preset->key());
     }
 
@@ -597,7 +598,7 @@ final class ModelPages
     {
         $links = paginate_links(['type' => 'list', 'prev_text' => $this->text($preset, 'prev'), 'next_text' => $this->text($preset, 'next')]);
         if (is_string($links) && $links !== '') {
-            echo '<nav class="fs-collection-pagination" aria-label="Paginação">' . $links . '</nav>'; // phpcs:ignore WordPress.Security.EscapeOutput
+            echo '<nav class="fs-collection-pagination" aria-label="' . esc_attr(Strings::t('Paginação')) . '">' . $links . '</nav>'; // phpcs:ignore WordPress.Security.EscapeOutput
         }
     }
 

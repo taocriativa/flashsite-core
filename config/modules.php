@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 return [
+    FlashSite\Core\Modules\Multilingual\MultilingualModule::class,
     FlashSite\Core\Modules\BusinessData\BusinessDataModule::class,
     FlashSite\Core\Modules\AccessControl\AccessControlModule::class,
     FlashSite\Core\Modules\AdminUX\AdminUXModule::class,

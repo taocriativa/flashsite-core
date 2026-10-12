@@ -17,11 +17,14 @@
         BR: { code: '55', min: 10, max: 11, re: /^[1-9]{2}9?\d{8}$/, msg: 'Informe DDD + número, só algarismos (ex.: 71 99999 9999).' },
         INT: { code: '', min: 7, max: 15, re: /^\d{7,15}$/, msg: 'Indique um número de telefone válido.' }
     };
+    /* Mensagens no idioma da página (Core 3.2+), quando o PHP as envia. */
+    var MSG = cfg.messages || {};
+    ['PT', 'BR', 'INT'].forEach(function (k) { if (MSG[k]) { PHONE_RULES[k].msg = MSG[k]; } });
 
     function phoneError(raw) {
         var value = (raw || '').trim();
         if (value === '') { return ''; }
-        if (/[^\d\s+()\-.]/.test(value)) { return 'Use só números.'; }
+        if (/[^\d\s+()\-.]/.test(value)) { return MSG.digits || 'Use só números.'; }
         var digits = value.replace(/\D/g, '');
         var intl = /^\s*(\+|00)/.test(value);
         if (intl) {

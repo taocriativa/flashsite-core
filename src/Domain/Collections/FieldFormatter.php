@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace FlashSite\Core\Domain\Collections;
 
+use FlashSite\Core\Domain\I18n\Strings;
+
 /**
  * Formata valores de itens para o site (pt-PT).
  *
@@ -106,7 +108,7 @@ final class FieldFormatter
 
         $flag = $flagKey !== '' ? $preset->field($flagKey) : null;
         if ($flag !== null && $this->reader->value($flag, $postId) === true) {
-            return self::ON_REQUEST_TEXT;
+            return Strings::t(self::ON_REQUEST_TEXT);
         }
 
         $field = $preset->field($priceKey);
@@ -188,7 +190,7 @@ final class FieldFormatter
         return [
             'value' => $value,
             'term' => $term,
-            'suffix' => (string) ($config['suffix'] ?? ''),
+            'suffix' => Strings::t((string) ($config['suffix'] ?? '')),
             'separator' => (string) ($config['separator'] ?? ' · '),
         ];
     }
@@ -222,7 +224,7 @@ final class FieldFormatter
         if ($taxonomy->hierarchical) {
             usort($terms, static fn ($a, $b) => ((int) $b->parent > 0 ? 1 : 0) <=> ((int) $a->parent > 0 ? 1 : 0));
         }
-        return implode($separator, array_map(static fn ($t) => (string) $t->name, $terms));
+        return implode($separator, array_map(static fn ($t) => Strings::t((string) $t->name), $terms));
     }
 
     /** @return list<string> slugs dos termos de uma taxonomia do preset */
@@ -259,13 +261,13 @@ final class FieldFormatter
         if (is_array($config) && isset($config['taxonomy'], $config['terms']) && is_array($config['terms'])) {
             foreach ($this->termSlugs($preset, (string) $config['taxonomy'], $postId) as $slug) {
                 if (isset($config['terms'][$slug])) {
-                    return (string) $config['terms'][$slug];
+                    return Strings::t((string) $config['terms'][$slug]);
                 }
             }
             return '';
         }
         $field = is_array($config) && isset($config['field']) ? $preset->field((string) $config['field']) : null;
-        return $field !== null && $this->reader->value($field, $postId) === true ? (string) ($config['text'] ?? '') : '';
+        return $field !== null && $this->reader->value($field, $postId) === true ? Strings::t((string) ($config['text'] ?? '')) : '';
     }
 
     private function priceSuffix(CollectionPresetInterface $preset, int $postId, ?string $exclude = null): string
@@ -275,14 +277,14 @@ final class FieldFormatter
         if (is_array($config) && isset($config['field'], $config['map']) && is_array($config['map'])) {
             $field = $preset->field((string) $config['field']);
             $value = $field !== null ? (string) $this->reader->value($field, $postId) : '';
-            return (string) ($config['map'][$value] ?? '');
+            return Strings::t((string) ($config['map'][$value] ?? ''));
         }
         if (! is_array($config) || ! isset($config['taxonomy'], $config['terms']) || ! is_array($config['terms'])) {
             return '';
         }
         foreach ($this->termSlugs($preset, (string) $config['taxonomy'], $postId) as $slug) {
             if ($slug !== $exclude && isset($config['terms'][$slug])) {
-                return (string) $config['terms'][$slug];
+                return Strings::t((string) $config['terms'][$slug]);
             }
         }
         return '';

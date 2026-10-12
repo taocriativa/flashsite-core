@@ -5,6 +5,7 @@ namespace FlashSite\Core\Modules\Collections\Output\Elementor;
 
 use FlashSite\Core\Domain\Collections\CollectionPresetInterface;
 use FlashSite\Core\Domain\Collections\FieldFormatter;
+use FlashSite\Core\Domain\I18n\Strings;
 
 require_once __DIR__ . '/ItemFieldTag.php';
 
@@ -69,7 +70,7 @@ class ItemPriceDropTag extends ItemFieldTag
             return '';
         }
         if ((string) ($this->get_settings('drop_part') ?: 'badge') === 'badge') {
-            return (string) ($this->get_settings('badge_text') ?: 'Preço reduzido');
+            return Strings::t((string) ($this->get_settings('badge_text') ?: 'Preço reduzido'));
         }
         $style = (string) ($this->get_settings('money') ?: FieldFormatter::MONEY_CENTS);
         return $formatter->previousPriceText($preset, $postId, $style);
