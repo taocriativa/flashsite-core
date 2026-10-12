@@ -14,7 +14,7 @@ use FlashSite\Core\Infrastructure\Storage\OptionsStorage;
  *
  * Mostra, para cada idioma além do principal, os campos de texto dos Dados do negócio que mudam
  * de idioma (frase curta, título, horários…). Vazio = mostra o do idioma principal.
- * REST flashsite/v1/business-profile/translations (GET/POST) para o MCP.
+ * REST flashsite/v1/business-translations (GET/POST) para o MCP.
  */
 final class BusinessTranslationsPage
 {
@@ -109,7 +109,7 @@ final class BusinessTranslationsPage
 
     public function registerRest(): void
     {
-        register_rest_route('flashsite/v1', '/business-profile/translations', [
+        register_rest_route('flashsite/v1', '/business-translations', [
             ['methods' => 'GET', 'callback' => fn () => ['languages' => self::otherLanguages(), 'fields' => BusinessTranslations::PATHS, 'values' => $this->translations->all()], 'permission_callback' => fn () => current_user_can(self::CAP)],
             ['methods' => 'POST', 'callback' => [$this, 'restSave'], 'permission_callback' => fn () => current_user_can(self::CAP)],
         ]);
