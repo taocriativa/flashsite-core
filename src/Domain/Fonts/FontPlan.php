@@ -45,12 +45,21 @@ final class FontPlan
                 continue;
             }
             $label = trim((string) ($variable['label'] ?? ''));
-            $family = self::cleanFamily((string) ($variable['value'] ?? ''));
+            $family = self::cleanFamily(self::scalar($variable['value'] ?? ''));
             if ($label !== '' && $family !== '') {
                 $out[$label] = $family;
             }
         }
         return $out;
+    }
+
+    /** O Elementor pode guardar o valor tipado: {"$$type": "string", "value": "Source Sans 3"}. */
+    private static function scalar(mixed $value): string
+    {
+        for ($i = 0; $i < 4 && is_array($value); $i++) {
+            $value = $value['value'] ?? reset($value);
+        }
+        return is_scalar($value) ? (string) $value : '';
     }
 
     public static function cleanFamily(string $family): string

@@ -18,7 +18,7 @@ final class FontsTest extends TestCase
         // Variáveis do Elementor V4 no kit: só as de fonte, sem as apagadas.
         $record = json_encode(['data' => [
             'e-gv-1' => ['type' => 'global-font-variable', 'label' => 'surf-fonte-titulo', 'value' => 'Big Shoulders Display'],
-            'e-gv-2' => ['type' => 'global-font-variable', 'label' => 'surf-fonte-texto', 'value' => '"Source Sans 3", sans-serif'],
+            'e-gv-2' => ['type' => 'global-font-variable', 'label' => 'surf-fonte-texto', 'value' => ['$$type' => 'string', 'value' => '"Source Sans 3", sans-serif']],
             'e-gv-3' => ['type' => 'global-color-variable', 'label' => 'surf-coral', 'value' => '#E2603F'],
             'e-gv-4' => ['type' => 'global-font-variable', 'label' => 'velha', 'value' => 'Lato', 'deleted' => true],
         ]]);
