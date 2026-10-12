@@ -4,12 +4,15 @@ declare(strict_types=1);
 namespace FlashSite\Core\Modules\SiteTexts;
 
 use FlashSite\Core\Core\Contracts\ModuleInterface;
+use FlashSite\Core\Domain\I18n\Language;
+use FlashSite\Core\Domain\I18n\Strings;
 use FlashSite\Core\Domain\SiteTexts\SiteTextsRegistry;
 
 /**
  * FlashSite › Textos do site (@since 3.1.0): o cliente muda os textos marcados com a tag
  * "Texto do site" sem abrir o Elementor. A lista de campos é lida das páginas do Elementor
  * quando são salvas, quando o Core muda de versão e pelo botão "Atualizar lista".
+ * Com vários idiomas (@since 3.2.0-beta.3), a tela tem uma aba por idioma.
  */
 final class SiteTextsModule implements ModuleInterface
 {
@@ -69,7 +72,8 @@ final class SiteTextsModule implements ModuleInterface
         $data = is_string($raw) ? json_decode($raw, true) : $raw;
         $status = (string) get_post_status($postId);
         $found = is_array($data) && in_array($status, ['publish', 'private'], true) ? SiteTextsRegistry::extract($data) : [];
-        $this->registry->syncPage($postId, $found);
+        $context = Strings::context();
+        $this->registry->syncPage($postId, $found, $context !== null ? $context->ofPost($postId) : '');
     }
 
     /** Relê todas as páginas do Elementor publicadas. */
@@ -101,7 +105,10 @@ final class SiteTextsModule implements ModuleInterface
         if (! current_user_can(self::CAP)) {
             wp_die(esc_html__('Sem permissão.', 'flashsite-core'));
         }
-        $groups = $this->groupedFields();
+        $languages = $this->registry->languages();
+        $requested = isset($_GET['idioma']) ? sanitize_text_field((string) wp_unslash($_GET['idioma'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+        $language = in_array($requested, $languages, true) ? $requested : $languages[0];
+        $groups = $this->groupedFields($language);
         $values = $this->registry->values();
         $canRescan = current_user_can('manage_options');
         include FLASHSITE_CORE_PATH . 'templates/admin/site-texts.php';
@@ -114,10 +121,10 @@ final class SiteTextsModule implements ModuleInterface
      *
      * @return list<array{title: string, anchor: string, url: string, sections: array<string, list<array<string, mixed>>>}>
      */
-    public function groupedFields(): array
+    public function groupedFields(string $language = ''): array
     {
         $groups = [];
-        foreach ($this->registry->fields() as $field) {
+        foreach ($this->registry->fieldsFor($language) as $field) {
             $pageId = (int) (($field['pages'] ?? [])[0] ?? 0);
             if (! isset($groups[$pageId])) {
                 $isPage = $pageId > 0 && get_post_type($pageId) === 'page';
@@ -145,7 +152,7 @@ final class SiteTextsModule implements ModuleInterface
     /** @return array{int, int, int} */
     private function pageOrder(int $pageId): array
     {
-        if ($pageId > 0 && (int) get_option('page_on_front') === $pageId) {
+        if ($this->isFront($pageId)) {
             return [0, 0, 0];
         }
         if ($pageId > 0 && get_post_type($pageId) === 'page') {
@@ -158,7 +165,7 @@ final class SiteTextsModule implements ModuleInterface
     private function pageLabel(int $pageId): string
     {
         $title = wp_strip_all_tags((string) get_the_title($pageId));
-        if ((int) get_option('page_on_front') === $pageId) {
+        if ($this->isFront($pageId)) {
             return 'Página inicial';
         }
         if (get_post_type($pageId) !== 'page') {
@@ -166,6 +173,16 @@ final class SiteTextsModule implements ModuleInterface
         }
         // Páginas modelo das coleções ("Modelo · Imóveis topo"): mostra só a parte depois do prefixo.
         return str_starts_with($title, 'Modelo · ') ? substr($title, strlen('Modelo · ')) : $title;
+    }
+
+    /** Página inicial, também nas traduções (filtro flashsite/front_page_ids, do módulo Multilingual). */
+    private function isFront(int $pageId): bool
+    {
+        if ($pageId <= 0) {
+            return false;
+        }
+        $ids = (array) apply_filters('flashsite/front_page_ids', [(int) get_option('page_on_front')]);
+        return in_array($pageId, array_map('intval', $ids), true);
     }
 
     /**
@@ -204,7 +221,12 @@ final class SiteTextsModule implements ModuleInterface
         $changed = $this->registry->saveValues($input);
         $this->purge($changed);
         $over = array_values(array_intersect($changed, $this->registry->overLimit()));
-        wp_safe_redirect(add_query_arg(['page' => self::SLUG, 'saved' => count($changed), 'over' => implode(',', $over)], admin_url('admin.php')));
+        $language = isset($_POST['fs_idioma']) ? sanitize_text_field((string) wp_unslash($_POST['fs_idioma'])) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+        $args = ['page' => self::SLUG, 'saved' => count($changed), 'over' => implode(',', $over)];
+        if (Language::isSupported($language)) {
+            $args['idioma'] = $language;
+        }
+        wp_safe_redirect(add_query_arg($args, admin_url('admin.php')));
         exit;
     }
 

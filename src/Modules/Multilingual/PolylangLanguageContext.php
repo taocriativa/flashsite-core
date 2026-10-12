@@ -42,6 +42,13 @@ final class PolylangLanguageContext implements LanguageContextInterface
         return array_values(array_unique(array_merge([$primary], $codes)));
     }
 
+    public function ofPost(int $postId): string
+    {
+        $locale = $postId > 0 && function_exists('pll_get_post_language') ? (string) pll_get_post_language($postId, 'locale') : '';
+        $code = Language::fromLocale($locale);
+        return $code !== '' ? $this->refine($code, $locale) : $this->primary();
+    }
+
     /** Português sem região ("pt") segue o mercado do site (pt-PT ou pt-BR). */
     private function refine(string $code, string $locale): string
     {

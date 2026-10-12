@@ -26,8 +26,25 @@ final class MultilingualModule implements ModuleInterface
         add_action('plugins_loaded', static function () use ($market): void {
             if (function_exists('pll_current_language')) {
                 Strings::useContext(new PolylangLanguageContext($market));
+                add_filter('flashsite/front_page_ids', [self::class, 'frontTranslations']);
+                add_filter('flashsite/multilingual_active', '__return_true');
             }
         }, 20);
+    }
+
+    /**
+     * Traduções da página inicial (Textos do site mostram "Página inicial" em cada idioma).
+     *
+     * @param list<int> $ids
+     * @return list<int>
+     */
+    public static function frontTranslations(array $ids): array
+    {
+        $front = (int) get_option('page_on_front');
+        if ($front > 0 && function_exists('pll_get_post_translations')) {
+            $ids = array_merge($ids, array_map('intval', array_values((array) pll_get_post_translations($front))));
+        }
+        return array_values(array_unique($ids));
     }
 
     public function boot(): void {}

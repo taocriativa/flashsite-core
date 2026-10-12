@@ -8,10 +8,12 @@ if (! defined('ABSPATH')) exit;
  * @var list<array{title: string, anchor: string, url: string, sections: array<string, list<array<string, mixed>>>}> $groups
  * @var array<string, string> $values
  * @var bool $canRescan
+ * @var list<string> $languages idiomas com textos, o principal primeiro (@since 3.2.0-beta.3)
+ * @var string $language idioma aberto
  */
 
 $saved   = isset($_GET['saved']) ? (int) $_GET['saved'] : null; // phpcs:ignore WordPress.Security.NonceVerification
-$over    = isset($_GET['over']) && $_GET['over'] !== '' ? array_map('sanitize_key', explode(',', (string) wp_unslash($_GET['over']))) : []; // phpcs:ignore WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput
+$over    = isset($_GET['over']) && $_GET['over'] !== '' ? array_map([\FlashSite\Core\Domain\SiteTexts\SiteTextsRegistry::class, 'sanitizeId'], explode(',', (string) wp_unslash($_GET['over']))) : []; // phpcs:ignore WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput
 $scanned = isset($_GET['scanned']) ? (int) $_GET['scanned'] : null; // phpcs:ignore WordPress.Security.NonceVerification
 
 $headerTitle    = 'Textos do site';
@@ -37,6 +39,15 @@ $headerActions  = [
         <div class="notice notice-info is-dismissible"><p><?php echo esc_html(sprintf('Lista atualizada a partir de %d páginas.', $scanned)); ?></p></div>
     <?php endif; ?>
 
+    <?php if (count($languages) > 1) : ?>
+        <nav class="nav-tab-wrapper fsc-texts-languages" aria-label="Idiomas">
+            <?php foreach ($languages as $code) : ?>
+                <a class="nav-tab<?php echo $code === $language ? ' nav-tab-active' : ''; ?>" href="<?php echo esc_url(add_query_arg(['page' => 'flashsite-site-texts', 'idioma' => $code], admin_url('admin.php'))); ?>"<?php echo $code === $language ? ' aria-current="page"' : ''; ?>><?php echo esc_html(\FlashSite\Core\Domain\I18n\Language::SUPPORTED[$code] ?? $code); ?></a>
+            <?php endforeach; ?>
+        </nav>
+        <p class="description" style="margin:12px 0 20px;">Cada idioma tem a sua página. Os textos de cada aba aparecem só na página desse idioma.</p>
+    <?php endif; ?>
+
     <?php if ($groups === []) : ?>
         <div class="fsc-card">
             <p>Ainda não há textos editáveis neste site.</p>
@@ -56,6 +67,7 @@ $headerActions  = [
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="fsc-site-texts" id="fsc-site-texts">
             <?php wp_nonce_field('flashsite_site_texts_save'); ?>
             <input type="hidden" name="action" value="flashsite_site_texts_save">
+            <input type="hidden" name="fs_idioma" value="<?php echo esc_attr($language); ?>">
 
             <?php foreach ($groups as $group) : ?>
                 <section class="fsc-card fsc-texts-page" id="<?php echo esc_attr($group['anchor']); ?>">
@@ -70,8 +82,8 @@ $headerActions  = [
                             <h3 class="fsc-texts-section"><?php echo esc_html($sectionTitle); ?></h3>
                         <?php endif; ?>
                         <?php foreach ($fields as $field) :
-                            $key = (string) $field['key'];
-                            $id = 'fs-text-' . $key;
+                            $key = (string) ($field['id'] ?? $field['key']);
+                            $id = 'fs-text-' . str_replace('@', '-', $key);
                             $value = $values[$key] ?? '';
                             $default = (string) $field['default'];
                             $current = $value !== '' ? $value : $default;

@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../TestCase.php';
 
+use FlashSite\Core\Domain\I18n\Language;
+use FlashSite\Core\Domain\I18n\LanguageContextInterface;
+use FlashSite\Core\Domain\I18n\Strings;
 use FlashSite\Core\Domain\SiteTexts\SiteTextsRegistry;
 use FlashSite\Core\Infrastructure\Storage\OptionsStorage;
 
@@ -76,5 +79,56 @@ final class SiteTextsTest extends TestCase
         $registry->syncPage(72, []);
         $this->assertSame(false, isset($registry->fields()['inicio_titulo']));
         $this->assertSame([105], $registry->fields()['rodape_frase']['pages']);
+
+        $this->multilingual();
+    }
+
+    /** Vários idiomas (@since 3.2.0-beta.3): mesma chave em cada página, valor por idioma. */
+    private function multilingual(): void
+    {
+        flashsite_reset_test_state();
+        $context = new class implements LanguageContextInterface {
+            public string $now = Language::PT_PT;
+            public function current(): string { return $this->now; }
+            public function primary(): string { return Language::PT_PT; }
+            public function available(): array { return [Language::PT_PT, Language::EN, Language::FR]; }
+            public function ofPost(int $postId): string { return [20 => Language::PT_PT, 30 => Language::EN, 40 => Language::FR][$postId] ?? Language::PT_PT; }
+        };
+        Strings::useContext($context);
+
+        $registry = new SiteTextsRegistry(new OptionsStorage());
+        $field = static fn (string $default): array => ['key' => 'inicio_titulo', 'label' => 'Título', 'type' => 'line', 'default' => $default, 'section' => 'Topo', 'element' => 'a1', 'max' => 0];
+        $registry->syncPage(20, [$field('Apanhe a sua primeira onda.')], $context->ofPost(20));
+        $registry->syncPage(30, [$field('Catch your first wave.')], $context->ofPost(30));
+        $registry->syncPage(40, [$field('Prenez votre première vague.')], $context->ofPost(40));
+
+        // Principal com a chave simples (sites de um idioma não mudam); os outros com @idioma.
+        $this->assertSame(['inicio_titulo', 'inicio_titulo@en', 'inicio_titulo@fr'], array_keys($registry->fields()));
+        $this->assertSame([Language::PT_PT, Language::EN, Language::FR], $registry->languages());
+        $this->assertSame(['inicio_titulo@en'], array_keys($registry->fieldsFor(Language::EN)));
+        $this->assertSame(['inicio_titulo'], array_keys($registry->fieldsFor('')));
+
+        $changed = $registry->saveValues(['inicio_titulo@en' => 'Your first wave in Ericeira', 'inicio_titulo@xx' => 'ignorado']);
+        $this->assertSame(['inicio_titulo@en'], $changed);
+        $this->assertSame('', SiteTextsRegistry::sanitizeId('inicio_titulo@xx'));
+        $this->assertSame('inicio_titulo', SiteTextsRegistry::sanitizeId('inicio_titulo@pt-PT'));
+        $this->assertSame('Apanhe a sua primeira onda.', $registry->text('inicio_titulo', 'Apanhe a sua primeira onda.', Language::PT_PT));
+
+        // Cada página mostra o valor do seu idioma; sem valor, o padrão da própria página.
+        $context->now = Language::EN;
+        $this->assertSame('Your first wave in Ericeira', $registry->text('inicio_titulo', 'Catch your first wave.'));
+        $context->now = Language::FR;
+        $this->assertSame('Prenez votre première vague.', $registry->text('inicio_titulo', 'Prenez votre première vague.'));
+        $context->now = Language::PT_PT;
+        $this->assertSame('Apanhe a sua primeira onda.', $registry->text('inicio_titulo', 'Apanhe a sua primeira onda.'));
+
+        // Campos de antes da 3.2 (sem idioma) contam como do idioma principal.
+        flashsite_reset_test_state();
+        $legacy = new SiteTextsRegistry(new OptionsStorage());
+        $legacy->syncPage(72, [$field('Seu próximo imóvel')]);
+        $legacy->saveValues(['inicio_titulo' => 'Novo']);
+        $this->assertSame('Novo', $legacy->text('inicio_titulo'));
+        $this->assertSame([Language::PT_PT], $legacy->languages());
+        Strings::useContext(null);
     }
 }

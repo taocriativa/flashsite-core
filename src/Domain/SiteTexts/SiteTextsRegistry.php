@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace FlashSite\Core\Domain\SiteTexts;
 
+use FlashSite\Core\Domain\I18n\Language;
+use FlashSite\Core\Domain\I18n\Strings;
 use FlashSite\Core\Infrastructure\Storage\OptionsStorage;
 
 /**
@@ -11,6 +13,10 @@ use FlashSite\Core\Infrastructure\Storage\OptionsStorage;
  * Quem monta o site marca um texto com a tag do Elementor "Texto do site" (chave, rótulo, tipo,
  * texto padrão). O Core lê as páginas, monta a lista de campos e o cliente edita os valores em
  * FlashSite › Textos do site, sem abrir o Elementor. Sem valor guardado, vale o texto padrão.
+ *
+ * Sites com vários idiomas (@since 3.2.0-beta.3): cada idioma tem a sua página, com as mesmas
+ * chaves. O idioma principal guarda com a chave simples (como sempre, sem migração); os outros
+ * guardam como "chave@idioma" (ex.: inicio_titulo@en). A página mostra o valor do seu idioma.
  */
 final class SiteTextsRegistry
 {
@@ -18,6 +24,7 @@ final class SiteTextsRegistry
     public const FIELDS_OPTION = 'flashsite_site_texts_fields';
     public const VALUES_OPTION = 'flashsite_site_texts_values';
     public const TYPES = ['line', 'paragraph'];
+    public const LANGUAGE_SEPARATOR = '@';
 
     public function __construct(private OptionsStorage $storage) {}
 
@@ -142,6 +149,65 @@ final class SiteTextsRegistry
         return trim($key, '_-');
     }
 
+    /** Idioma principal do site (sem contexto: português de Portugal). */
+    public static function primaryLanguage(): string
+    {
+        $context = Strings::context();
+        return $context !== null ? $context->primary() : Language::PT_PT;
+    }
+
+    /** Onde o valor fica guardado: chave simples no idioma principal, "chave@idioma" nos outros. */
+    public static function storageId(string $key, string $language = ''): string
+    {
+        $key = self::sanitizeKey($key);
+        if ($language === '' || $language === self::primaryLanguage() || ! Language::isSupported($language)) {
+            return $key;
+        }
+        return $key . self::LANGUAGE_SEPARATOR . $language;
+    }
+
+    /** "inicio_titulo@en" → chave e idioma limpos; idioma desconhecido devolve '' (nada é guardado). */
+    public static function sanitizeId(string $id): string
+    {
+        $parts = explode(self::LANGUAGE_SEPARATOR, $id, 2);
+        if (isset($parts[1]) && ! Language::isSupported(trim($parts[1]))) {
+            return '';
+        }
+        return self::storageId($parts[0], isset($parts[1]) ? trim($parts[1]) : '');
+    }
+
+    /**
+     * Idiomas com textos editáveis, o principal primeiro.
+     *
+     * @return list<string>
+     */
+    public function languages(): array
+    {
+        $primary = self::primaryLanguage();
+        $found = [];
+        foreach ($this->fields() as $field) {
+            $found[] = (string) ($field['language'] ?? '') !== '' ? (string) $field['language'] : $primary;
+        }
+        $found = array_values(array_unique($found));
+        $others = array_values(array_diff($found, [$primary]));
+        return in_array($primary, $found, true) || $others === [] ? array_merge([$primary], $others) : $others;
+    }
+
+    /**
+     * Campos de um idioma (vazio = principal). Campos de antes da 3.2 não têm idioma: são do principal.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public function fieldsFor(string $language = ''): array
+    {
+        $primary = self::primaryLanguage();
+        $language = $language !== '' ? $language : $primary;
+        return array_filter($this->fields(), static function (array $field) use ($language, $primary): bool {
+            $own = (string) ($field['language'] ?? '');
+            return ($own !== '' ? $own : $primary) === $language;
+        });
+    }
+
     /**
      * Lista de campos guardada: chave → campo + páginas onde aparece.
      *
@@ -154,12 +220,14 @@ final class SiteTextsRegistry
     }
 
     /**
-     * Substitui os campos de uma página pelos encontrados agora.
+     * Substitui os campos de uma página pelos encontrados agora. $language = idioma da página
+     * (vazio = principal); nos outros idiomas o campo fica guardado como "chave@idioma".
      *
      * @param list<array{key: string, label: string, type: string, default: string, section: string}> $found
      */
-    public function syncPage(int $pageId, array $found): bool
+    public function syncPage(int $pageId, array $found, string $language = ''): bool
     {
+        $language = Language::isSupported($language) ? $language : self::primaryLanguage();
         $fields = $this->fields();
         foreach ($fields as $key => $field) {
             $pages = array_values(array_diff((array) ($field['pages'] ?? []), [$pageId]));
@@ -170,7 +238,9 @@ final class SiteTextsRegistry
             }
         }
         foreach ($found as $field) {
-            $key = $field['key'];
+            $key = self::storageId($field['key'], $language);
+            $field['id'] = $key;
+            $field['language'] = $language;
             $pages = isset($fields[$key]) ? (array) $fields[$key]['pages'] : [];
             $pages[] = $pageId;
             $fields[$key] = $field + ['pages' => []];
@@ -187,9 +257,9 @@ final class SiteTextsRegistry
     }
 
     /** Texto a mostrar: o valor do cliente ou, sem ele, o padrão da tag. */
-    public function text(string $key, string $default = ''): string
+    public function text(string $key, string $default = '', ?string $language = null): string
     {
-        $value = $this->values()[self::sanitizeKey($key)] ?? '';
+        $value = $this->values()[self::storageId($key, $language ?? Strings::language())] ?? '';
         return trim($value) !== '' ? $value : $default;
     }
 
@@ -205,7 +275,7 @@ final class SiteTextsRegistry
         $values = $this->values();
         $changed = [];
         foreach ($input as $key => $raw) {
-            $key = self::sanitizeKey((string) $key);
+            $key = self::sanitizeId((string) $key);
             if (! isset($fields[$key]) || ! is_scalar($raw)) {
                 continue;
             }

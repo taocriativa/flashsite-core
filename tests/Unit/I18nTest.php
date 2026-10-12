@@ -22,6 +22,7 @@ final class FixedLanguageContext implements LanguageContextInterface
     public function current(): string { return $this->code; }
     public function primary(): string { return Language::PT_PT; }
     public function available(): array { return [Language::PT_PT, $this->code]; }
+    public function ofPost(int $postId): string { return $GLOBALS['fs_test_post_lang'][$postId] ?? Language::PT_PT; }
 }
 
 final class I18nTest extends TestCase

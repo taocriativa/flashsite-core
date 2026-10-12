@@ -17,4 +17,7 @@ interface LanguageContextInterface
 
     /** @return list<string> idiomas ativos no site, o principal primeiro */
     public function available(): array;
+
+    /** Idioma de uma página ou item (@since 3.2.0-beta.3); sem idioma próprio, o principal. */
+    public function ofPost(int $postId): string;
 }

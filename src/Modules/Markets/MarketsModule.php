@@ -187,8 +187,20 @@ final class MarketsModule implements ModuleInterface
         return $pair + ['urls' => $urls, 'settings' => $config['settings']];
     }
 
+    /**
+     * Site com plugin de tradução (Polylang): os idiomas e o hreflang vêm dele (@since 3.2.0-beta.3).
+     * Os Mercados não imprimem hreflang nem o aviso de país, para não haver dois hreflang nem aviso errado.
+     */
+    public static function translationPluginActive(): bool
+    {
+        return function_exists('apply_filters') && (bool) apply_filters('flashsite/multilingual_active', false);
+    }
+
     public function printHreflang(): void
     {
+        if (self::translationPluginActive()) {
+            return;
+        }
         $pair = $this->currentPair();
         if ($pair === null) {
             return;
@@ -207,7 +219,7 @@ final class MarketsModule implements ModuleInterface
         if (self::pageHasTabs()) {
             wp_enqueue_script('flashsite-core-tabs', FLASHSITE_CORE_URL . 'assets/frontend/js/fsc-tabs.js', [], FLASHSITE_CORE_VERSION, ['in_footer' => true, 'strategy' => 'defer']);
         }
-        $pair = $this->currentPair();
+        $pair = self::translationPluginActive() ? null : $this->currentPair();
         if ($pair === null) {
             return;
         }
@@ -310,6 +322,9 @@ final class MarketsModule implements ModuleInterface
         include FLASHSITE_CORE_PATH . 'templates/admin/partials/admin-header.php';
         if (isset($_GET['fs_saved'])) { // phpcs:ignore WordPress.Security.NonceVerification
             echo '<div class="notice notice-success is-dismissible"><p>Guardado.</p></div>';
+        }
+        if (self::translationPluginActive()) {
+            echo '<div class="notice notice-info"><p><strong>Este site usa o Polylang.</strong> Os idiomas e os endereços para o Google vêm dele, por isso os Mercados não imprimem hreflang nem mostram o aviso de país. As abas por país (#brasil) continuam a funcionar.</p></div>';
         }
         echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
         echo '<input type="hidden" name="action" value="flashsite_markets_save">';

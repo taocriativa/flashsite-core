@@ -26,4 +26,9 @@ final class MarketLanguageContext implements LanguageContextInterface
     {
         return [$this->primary()];
     }
+
+    public function ofPost(int $postId): string
+    {
+        return $this->primary();
+    }
 }

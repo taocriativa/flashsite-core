@@ -15,6 +15,9 @@ final class MarketsModuleTest extends TestCase
         $this->assertSame(null, MarketsModule::pairFor($pairs, 99), 'Página sem par não tem versões.');
         $this->assertSame(null, MarketsModule::pairFor($pairs, 0));
 
+        // Sem Polylang (nenhum filtro): os Mercados imprimem hreflang como sempre.
+        $this->assertSame(false, MarketsModule::translationPluginActive());
+
         $links = MarketsModule::hreflangLinks(['PT' => 'https://x.pt/', 'BR' => 'https://x.pt/br/'], 'PT');
         $this->assertSame([
             ['hreflang' => 'pt-PT', 'href' => 'https://x.pt/'],
