@@ -29,4 +29,16 @@ final class MultilingualModule implements ModuleInterface
             }
         }, 20);
     }
+
+    public function boot(): void {}
+
+    public function isActive(): bool
+    {
+        return true;
+    }
+
+    public function getSlug(): string
+    {
+        return 'multilingual';
+    }
 }
