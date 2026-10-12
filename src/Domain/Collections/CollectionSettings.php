@@ -8,7 +8,7 @@ use FlashSite\Core\Infrastructure\Storage\OptionsStorage;
 /**
  * Definições globais das Coleções no site (FlashSite › Coleções).
  *
- * Formato da option: ['currency' => 'EUR', 'market' => 'PT']
+ * Formato da option: ['currency' => 'EUR', 'market' => 'PT', 'per_language' => ['plano']]
  *
  * @since 2.6.0
  */
@@ -56,6 +56,33 @@ final class CollectionSettings
         }
         $raw = $this->raw();
         $raw['currency'] = Currency::of($code)->code;
+        return $this->storage->update(self::OPTION_KEY, $raw, true);
+    }
+
+    /**
+     * Sites com vários idiomas (@since 3.2.0-beta.4): coleções com um item por idioma.
+     * As outras são compartilhadas (padrão): um item só, com os rótulos do Core traduzidos.
+     */
+    public function perLanguage(string $key): bool
+    {
+        return in_array($key, $this->perLanguageKeys(), true);
+    }
+
+    /** @return list<string> */
+    public function perLanguageKeys(): array
+    {
+        $keys = $this->raw()['per_language'] ?? [];
+        return is_array($keys) ? array_values(array_filter(array_map('strval', $keys), static fn (string $k): bool => $k !== '')) : [];
+    }
+
+    /** @param list<string> $keys */
+    public function setPerLanguage(array $keys): bool
+    {
+        $raw = $this->raw();
+        $raw['per_language'] = array_values(array_unique(array_filter(array_map(
+            static fn ($k): string => strtolower((string) preg_replace('/[^a-z0-9_]/i', '', (string) $k)),
+            $keys
+        ))));
         return $this->storage->update(self::OPTION_KEY, $raw, true);
     }
 

@@ -35,6 +35,7 @@ $files = [
     __DIR__ . '/Integration/PratoPresetTest.php',
     __DIR__ . '/Unit/I18nTest.php',
     __DIR__ . '/Unit/ModulesListTest.php',
+    __DIR__ . '/Unit/MultilingualCollectionsTest.php',
 ];
 
 foreach ($files as $file) {
@@ -73,6 +74,7 @@ $tests = [
     new PratoPresetTest(),
     new I18nTest(),
     new ModulesListTest(),
+    new MultilingualCollectionsTest(),
 ];
 
 $failures = [];

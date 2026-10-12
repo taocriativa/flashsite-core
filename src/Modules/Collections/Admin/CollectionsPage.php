@@ -97,6 +97,16 @@ final class CollectionsPage
             printf('<option value="%s"%s>%s</option>', esc_attr($code), $code === $current ? ' selected' : '', esc_html($label));
         }
         echo '</select>';
+        if ($this->settings !== null && (bool) apply_filters('flashsite/multilingual_active', false)) {
+            echo '<h2 style="margin-top:18px">4. Idiomas</h2><p>Compartilhada (padrão): cada item é cadastrado uma vez e o site traduz só os rótulos (preço, botões, filtros). Itens por idioma: cada item tem a sua versão em cada idioma, ligada pelo Polylang (botão + na lista de itens). Use quando o título e a descrição precisam de mudar de idioma.</p>';
+            echo '<input type="hidden" name="fs_per_language_form" value="1">';
+            foreach ($this->registry->all() as $key => $preset) {
+                if (! $this->activation->isActive((string) $key)) {
+                    continue;
+                }
+                printf('<p><label><input type="checkbox" name="per_language[]" value="%s"%s> %s: itens por idioma</label></p>', esc_attr((string) $key), $this->settings->perLanguage((string) $key) ? ' checked' : '', esc_html($preset->labels()['plural']));
+            }
+        }
         echo '<div class="fsc-card-actions">';
         submit_button('Guardar coleções', 'primary fsc-btn', 'submit', false);
         echo '</div></div></div>';
@@ -139,6 +149,10 @@ final class CollectionsPage
         }
         if ($currency !== '' && $this->settings !== null) {
             $this->settings->setCurrency($currency);
+        }
+        if ($this->settings !== null && isset($_POST['fs_per_language_form'])) {
+            $perLanguage = isset($_POST['per_language']) && is_array($_POST['per_language']) ? array_map('sanitize_key', wp_unslash($_POST['per_language'])) : [];
+            $this->settings->setPerLanguage(array_values(array_intersect($perLanguage, $this->registry->keys())));
         }
         do_action('flashsite_collections_changed');
         $this->redirect($active === []
