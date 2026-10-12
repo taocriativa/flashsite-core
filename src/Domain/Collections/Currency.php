@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace FlashSite\Core\Domain\Collections;
 
+use FlashSite\Core\Domain\I18n\Language;
+use FlashSite\Core\Domain\I18n\Strings;
+
 /**
  * Moedas suportadas nos preços das Coleções, com a convenção de escrita de cada uma.
  *
@@ -53,7 +56,33 @@ final class Currency
 
     public function format(float $value, int $decimals): string
     {
-        return $this->wrap($this->number($value, $decimals));
+        $d = $this->display();
+        return $this->wrap(number_format($value, $decimals, $d['decimal'], $d['thousands']));
+    }
+
+    /**
+     * Separadores e posição do símbolo como o visitante os lê (@since 3.2.0-beta.5): em inglês
+     * "€45.00"; nos outros idiomas, como a moeda define ("45,00 €"). O painel usa sempre number().
+     *
+     * @return array{label: string, symbol: string, before: bool, space: bool, thousands: string, decimal: string}
+     */
+    private function display(): array
+    {
+        $d = self::DEFINITIONS[$this->code];
+        if (Strings::language() === Language::EN) {
+            $d['thousands'] = ',';
+            $d['decimal'] = '.';
+            $d['before'] = true;
+            $d['space'] = strlen($d['symbol']) > 2 && ctype_alpha($d['symbol']);
+        }
+        return $d;
+    }
+
+    /** Número com os separadores que o visitante lê (site); no painel use number(). */
+    public function displayNumber(float $value, int $decimals = 2): string
+    {
+        $d = $this->display();
+        return number_format($value, $decimals, $d['decimal'], $d['thousands']);
     }
 
     /** Só o número, com os separadores desta moeda (sem símbolo). */
@@ -72,7 +101,7 @@ final class Currency
     /** Coloca o símbolo no sítio certo de um texto já formatado ("100 mil" → "100 mil €" / "R$ 100 mil"). */
     public function wrap(string $amount): string
     {
-        $d = self::DEFINITIONS[$this->code];
+        $d = $this->display();
         $gap = $d['space'] ? ' ' : '';
         return $d['before'] ? $d['symbol'] . $gap . $amount : $amount . $gap . $d['symbol'];
     }

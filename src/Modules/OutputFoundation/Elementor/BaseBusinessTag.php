@@ -6,6 +6,8 @@ namespace FlashSite\Core\Modules\OutputFoundation\Elementor;
 use FlashSite\Core\Core\Plugin;
 use FlashSite\Core\Domain\Business\BusinessData;
 use FlashSite\Core\Domain\Business\BusinessRepository;
+use FlashSite\Core\Domain\Business\BusinessTranslations;
+use FlashSite\Core\Infrastructure\Storage\OptionsStorage;
 
 // Garante que ElementorTagBase está disponível antes de ser usada como base desta classe.
 require_once __DIR__ . '/ElementorTagBase.php';
@@ -57,7 +59,8 @@ abstract class BaseBusinessTag extends ElementorTagBase
             '_flashsite.format.email_link' => $this->formatEmailLink($businessData),
             '_flashsite.format.full_address' => $this->formatFullAddress($businessData),
             '_flashsite.format.hours_formatted' => $this->formatHours($businessData),
-            default => $businessData->get($path, $default),
+            // Campos de texto com versão por idioma (@since 3.2.0-beta.5).
+            default => (new BusinessTranslations(new OptionsStorage()))->resolve($path, $businessData->get($path, $default)),
         };
     }
 

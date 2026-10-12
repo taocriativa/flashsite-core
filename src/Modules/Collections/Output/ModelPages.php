@@ -103,7 +103,7 @@ final class ModelPages
             ]);
             $this->sitePages[$title] = (int) ($ids[0] ?? 0);
         }
-        return $this->sitePages[$title];
+        return self::translated($this->sitePages[$title]);
     }
 
     /** 404 ou página de texto (não Elementor) a envolver com cabeçalho/rodapé. */
@@ -180,7 +180,20 @@ final class ModelPages
             ]);
             $id = (int) ($ids[0] ?? 0);
         }
-        return $this->resolved[$cacheKey] = $id;
+        return self::translated($this->resolved[$cacheKey] = $id);
+    }
+
+    /**
+     * Página modelo no idioma da página atual, quando há tradução (@since 3.2.0-beta.5).
+     * O módulo Multilingual responde ao filtro com o Polylang; sem ele, devolve a mesma página.
+     */
+    private static function translated(int $id): int
+    {
+        if ($id <= 0 || ! function_exists('apply_filters')) {
+            return $id;
+        }
+        $translated = (int) apply_filters('flashsite/model_page_id', $id);
+        return $translated > 0 ? $translated : $id;
     }
 
     public function templateInclude(string $template): string

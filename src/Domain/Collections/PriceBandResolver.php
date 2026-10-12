@@ -147,7 +147,7 @@ final class PriceBandResolver
             $k = $value / 1000;
             return rtrim(rtrim(number_format($k, 1, ',', ''), '0'), ',') . ' mil';
         }
-        return $currency !== null ? $currency->number((float) $value, 0) : (string) (int) round($value);
+        return $currency !== null ? $currency->displayNumber((float) $value, 0) : (string) (int) round($value);
     }
 
     /**

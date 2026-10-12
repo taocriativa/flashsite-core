@@ -39,6 +39,9 @@ final class MultilingualModule implements ModuleInterface
                     }
                     return $map;
                 }))->register();
+                (new LanguageSwitcher())->register();
+                (new BusinessTranslationsPage())->register();
+                add_filter('flashsite/model_page_id', [self::class, 'modelTranslation']);
             }
         }, 20);
     }
@@ -56,6 +59,17 @@ final class MultilingualModule implements ModuleInterface
             $ids = array_merge($ids, array_map('intval', array_values((array) pll_get_post_translations($front))));
         }
         return array_values(array_unique($ids));
+    }
+
+    /** Página modelo traduzida para o idioma atual (sem tradução: a original). */
+    public static function modelTranslation(int $id): int
+    {
+        if (! function_exists('pll_get_post') || ! function_exists('pll_current_language')) {
+            return $id;
+        }
+        $language = (string) pll_current_language('slug');
+        $translated = $language !== '' ? (int) pll_get_post($id, $language) : 0;
+        return $translated > 0 ? $translated : $id;
     }
 
     public function boot(): void {}

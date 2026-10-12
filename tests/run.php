@@ -36,6 +36,7 @@ $files = [
     __DIR__ . '/Unit/I18nTest.php',
     __DIR__ . '/Unit/ModulesListTest.php',
     __DIR__ . '/Unit/MultilingualCollectionsTest.php',
+    __DIR__ . '/Unit/MultilingualBeta5Test.php',
 ];
 
 foreach ($files as $file) {
@@ -75,6 +76,7 @@ $tests = [
     new I18nTest(),
     new ModulesListTest(),
     new MultilingualCollectionsTest(),
+    new MultilingualBeta5Test(),
 ];
 
 $failures = [];
