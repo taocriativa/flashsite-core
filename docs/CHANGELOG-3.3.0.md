@@ -21,3 +21,7 @@
 
 ## beta.1
 - **Correção:** `ModelPages::pageId()` devolvia da cache o id da página modelo sem a tradução do Polylang. Só a primeira chamada de cada pedido era traduzida, por isso a listagem e a página de cada item em EN e FR usavam os modelos do idioma principal. Agora a tradução é resolvida em todas as chamadas.
+
+## Fora do escopo da 3.3.0
+- **Cabeçalho/menu quebrado no staging.flashsite.pt:** persiste com o Core revertido para a 3.2.0, então não vem do Core. As folhas de CSS atômico do Elementor do staging (`local-2101-frontend-desktop`, `global-2101-frontend-desktop`, `base-desktop`) divergem das da produção. Tratado como problema interno do staging/Elementor; não bloqueia o desenvolvimento do Core.
+
