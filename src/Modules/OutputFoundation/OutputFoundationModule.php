@@ -5,6 +5,10 @@ namespace FlashSite\Core\Modules\OutputFoundation;
 
 use FlashSite\Core\Core\Contracts\LoggerInterface;
 use FlashSite\Core\Core\Contracts\ModuleInterface;
+use FlashSite\Core\Domain\Business\BusinessTranslations;
+use FlashSite\Core\Domain\Business\OpeningHours;
+use FlashSite\Core\Domain\I18n\Strings;
+use FlashSite\Core\Infrastructure\Storage\OptionsStorage;
 use FlashSite\Core\Modules\OutputFoundation\Elementor\AccentColorTag;
 use FlashSite\Core\Modules\OutputFoundation\Elementor\AddressTag;
 use FlashSite\Core\Modules\OutputFoundation\Elementor\BusinessNameTag;
@@ -715,33 +719,16 @@ final class OutputFoundationModule implements ModuleInterface
         return implode(', ', $parts);
     }
 
+    /** Um dia por linha, no idioma da página (@since 3.3.0-beta.6). */
     private function resolveOpeningHours(): string
     {
-        $ordered = [
-            'Seg' => (string) $this->businessData->get('hours.monday', ''),
-            'Ter' => (string) $this->businessData->get('hours.tuesday', ''),
-            'Qua' => (string) $this->businessData->get('hours.wednesday', ''),
-            'Qui' => (string) $this->businessData->get('hours.thursday', ''),
-            'Sex' => (string) $this->businessData->get('hours.friday', ''),
-            'Sáb' => (string) $this->businessData->get('hours.saturday', ''),
-            'Dom' => (string) $this->businessData->get('hours.sunday', ''),
-        ];
-        $lines = [];
-        foreach ($ordered as $label => $value) {
-            $value = trim($value);
-            if ($value !== '') {
-                $lines[] = $label . ': ' . $value;
-            }
-        }
-        $notes = trim((string) $this->businessData->get('hours.notes', ''));
-        if ($notes !== '') {
-            $lines[] = $notes;
-        }
-        if ($lines === []) {
-            return trim((string) $this->businessData->get('hours.legacy_text', ''));
-        }
-
-        return implode("\n", $lines);
+        $language = Strings::language();
+        return OpeningHours::format(
+            (array) $this->businessData->get('hours', []),
+            $language,
+            (new BusinessTranslations(new OptionsStorage()))->resolver($language),
+            false
+        );
     }
 
     private function normalizeLineEndings(string $value): string

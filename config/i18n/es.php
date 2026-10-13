@@ -19,6 +19,8 @@ return [
         'Fechar' => 'Cerrar',
         'Outros' => 'Otros',
         'Preço sob consulta' => 'Precio a consultar',
+        // Horários, texto completo (3.3.0-beta.6)
+        'Seg' => 'Lun', 'Ter' => 'Mar', 'Qua' => 'Mié', 'Qui' => 'Jue', 'Sex' => 'Vie', 'Sáb' => 'Sáb', 'Dom' => 'Dom', ' e ' => ' y ',
         // Faixas de preço (3.3.0-beta.5)
         'Até' => 'Hasta', 'Mais de' => 'Más de', ' a ' => ' a ',
         'Sob consulta' => 'A consultar',

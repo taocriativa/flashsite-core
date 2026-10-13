@@ -87,6 +87,17 @@ final class BusinessTranslations
     }
 
     /**
+     * Resolvedor (caminho, original) => valor no idioma, para formatadores que recebem o idioma por parâmetro.
+     * Usa resolve(), por isso o fallback para o idioma principal é o mesmo de sempre.
+     *
+     * @return callable(string, string): string
+     */
+    public function resolver(string $language): callable
+    {
+        return fn (string $path, string $original): string => (string) $this->resolve($path, $original, $language);
+    }
+
+    /**
      * Guarda as traduções enviadas (substitui os idiomas enviados; os outros ficam).
      *
      * @param array<string, mixed> $input idioma => [caminho => texto]

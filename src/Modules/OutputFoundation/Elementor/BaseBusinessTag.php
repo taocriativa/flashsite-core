@@ -7,6 +7,8 @@ use FlashSite\Core\Core\Plugin;
 use FlashSite\Core\Domain\Business\BusinessData;
 use FlashSite\Core\Domain\Business\BusinessRepository;
 use FlashSite\Core\Domain\Business\BusinessTranslations;
+use FlashSite\Core\Domain\Business\OpeningHours;
+use FlashSite\Core\Domain\I18n\Strings;
 use FlashSite\Core\Infrastructure\Storage\OptionsStorage;
 
 // Garante que ElementorTagBase está disponível antes de ser usada como base desta classe.
@@ -95,6 +97,9 @@ abstract class BaseBusinessTag extends ElementorTagBase
 
     private function formatHours(BusinessData $businessData): string
     {
+        $language = Strings::language();
+        $resolver = (new BusinessTranslations(new OptionsStorage()))->resolver($language);
+
         $application = Plugin::instance()->application();
         if ($application !== null) {
             $container = $application->container();
@@ -102,37 +107,10 @@ abstract class BaseBusinessTag extends ElementorTagBase
                 /** @var BusinessRepository $repository */
                 $repository = $container->make(BusinessRepository::class);
                 // Numa linha de texto do Elementor as quebras desaparecem: separar os grupos com " · ".
-                return str_replace("\n", ' · ', $repository->getProfile()->getOpeningHours());
+                return str_replace("\n", ' · ', $repository->getProfile()->getOpeningHours($language, $resolver));
             }
         }
 
-        $ordered = [
-            'Seg' => (string) $businessData->get('hours.monday', ''),
-            'Ter' => (string) $businessData->get('hours.tuesday', ''),
-            'Qua' => (string) $businessData->get('hours.wednesday', ''),
-            'Qui' => (string) $businessData->get('hours.thursday', ''),
-            'Sex' => (string) $businessData->get('hours.friday', ''),
-            'Sáb' => (string) $businessData->get('hours.saturday', ''),
-            'Dom' => (string) $businessData->get('hours.sunday', ''),
-        ];
-
-        $lines = [];
-        foreach ($ordered as $label => $value) {
-            $value = trim($value);
-            if ($value !== '') {
-                $lines[] = $label . ': ' . $value;
-            }
-        }
-
-        $notes = trim((string) $businessData->get('hours.notes', ''));
-        if ($notes !== '') {
-            $lines[] = $notes;
-        }
-
-        if ($lines === []) {
-            return trim((string) $businessData->get('hours.legacy_text', ''));
-        }
-
-        return implode("\n", $lines);
+        return OpeningHours::format((array) $businessData->get('hours', []), $language, $resolver, false);
     }
 }

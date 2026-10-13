@@ -1,0 +1,168 @@
+{
+    "cases": {
+        "all_same": {
+            "hours": {
+                "monday": "9h–18h",
+                "tuesday": "9h–18h",
+                "wednesday": "9h–18h",
+                "thursday": "9h–18h",
+                "friday": "9h–18h",
+                "saturday": "9h–18h",
+                "sunday": "9h–18h",
+                "notes": "",
+                "legacy_text": ""
+            }
+        },
+        "week_weekend": {
+            "hours": {
+                "monday": "9h–18h",
+                "tuesday": "9h–18h",
+                "wednesday": "9h–18h",
+                "thursday": "9h–18h",
+                "friday": "9h–18h",
+                "saturday": "10h–13h",
+                "sunday": "10h–13h",
+                "notes": "",
+                "legacy_text": ""
+            }
+        },
+        "two_days": {
+            "hours": {
+                "monday": "9h",
+                "tuesday": "9h",
+                "wednesday": "",
+                "thursday": "",
+                "friday": "",
+                "saturday": "",
+                "sunday": "",
+                "notes": "",
+                "legacy_text": ""
+            }
+        },
+        "gap": {
+            "hours": {
+                "monday": "9h",
+                "tuesday": "",
+                "wednesday": "9h",
+                "thursday": "",
+                "friday": "",
+                "saturday": "",
+                "sunday": "",
+                "notes": "",
+                "legacy_text": ""
+            }
+        },
+        "sat_only_notes": {
+            "hours": {
+                "monday": "",
+                "tuesday": "",
+                "wednesday": "",
+                "thursday": "",
+                "friday": "",
+                "saturday": "8h–12h",
+                "sunday": "",
+                "notes": "Fechado em feriados",
+                "legacy_text": ""
+            }
+        },
+        "notes_only": {
+            "hours": {
+                "monday": "",
+                "tuesday": "",
+                "wednesday": "",
+                "thursday": "",
+                "friday": "",
+                "saturday": "",
+                "sunday": "",
+                "notes": "Atendimento por marcação",
+                "legacy_text": ""
+            }
+        },
+        "legacy": {
+            "hours": {
+                "monday": "",
+                "tuesday": "",
+                "wednesday": "",
+                "thursday": "",
+                "friday": "",
+                "saturday": "",
+                "sunday": "",
+                "notes": "",
+                "legacy_text": "Seg a Sex 9h às 18h"
+            }
+        },
+        "empty": {
+            "hours": {
+                "monday": "",
+                "tuesday": "",
+                "wednesday": "",
+                "thursday": "",
+                "friday": "",
+                "saturday": "",
+                "sunday": "",
+                "notes": "",
+                "legacy_text": ""
+            }
+        },
+        "mixed": {
+            "hours": {
+                "monday": "9h–18h",
+                "tuesday": "9h–18h",
+                "wednesday": "10h–19h",
+                "thursday": "10h–19h",
+                "friday": "10h–19h",
+                "saturday": "",
+                "sunday": "Fechado",
+                "notes": "Feriados: consulte",
+                "legacy_text": ""
+            }
+        }
+    },
+    "out": {
+        "all_same": {
+            "grouped": "Seg a Dom: 9h–18h",
+            "lines": "Seg: 9h–18h<br \/>\nTer: 9h–18h<br \/>\nQua: 9h–18h<br \/>\nQui: 9h–18h<br \/>\nSex: 9h–18h<br \/>\nSáb: 9h–18h<br \/>\nDom: 9h–18h",
+            "inline": "Seg: 9h–18h<br \/>\nTer: 9h–18h<br \/>\nQua: 9h–18h<br \/>\nQui: 9h–18h<br \/>\nSex: 9h–18h<br \/>\nSáb: 9h–18h<br \/>\nDom: 9h–18h"
+        },
+        "week_weekend": {
+            "grouped": "Seg a Sex: 9h–18h\nSáb e Dom: 10h–13h",
+            "lines": "Seg: 9h–18h<br \/>\nTer: 9h–18h<br \/>\nQua: 9h–18h<br \/>\nQui: 9h–18h<br \/>\nSex: 9h–18h<br \/>\nSáb: 10h–13h<br \/>\nDom: 10h–13h",
+            "inline": "Seg: 9h–18h<br \/>\nTer: 9h–18h<br \/>\nQua: 9h–18h<br \/>\nQui: 9h–18h<br \/>\nSex: 9h–18h<br \/>\nSáb: 10h–13h<br \/>\nDom: 10h–13h"
+        },
+        "two_days": {
+            "grouped": "Seg e Ter: 9h",
+            "lines": "Seg: 9h<br \/>\nTer: 9h",
+            "inline": "Seg: 9h<br \/>\nTer: 9h"
+        },
+        "gap": {
+            "grouped": "Seg: 9h\nQua: 9h",
+            "lines": "Seg: 9h<br \/>\nQua: 9h",
+            "inline": "Seg: 9h<br \/>\nQua: 9h"
+        },
+        "sat_only_notes": {
+            "grouped": "Sáb: 8h–12h\nFechado em feriados",
+            "lines": "Sáb: 8h–12h<br \/>\nFechado em feriados",
+            "inline": "Sáb: 8h–12h<br \/>\nFechado em feriados"
+        },
+        "notes_only": {
+            "grouped": "Atendimento por marcação",
+            "lines": "Atendimento por marcação",
+            "inline": "Atendimento por marcação"
+        },
+        "legacy": {
+            "grouped": "Seg a Sex 9h às 18h",
+            "lines": "Seg a Sex 9h às 18h",
+            "inline": "Seg a Sex 9h às 18h"
+        },
+        "empty": {
+            "grouped": "",
+            "lines": "",
+            "inline": ""
+        },
+        "mixed": {
+            "grouped": "Seg e Ter: 9h–18h\nQua a Sex: 10h–19h\nDom: Fechado\nFeriados: consulte",
+            "lines": "Seg: 9h–18h<br \/>\nTer: 9h–18h<br \/>\nQua: 10h–19h<br \/>\nQui: 10h–19h<br \/>\nSex: 10h–19h<br \/>\nDom: Fechado<br \/>\nFeriados: consulte",
+            "inline": "Seg: 9h–18h<br \/>\nTer: 9h–18h<br \/>\nQua: 10h–19h<br \/>\nQui: 10h–19h<br \/>\nSex: 10h–19h<br \/>\nDom: Fechado<br \/>\nFeriados: consulte"
+        }
+    }
+}

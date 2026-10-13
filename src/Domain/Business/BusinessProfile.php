@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace FlashSite\Core\Domain\Business;
 
+use FlashSite\Core\Domain\I18n\Language;
+
 final class BusinessProfile
 {
     /** @var array<string, mixed> */
@@ -148,49 +150,15 @@ final class BusinessProfile
     /**
      * Horário em texto, com dias seguidos iguais agrupados:
      * "Seg a Sex: 7h–21h\nSáb e Dom: 9h–13h". Uma linha por grupo.
+     *
+     * Sem argumentos devolve sempre o português (é o que a API pública usa). Para outro idioma o chamador
+     * passa o idioma e o resolvedor de traduções (ver OpeningHours e BusinessTranslations::resolver()).
+     *
+     * @param (callable(string, string): string)|null $resolve
      */
-    public function getOpeningHours(): string
+    public function getOpeningHours(?string $language = null, ?callable $resolve = null): string
     {
-        $hours = $this->getHours();
-        $days = [
-            'Seg' => $hours['monday'] ?? '',
-            'Ter' => $hours['tuesday'] ?? '',
-            'Qua' => $hours['wednesday'] ?? '',
-            'Qui' => $hours['thursday'] ?? '',
-            'Sex' => $hours['friday'] ?? '',
-            'Sáb' => $hours['saturday'] ?? '',
-            'Dom' => $hours['sunday'] ?? '',
-        ];
-        $groups = [];
-        foreach ($days as $label => $value) {
-            $value = trim((string) $value);
-            $last = count($groups) - 1;
-            if ($value !== '' && $last >= 0 && $groups[$last]['value'] === $value && $groups[$last]['open']) {
-                $groups[$last]['days'][] = $label;
-                continue;
-            }
-            $groups[] = ['days' => [$label], 'value' => $value, 'open' => $value !== ''];
-        }
-        $lines = [];
-        foreach ($groups as $group) {
-            if (! $group['open']) {
-                continue;
-            }
-            $d = $group['days'];
-            $label = match (count($d)) {
-                1 => $d[0],
-                2 => $d[0] . ' e ' . $d[1],
-                default => $d[0] . ' a ' . $d[count($d) - 1],
-            };
-            $lines[] = $label . ': ' . $group['value'];
-        }
-        if (($hours['notes'] ?? '') !== '') {
-            $lines[] = (string) $hours['notes'];
-        }
-        if ($lines === [] && ($hours['legacy_text'] ?? '') !== '') {
-            return (string) $hours['legacy_text'];
-        }
-        return implode("\n", $lines);
+        return OpeningHours::format($this->getHours(), $language ?? Language::PT_PT, $resolve, true);
     }
 
     public function getWebsiteUrl(): string { return $this->data['social']['website_url']; }

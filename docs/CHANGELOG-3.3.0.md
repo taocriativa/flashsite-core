@@ -1,5 +1,11 @@
 # 3.3.0
 
+## beta.6 (cumulativa: inclui a beta.5)
+- **Horários, texto completo, no idioma da página:** a tag "Horários (Texto Completo)" e o shortcode `[flashsite_hours]` / `business.hours.formatted` passam a usar as abreviações dos dias e os conectivos do idioma (EN Mon…Sun, "and", "to"; FR Lun…Dim, "et", "à"; ES Lun…Dom, "y", "a") e os valores por dia e a observação traduzidos em Dados do negócio por idioma. Antes saía tudo em português.
+- A tag continua a agrupar dias seguidos ("Mon to Fri: 9am–6pm · Sat and Sun: 10am–1pm") e o shortcode continua com um dia por linha. O agrupamento usa o texto já resolvido no idioma: dois dias só se juntam se o texto final for igual. Dia sem tradução usa o valor do idioma principal (`BusinessTranslations::resolve()`, sem segunda regra de fallback).
+- Novo `Domain\Business\OpeningHours`: recebe o idioma e o resolvedor por parâmetro e não lê o idioma da página. `BusinessProfile::getOpeningHours()` mantém o contrato (sem argumentos devolve português) e ganhou `$language` e `$resolve` opcionais; `BusinessTranslations::resolver()` monta o resolvedor.
+- Português (pt-PT e pt-BR) byte a byte igual ao de antes, conferido contra `tests/fixtures/hours_pt_baseline.json` (saídas anteriores à mudança). A API pública (`opening_hours`) segue em português, sem inferir o idioma na REST.
+
 ## beta.5 (cumulativa: inclui a beta.4)
 - **Faixas de preço no idioma do visitante** (imobiliário): inglês "For sale · Up to €100k", "€100k to €200k", "Over €1M", "€1.5M"; francês "Vente · Jusqu'à 100 k€", "100 à 200 k€", "Plus de 1 M€", "1,5 M€"; espanhol "Venta · Hasta 100 mil €", "Más de 1 millón €", "2 millones €". Português sem nenhuma alteração. Convenções numéricas da 3.2 mantidas (milhar, decimal, posição do símbolo).
 - O nome é refeito a partir do slug da faixa e da configuração do preset (`PriceBandResolver::localizedName()`); "Até", "Mais de" e " a " vivem em `config/i18n/{en,fr,es}.php`. O nome que se grava continua sempre em português, mesmo se a gravação acontecer com a página noutro idioma.

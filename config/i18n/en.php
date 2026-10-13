@@ -25,6 +25,8 @@ return [
         'Outros' => 'Other',
         // Preços
         'Preço sob consulta' => 'Price on request',
+        // Horários, texto completo (3.3.0-beta.6)
+        'Seg' => 'Mon', 'Ter' => 'Tue', 'Qua' => 'Wed', 'Qui' => 'Thu', 'Sex' => 'Fri', 'Sáb' => 'Sat', 'Dom' => 'Sun', ' e ' => ' and ',
         // Faixas de preço (3.3.0-beta.5)
         'Até' => 'Up to', 'Mais de' => 'Over', ' a ' => ' to ',
         'Sob consulta' => 'On request',
