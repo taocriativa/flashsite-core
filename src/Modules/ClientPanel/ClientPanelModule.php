@@ -15,7 +15,7 @@ use FlashSite\Core\Domain\I18n\Strings;
  * Painel do cliente (@since 3.1.0).
  *
  * - "O que pode editar": primeira tela do painel, com atalhos para tudo o que o cliente muda.
- * - Perfil "Cliente" (papel flashsite_site_manager): entra direto nessa tela, sem o Painel do
+ * - Perfil "Gestor Flash Site" (papel flashsite_site_manager): entra direto nessa tela, sem o Painel do
  *   WordPress, sem menus e avisos de plugins e sem as telas técnicas do FlashSite.
  */
 final class ClientPanelModule implements ModuleInterface
@@ -23,7 +23,6 @@ final class ClientPanelModule implements ModuleInterface
     public const SLUG = 'flashsite-edit';
     public const CAP = 'flashsite_view_dashboard';
     public const ROLE = CollectionCapabilities::SITE_MANAGER_ROLE;
-    public const ROLE_NAME = 'Cliente';
 
     /** Telas do FlashSite que o cliente não vê (técnicas ou só para a Flash Site). */
     public const HIDDEN_SUBMENUS = ['flashsite-core', 'flashsite-shortcodes', 'flashsite-setup-wizard', 'flashsite-data-safety', 'flashsite-markets', 'flashsite-collections'];
@@ -43,7 +42,6 @@ final class ClientPanelModule implements ModuleInterface
 
     public function register(): void
     {
-        add_action('init', [$this, 'ensureRoleName']);
         add_action('admin_menu', [$this, 'addMenu'], 9);
         add_action('admin_menu', [$this, 'trimMenusForClient'], 999);
         add_action('admin_init', [$this, 'redirectDashboard']);
@@ -92,20 +90,6 @@ final class ClientPanelModule implements ModuleInterface
             return false;
         }
         return in_array(self::ROLE, $user->roles, true) && ! in_array('administrator', $user->roles, true);
-    }
-
-    /** O papel antigo "Gestor de Site" passa a chamar-se "Cliente". */
-    public function ensureRoleName(): void
-    {
-        $roles = function_exists('wp_roles') ? wp_roles() : null;
-        if (! is_object($roles) || ! isset($roles->roles[self::ROLE]) || $roles->roles[self::ROLE]['name'] === self::ROLE_NAME) {
-            return;
-        }
-        $roles->roles[self::ROLE]['name'] = self::ROLE_NAME;
-        $roles->role_names[self::ROLE] = self::ROLE_NAME;
-        if ($roles->use_db) {
-            update_option($roles->role_key, $roles->roles);
-        }
     }
 
     public function addMenu(): void
@@ -167,7 +151,7 @@ final class ClientPanelModule implements ModuleInterface
         }
     }
 
-    /** Cliente não vê assistentes de IA da hospedagem (não editam o site do jeito certo). */
+    /** O Gestor Flash Site não vê assistentes de IA da hospedagem (não editam o site do jeito certo). */
     public function hideAssistants(): void
     {
         if (! self::isClient() || (! is_admin() && ! (function_exists('is_admin_bar_showing') && is_admin_bar_showing()))) {
@@ -193,7 +177,7 @@ final class ClientPanelModule implements ModuleInterface
     public const ADMIN_WARNING_SCREENS = ['dashboard', 'plugins', 'themes', 'theme-editor', 'plugin-editor', 'options-general', 'users', 'toplevel_page_flashsite-edit'];
 
     /**
-     * Site entregue (há um usuário Cliente): o administrador vê, nas telas sensíveis, que este
+     * Site entregue (há um usuário Gestor Flash Site): o administrador vê, nas telas sensíveis, que este
      * acesso mexe na base do site e que o dia a dia é pelo acesso de gestão.
      */
     public function adminWarning(): void
@@ -227,7 +211,7 @@ final class ClientPanelModule implements ModuleInterface
     }
 
     /**
-     * Cliente: arquivo em uso no site não pode ser excluído (ver MediaGuard).
+     * Gestor Flash Site: arquivo em uso no site não pode ser excluído (ver MediaGuard).
      *
      * @param list<string> $caps
      * @param string $cap

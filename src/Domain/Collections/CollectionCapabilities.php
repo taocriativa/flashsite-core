@@ -8,9 +8,9 @@ use FlashSite\Core\Infrastructure\Storage\OptionsStorage;
 /**
  * Permissões das Coleções.
  *
- * - Gestor de Site e Administrador criam, editam, publicam e apagam itens dos presets ativos.
+ * - Gestor Flash Site e Administrador criam, editam, publicam e apagam itens dos presets ativos.
  * - Só o Administrador tem `flashsite_manage_collections` (ligar/desligar presets, termos fixos).
- * - O Gestor de Site recebe `upload_files` para carregar fotos (decisão de 05/10/2026).
+ * - O Gestor Flash Site recebe `upload_files` para carregar fotos (decisão de 05/10/2026).
  *
  * A sincronização só escreve nos papéis quando o conjunto ativo muda (hash guardado).
  *

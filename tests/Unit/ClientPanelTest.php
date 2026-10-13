@@ -46,5 +46,10 @@ final class ClientPanelTest extends TestCase
         $this->assertTrue(ClientPanelModule::isClient($client));
         $this->assertSame(false, ClientPanelModule::isClient($admin));
         $this->assertSame(false, ClientPanelModule::isClient((object) ['roles' => ['editor']]));
+
+        // WooCommerce (3.3.0-beta.2): comprador nunca é gestor; os dois papéis coexistem sem mistura.
+        $this->assertSame(false, ClientPanelModule::isClient((object) ['roles' => ['customer']]));
+        $this->assertSame(true, ClientPanelModule::isClient((object) ['roles' => ['customer', 'flashsite_site_manager']]));
+        $this->assertSame(false, ClientPanelModule::isClient((object) ['roles' => ['customer', 'administrator']]));
     }
 }

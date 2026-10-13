@@ -7,6 +7,9 @@ final class RoleManager
 {
     private const ROLE_KEY = 'flashsite_site_manager';
 
+    /** Nome visível único: "Cliente" pertence ao papel `customer` do WooCommerce. */
+    public const ROLE_LABEL = 'Gestor Flash Site';
+
     public function __construct(private string $capabilitiesConfigPath) {}
 
     public function ensureRole(): void
@@ -15,7 +18,7 @@ final class RoleManager
         $role = get_role(self::ROLE_KEY);
 
         if ($role === null) {
-            add_role(self::ROLE_KEY, 'Gestor de Site', $this->buildRoleCapabilities($capabilities));
+            add_role(self::ROLE_KEY, self::ROLE_LABEL, $this->buildRoleCapabilities($capabilities));
             $role = get_role(self::ROLE_KEY);
         }
 
@@ -25,7 +28,25 @@ final class RoleManager
             }
         }
 
+        $this->syncRoleLabel();
         $this->ensureAdministratorCapabilities($capabilities);
+    }
+
+    /**
+     * Instalações existentes guardam o nome antigo ("Gestor de Site" ou "Cliente") na opção de papéis.
+     * Só o nome visível muda: chave, capabilities e utilizadores ficam intactos. Não grava se já estiver certo.
+     */
+    public function syncRoleLabel(): void
+    {
+        $roles = function_exists('wp_roles') ? wp_roles() : null;
+        if (! is_object($roles) || ! isset($roles->roles[self::ROLE_KEY]) || ($roles->roles[self::ROLE_KEY]['name'] ?? '') === self::ROLE_LABEL) {
+            return;
+        }
+        $roles->roles[self::ROLE_KEY]['name'] = self::ROLE_LABEL;
+        $roles->role_names[self::ROLE_KEY] = self::ROLE_LABEL;
+        if ($roles->use_db) {
+            update_option($roles->role_key, $roles->roles);
+        }
     }
 
     public function ensureAdministratorCapabilities(?array $capabilities = null): void

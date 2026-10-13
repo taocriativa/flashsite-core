@@ -4,6 +4,16 @@ declare(strict_types=1);
 $GLOBALS['flashsite_test_options'] = [];
 $GLOBALS['flashsite_test_roles'] = [];
 
+final class FlashSiteTestWpRoles
+{
+    /** @var array<string, array{name: string, capabilities: array<string, bool>}> */
+    public array $roles = [];
+    /** @var array<string, string> */
+    public array $role_names = [];
+    public bool $use_db = true;
+    public string $role_key = 'wp_user_roles';
+}
+
 final class FlashSiteTestRole
 {
     /** @var array<string, bool> */
@@ -163,6 +173,7 @@ function flashsite_reset_test_state(): void
     $GLOBALS['flashsite_test_roles'] = [
         'administrator' => new FlashSiteTestRole(['read' => true]),
     ];
+    $GLOBALS['flashsite_test_wp_roles'] = null;
     $GLOBALS['flashsite_test_hooks'] = [];
     $GLOBALS['flashsite_test_rest_routes'] = [];
     $GLOBALS['flashsite_test_current_user_caps'] = [];
@@ -281,7 +292,17 @@ if (!function_exists('add_role')) {
     {
         $obj = new FlashSiteTestRole($caps);
         $GLOBALS['flashsite_test_roles'][$role] = $obj;
+        $registry = wp_roles();
+        $registry->roles[$role] = ['name' => $display_name, 'capabilities' => $caps];
+        $registry->role_names[$role] = $display_name;
         return $obj;
+    }
+}
+
+if (!function_exists('wp_roles')) {
+    function wp_roles(): FlashSiteTestWpRoles
+    {
+        return $GLOBALS['flashsite_test_wp_roles'] ??= new FlashSiteTestWpRoles();
     }
 }
 
