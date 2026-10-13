@@ -175,6 +175,8 @@ function flashsite_reset_test_state(): void
     ];
     $GLOBALS['flashsite_test_wp_roles'] = null;
     $GLOBALS['flashsite_test_update_option_fail'] = false;
+    $GLOBALS['flashsite_test_rest'] = false;
+    $GLOBALS['flashsite_test_is_admin'] = false;
     $GLOBALS['flashsite_test_hooks'] = [];
     $GLOBALS['flashsite_test_rest_routes'] = [];
     $GLOBALS['flashsite_test_current_user_caps'] = [];
@@ -314,6 +316,13 @@ if (!function_exists('add_role')) {
         $registry->roles[$role] = ['name' => $display_name, 'capabilities' => $caps];
         $registry->role_names[$role] = $display_name;
         return $obj;
+    }
+}
+
+if (!function_exists('wp_is_serving_rest_request')) {
+    function wp_is_serving_rest_request(): bool
+    {
+        return !empty($GLOBALS['flashsite_test_rest']);
     }
 }
 

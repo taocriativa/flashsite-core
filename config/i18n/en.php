@@ -25,6 +25,8 @@ return [
         'Outros' => 'Other',
         // Preços
         'Preço sob consulta' => 'Price on request',
+        // Faixas de preço (3.3.0-beta.5)
+        'Até' => 'Up to', 'Mais de' => 'Over', ' a ' => ' to ',
         'Sob consulta' => 'On request',
         'a partir de ' => 'from ',
         'desde ' => 'from ',

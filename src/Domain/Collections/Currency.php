@@ -66,10 +66,10 @@ final class Currency
      *
      * @return array{label: string, symbol: string, before: bool, space: bool, thousands: string, decimal: string}
      */
-    private function display(): array
+    private function display(?string $language = null): array
     {
         $d = self::DEFINITIONS[$this->code];
-        if (Strings::language() === Language::EN) {
+        if (($language ?? Strings::language()) === Language::EN) {
             $d['thousands'] = ',';
             $d['decimal'] = '.';
             $d['before'] = true;
@@ -79,9 +79,9 @@ final class Currency
     }
 
     /** Número com os separadores que o visitante lê (site); no painel use number(). */
-    public function displayNumber(float $value, int $decimals = 2): string
+    public function displayNumber(float $value, int $decimals = 2, ?string $language = null): string
     {
-        $d = $this->display();
+        $d = $this->display($language);
         return number_format($value, $decimals, $d['decimal'], $d['thousands']);
     }
 
@@ -98,10 +98,16 @@ final class Currency
         return self::DEFINITIONS[$this->code]['before'];
     }
 
-    /** Coloca o símbolo no sítio certo de um texto já formatado ("100 mil" → "100 mil €" / "R$ 100 mil"). */
-    public function wrap(string $amount): string
+    /** Símbolo antes do valor como o visitante o lê no idioma (em inglês é sempre antes). */
+    public function symbolBeforeFor(string $language): bool
     {
-        $d = $this->display();
+        return $this->display($language)['before'];
+    }
+
+    /** Coloca o símbolo no sítio certo de um texto já formatado ("100 mil" → "100 mil €" / "R$ 100 mil"). */
+    public function wrap(string $amount, ?string $language = null): string
+    {
+        $d = $this->display($language);
         $gap = $d['space'] ? ' ' : '';
         return $d['before'] ? $d['symbol'] . $gap . $amount : $amount . $gap . $d['symbol'];
     }

@@ -19,6 +19,8 @@ return [
         'Fechar' => 'Fermer',
         'Outros' => 'Autres',
         'Preço sob consulta' => 'Prix sur demande',
+        // Faixas de preço (3.3.0-beta.5)
+        'Até' => "Jusqu'à", 'Mais de' => 'Plus de', ' a ' => ' à ',
         'Sob consulta' => 'Sur demande',
         'a partir de ' => 'à partir de ',
         'desde ' => 'à partir de ',

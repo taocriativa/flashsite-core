@@ -19,6 +19,8 @@ return [
         'Fechar' => 'Cerrar',
         'Outros' => 'Otros',
         'Preço sob consulta' => 'Precio a consultar',
+        // Faixas de preço (3.3.0-beta.5)
+        'Até' => 'Hasta', 'Mais de' => 'Más de', ' a ' => ' a ',
         'Sob consulta' => 'A consultar',
         'a partir de ' => 'desde ',
         'desde ' => 'desde ',

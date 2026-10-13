@@ -52,6 +52,7 @@ final class CollectionsOutput
     public function register(array $presets): void
     {
         $this->presets = $presets;
+        (new BandTermNames($this->formatter))->register($presets);
         add_shortcode('flashsite_collection', [$this, 'renderCollectionShortcode']);
         add_shortcode('flashsite_item', [$this, 'renderItemShortcode']);
         add_action('elementor/dynamic_tags/register', [$this, 'registerTags']);

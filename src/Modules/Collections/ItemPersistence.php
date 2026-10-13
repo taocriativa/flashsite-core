@@ -248,6 +248,12 @@ final class ItemPersistence
 
     public function ensureTerm(string $taxonomy, string $name, string $slug = '', int $parent = 0, bool $syncName = false): int
     {
+        // Gravação: o nome comparado e gravado é sempre o original (sem tradução de apresentação).
+        return \FlashSite\Core\Modules\Collections\Output\BandTermNames::suspend(fn (): int => $this->ensureTermNow($taxonomy, $name, $slug, $parent, $syncName));
+    }
+
+    private function ensureTermNow(string $taxonomy, string $name, string $slug, int $parent, bool $syncName): int
+    {
         $existing = term_exists($slug !== '' ? $slug : $name, $taxonomy, $parent ?: null);
         $existingId = is_array($existing) ? (int) $existing['term_id'] : ((is_int($existing) || (is_string($existing) && is_numeric($existing))) ? (int) $existing : 0);
         if ($existingId > 0) {
