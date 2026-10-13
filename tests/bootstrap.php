@@ -299,6 +299,13 @@ if (!function_exists('add_role')) {
     }
 }
 
+if (!function_exists('wp_get_current_user')) {
+    function wp_get_current_user(): object
+    {
+        return $GLOBALS['flashsite_test_current_user'] ?? (object) ['roles' => []];
+    }
+}
+
 if (!function_exists('wp_roles')) {
     function wp_roles(): FlashSiteTestWpRoles
     {

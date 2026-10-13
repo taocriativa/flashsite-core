@@ -51,5 +51,27 @@ final class ClientPanelTest extends TestCase
         $this->assertSame(false, ClientPanelModule::isClient((object) ['roles' => ['customer']]));
         $this->assertSame(true, ClientPanelModule::isClient((object) ['roles' => ['customer', 'flashsite_site_manager']]));
         $this->assertSame(false, ClientPanelModule::isClient((object) ['roles' => ['customer', 'administrator']]));
+
+        // 3.3.0-beta.3: roteamento da Minha Conta. Só o gestor sem `customer` sai do WooCommerce.
+        $this->assertSame(true, ClientPanelModule::isManagerOnly((object) ['roles' => ['flashsite_site_manager']]));
+        $this->assertSame(false, ClientPanelModule::isManagerOnly((object) ['roles' => ['customer']]));
+        $this->assertSame(false, ClientPanelModule::isManagerOnly((object) ['roles' => ['customer', 'flashsite_site_manager']]));
+        $this->assertSame(false, ClientPanelModule::isManagerOnly((object) ['roles' => ['administrator', 'flashsite_site_manager']]));
+        $this->assertSame(false, ClientPanelModule::isManagerOnly((object) ['roles' => ['subscriber']]));
+
+        $panel = (new \ReflectionClass(ClientPanelModule::class))->newInstanceWithoutConstructor();
+        $woo = 'https://x.test/minha-conta/';
+        $target = admin_url('admin.php?page=flashsite-edit');
+        $this->assertSame($target, $panel->wooLoginRedirect($woo, (object) ['roles' => ['flashsite_site_manager']]));
+        $this->assertSame($woo, $panel->wooLoginRedirect($woo, (object) ['roles' => ['customer']]));
+        $this->assertSame($woo, $panel->wooLoginRedirect($woo, (object) ['roles' => ['customer', 'flashsite_site_manager']]));
+        $this->assertSame($woo, $panel->wooLoginRedirect($woo, null));
+        // WooCommerce não pode bloquear o /wp-admin/ do gestor; comprador puro segue bloqueado.
+        $GLOBALS['flashsite_test_current_user'] = (object) ['roles' => ['customer', 'flashsite_site_manager']];
+        $this->assertSame(false, $panel->allowManagerAdminAccess(true));
+        $GLOBALS['flashsite_test_current_user'] = (object) ['roles' => ['customer']];
+        $this->assertSame(true, $panel->allowManagerAdminAccess(true));
+        // Sem WooCommerce carregado, a verificação da Minha Conta não faz nada.
+        $panel->redirectAccountPage();
     }
 }

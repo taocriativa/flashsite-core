@@ -46,6 +46,12 @@ final class ClientPanelModule implements ModuleInterface
         add_action('admin_menu', [$this, 'trimMenusForClient'], 999);
         add_action('admin_init', [$this, 'redirectDashboard']);
         add_filter('login_redirect', [$this, 'loginRedirect'], 10, 3);
+        // WooCommerce (@since 3.3.0-beta.3): o login pela Minha Conta não passa por login_redirect. Os dois
+        // ganchos só agem se o WooCommerce existir (verificado na hora, pois ele carrega depois do Core).
+        add_filter('woocommerce_login_redirect', [$this, 'wooLoginRedirect'], 20, 2);
+        add_action('template_redirect', [$this, 'redirectAccountPage'], 5);
+        // O WooCommerce expulsa do /wp-admin/ quem não tem edit_posts nem manage_woocommerce (o gestor não tem).
+        add_filter('woocommerce_prevent_admin_access', [$this, 'allowManagerAdminAccess']);
         add_action('admin_bar_menu', [$this, 'trimAdminBar'], 999);
         // Plugins que põem itens na barra depois do admin_bar_menu (ex.: Hostinger).
         add_action('wp_before_admin_bar_render', [$this, 'trimAdminBarLate'], 999);
@@ -90,6 +96,58 @@ final class ClientPanelModule implements ModuleInterface
             return false;
         }
         return in_array(self::ROLE, $user->roles, true) && ! in_array('administrator', $user->roles, true);
+    }
+
+    /**
+     * Gestor Flash Site sem o papel `customer` do WooCommerce: usa só a experiência de gestão.
+     * Com os dois papéis, a Minha Conta continua sendo do WooCommerce.
+     */
+    public static function isManagerOnly(?object $user = null): bool
+    {
+        $user ??= function_exists('wp_get_current_user') ? wp_get_current_user() : null;
+        if (! self::isClient($user)) {
+            return false;
+        }
+        return ! in_array('customer', $user->roles, true);
+    }
+
+    /**
+     * Login pela Minha Conta: só o gestor-only vai para "O que pode editar".
+     *
+     * @param mixed $redirect
+     * @param mixed $user
+     */
+    public function wooLoginRedirect($redirect, $user = null): string
+    {
+        if (is_object($user) && self::isManagerOnly($user)) {
+            return admin_url('admin.php?page=' . self::SLUG);
+        }
+        return (string) $redirect;
+    }
+
+    /**
+     * O Gestor Flash Site não tem `edit_posts`; sem isto o WooCommerce o mandaria de volta para a Minha Conta
+     * a cada visita ao /wp-admin/ (e, com o redirecionamento acima, entraria em ciclo). Vale também para quem
+     * tem `customer` e gestor. Comprador puro continua bloqueado como antes.
+     *
+     * @param mixed $prevent
+     */
+    public function allowManagerAdminAccess($prevent): bool
+    {
+        return self::isClient() ? false : (bool) $prevent;
+    }
+
+    /** Gestor-only já autenticado em /minha-conta/ vai para "O que pode editar" (o logout continua livre). */
+    public function redirectAccountPage(): void
+    {
+        if (! function_exists('is_account_page') || ! is_account_page() || ! is_user_logged_in() || ! self::isManagerOnly()) {
+            return;
+        }
+        if (function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('customer-logout')) {
+            return;
+        }
+        wp_safe_redirect(admin_url('admin.php?page=' . self::SLUG));
+        exit;
     }
 
     public function addMenu(): void
