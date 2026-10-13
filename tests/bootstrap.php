@@ -174,6 +174,7 @@ function flashsite_reset_test_state(): void
         'administrator' => new FlashSiteTestRole(['read' => true]),
     ];
     $GLOBALS['flashsite_test_wp_roles'] = null;
+    $GLOBALS['flashsite_test_update_option_fail'] = false;
     $GLOBALS['flashsite_test_hooks'] = [];
     $GLOBALS['flashsite_test_rest_routes'] = [];
     $GLOBALS['flashsite_test_current_user_caps'] = [];
@@ -201,9 +202,26 @@ if (!function_exists('get_option')) {
     }
 }
 
+if (!function_exists('maybe_serialize')) {
+    function maybe_serialize(mixed $data): mixed
+    {
+        return is_array($data) || is_object($data) ? serialize($data) : $data;
+    }
+}
+
+// Imita o WordPress: false se o valor já é igual; `flashsite_test_update_option_fail` simula falha real de BD.
 if (!function_exists('update_option')) {
     function update_option(string $option, mixed $value, mixed $autoload = null): bool
     {
+        if (!empty($GLOBALS['flashsite_test_update_option_fail'])) {
+            return false;
+        }
+        if (array_key_exists($option, $GLOBALS['flashsite_test_options'])) {
+            $old = $GLOBALS['flashsite_test_options'][$option];
+            if ($value === $old || maybe_serialize($value) === maybe_serialize($old)) {
+                return false;
+            }
+        }
         $GLOBALS['flashsite_test_options'][$option] = $value;
         return true;
     }

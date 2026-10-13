@@ -1,5 +1,8 @@
 # 3.3.0
 
+## beta.4 (cumulativa: inclui a beta.3)
+- **Correção:** salvar os Dados do negócio sem alteração devolvia erro 500. O `update_option()` do WordPress devolve `false` quando o valor já é igual ao gravado, e a API tratava isso como falha. `OptionsStorage::update()` agora relê o valor persistido quando recebe `false` e só mantém `false` se ele continuar diferente do desejado (falha real de gravação). Vale para todas as gravações que passam por `OptionsStorage`.
+
 ## Papéis: WooCommerce × Gestor Flash Site (decisão de produto)
 - **Nome visível do papel do Core:** "Gestor Flash Site". A chave interna continua `flashsite_site_manager`. O papel `customer` do WooCommerce segue como "Cliente".
 - **Separação intencional:** conta WooCommerce (`customer`: compras, pedidos, downloads, faturação, Minha Conta), conta Gestor Flash Site (`flashsite_site_manager`: gestão do site pelo painel) e Administrador (uso técnico). São papéis independentes: o Core não converte, não funde e não atribui papéis automaticamente.
