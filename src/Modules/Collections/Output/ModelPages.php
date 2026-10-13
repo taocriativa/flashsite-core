@@ -162,7 +162,8 @@ final class ModelPages
     {
         $cacheKey = $preset->key() . '|' . $role;
         if (isset($this->resolved[$cacheKey])) {
-            return $this->resolved[$cacheKey];
+            // A cache guarda o id original; a tradução depende do idioma e é resolvida a cada chamada (@since 3.3.0-beta.1).
+            return self::translated($this->resolved[$cacheKey]);
         }
         $id = $this->roles->first($preset->key() . ':' . $role);
         $titles = (array) $preset->setting('model_pages', []);
