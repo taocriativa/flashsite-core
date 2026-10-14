@@ -40,6 +40,9 @@ $files = [
     __DIR__ . '/Unit/MultilingualPriceBandsTest.php',
     __DIR__ . '/Unit/MultilingualHoursTest.php',
     __DIR__ . '/Unit/FontsTest.php',
+    __DIR__ . '/Unit/CollectionExtensibilityTest.php',
+    __DIR__ . '/Unit/CollectionOrderTemporalTest.php',
+    __DIR__ . '/Unit/GroupedArchiveContextTest.php',
 ];
 
 foreach ($files as $file) {
@@ -83,6 +86,9 @@ $tests = [
     new MultilingualPriceBandsTest(),
     new MultilingualHoursTest(),
     new FontsTest(),
+    new CollectionExtensibilityTest(),
+    new CollectionOrderTemporalTest(),
+    new GroupedArchiveContextTest(),
 ];
 
 $failures = [];

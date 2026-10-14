@@ -27,3 +27,12 @@ As Dynamic Tags ficam isoladas em `src/Modules/OutputFoundation/Elementor` e res
 ## Uninstall
 Por padrão, o uninstall é conservador e não remove dados.
 Para purga deliberada, usar `FLASHSITE_CORE_PURGE_ON_UNINSTALL`.
+
+## Collections (3.4)
+O módulo `Collections` é um motor genérico de conteúdos repetíveis. Cada tipo é um preset declarativo (`config/collections/<key>.php`); não existe código por preset. Fluxo:
+
+`config/collections` (Core) + pastas do filtro `flashsite/collections/preset_dirs` (kits, chaves `x_*`) -> `CollectionRegistry` (um só por requisição, no container) -> `CollectionsModule` (só presets ativos: CPT, taxonomias, post meta, capabilities) -> Gestor (`ItemEditor`), REST pública, Dynamic Tags, páginas modelo (`ModelPages`/`ModelRoles`), Polylang.
+
+Consultas de lista passam por `CollectionQuery`, que junta `OrderResolver` (`settings.order`) e `TemporalResolver` (`settings.temporal`). Sem essas configurações o comportamento é o do Core 3.3.0.
+
+Contrato do preset, do preset externo, ordenação, primitiva temporal e governança (Core × Kit de setor × Kit do job × Business): `COLLECTIONS-CONTRACT.md`.

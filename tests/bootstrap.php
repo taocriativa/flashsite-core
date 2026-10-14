@@ -559,6 +559,17 @@ if (!function_exists('add_filter')) {
     }
 }
 
+if (!function_exists('apply_filters')) {
+    /** Executa os callbacks registados com add_filter() (sem prioridades), para testar filtros do Core. */
+    function apply_filters(string $hook, mixed $value, ...$args): mixed
+    {
+        foreach ($GLOBALS['flashsite_test_filters'][$hook] ?? [] as $callback) {
+            $value = $callback($value, ...$args);
+        }
+        return $value;
+    }
+}
+
 if (!function_exists('register_post_type')) {
     function register_post_type(string $postType, array $args = []): object
     {
@@ -675,6 +686,16 @@ if (!function_exists('wp_get_object_terms')) {
     function wp_get_object_terms(int $objectId, string $taxonomy, array $args = []): array
     {
         $ids = $GLOBALS['flashsite_test_object_terms'][$objectId][$taxonomy] ?? [];
+        // Como o WordPress: sem 'fields' devolve objetos de termo (só quando o teste o pede).
+        if (! isset($args['fields']) && ! empty($GLOBALS['flashsite_test_terms_as_objects'])) {
+            $objects = [];
+            foreach ($ids as $id) {
+                if (isset($GLOBALS['flashsite_test_terms'][$taxonomy][$id])) {
+                    $objects[] = (object) $GLOBALS['flashsite_test_terms'][$taxonomy][$id];
+                }
+            }
+            return $objects;
+        }
         $field = $args['fields'] ?? 'ids';
         $out = [];
         foreach ($ids as $id) {

@@ -5,6 +5,9 @@ namespace FlashSite\Core\Modules\Collections\Output;
 
 use FlashSite\Core\Domain\Collections\CollectionPresetInterface;
 use FlashSite\Core\Domain\Collections\CollectionPublicSerializer;
+use FlashSite\Core\Domain\Collections\CollectionQuery;
+use FlashSite\Core\Domain\Collections\OrderResolver;
+use FlashSite\Core\Domain\Collections\TemporalResolver;
 
 /**
  * REST pública, só leitura, só itens publicados e só campos públicos.
@@ -46,6 +49,9 @@ final class PublicRestController
                 'per_page' => ['default' => 12, 'sanitize_callback' => 'absint'],
                 'page' => ['default' => 1, 'sanitize_callback' => 'absint'],
                 'featured' => ['default' => 0, 'sanitize_callback' => 'absint'],
+                'orderby' => ['default' => '', 'sanitize_callback' => 'sanitize_text_field'],
+                'order' => ['default' => 'ASC', 'sanitize_callback' => 'sanitize_text_field'],
+                'when' => ['default' => '', 'sanitize_callback' => 'sanitize_key'],
             ],
         ]);
         register_rest_route(self::NAMESPACE, '/public/collections/(?P<type>[a-z0-9_]+)/(?P<id>\d+)', [
@@ -85,6 +91,14 @@ final class PublicRestController
         if ((int) $request['featured'] === 1 && $featured !== null) {
             $args['meta_query'] = [['key' => $featured->metaKey(), 'value' => '1']];
         }
+        // @since 3.4.0: orderby = preset | @date | @title | @menu_order | field:<campo público>; when = upcoming | past | all.
+        // Sem estes parâmetros a lista é a de sempre.
+        $when = TemporalResolver::normalizeWhen($request['when']);
+        $orderby = (string) $request['orderby'];
+        $rules = $orderby === 'preset'
+            ? OrderResolver::rulesFor($preset, $when)
+            : ($orderby !== '' ? OrderResolver::fromToken($preset, $orderby, (string) $request['order']) : []);
+        $args = CollectionQuery::apply($args, $preset, $when, $rules);
         $query = new \WP_Query($args);
         $items = array_map(fn (\WP_Post $post): array => $this->serializer->item($preset, $post), $query->posts);
 

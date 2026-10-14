@@ -58,5 +58,7 @@ return [
         'Ver o menu' => 'Voir la carte', 'Ver o cardápio' => 'Voir la carte',
         'Categorias do menu' => 'Catégories de la carte', 'Categorias do cardápio' => 'Catégories de la carte',
         'Entradas' => 'Entrées', 'Pratos' => 'Plats', 'Pratos principais' => 'Plats principaux', 'Sobremesas' => 'Desserts', 'Bebidas' => 'Boissons',
+        // Período (arquivos com settings.temporal)
+        'Próximos' => 'À venir', 'Passados' => 'Passés', 'Período' => 'Période',
     ],
 ];

@@ -4,9 +4,12 @@ declare(strict_types=1);
 namespace FlashSite\Core\Modules\Collections\Output;
 
 use FlashSite\Core\Domain\Collections\CollectionPresetInterface;
+use FlashSite\Core\Domain\Collections\CollectionQuery;
 use FlashSite\Core\Domain\Collections\CollectionRegistry;
 use FlashSite\Core\Domain\Collections\FieldFormatter;
+use FlashSite\Core\Domain\Collections\OrderResolver;
 use FlashSite\Core\Domain\Collections\SchemaOrgBuilder;
+use FlashSite\Core\Domain\Collections\TemporalResolver;
 
 /**
  * Saída pública das Coleções:
@@ -58,6 +61,9 @@ final class CollectionsOutput
         add_action('elementor/dynamic_tags/register', [$this, 'registerTags']);
         add_action('elementor/query/flashsite_featured', [$this, 'queryFeatured']);
         add_action('elementor/query/flashsite_available', [$this, 'queryAvailable']);
+        add_action('elementor/query/flashsite_ordered', [$this, 'queryOrdered']);
+        add_action('elementor/query/flashsite_upcoming', [$this, 'queryUpcoming']);
+        add_action('elementor/query/flashsite_past', [$this, 'queryPast']);
         add_action('pre_get_posts', [$this, 'hideUnavailableItems']);
         add_filter('rank_math/json_ld', [$this, 'rankMathJsonLd'], 99, 2);
         add_filter('elementor/widget/render_content', [$this, 'lightenGalleryImage'], 10, 2);
@@ -154,6 +160,33 @@ final class CollectionsOutput
         $query->set('tax_query', $taxQuery);
     }
 
+    /** Loop Grid › Query ID "flashsite_ordered": usa settings.order do preset (@since 3.4.0). */
+    public function queryOrdered($query): void
+    {
+        $this->applyOrderAndWhen($query, null);
+    }
+
+    /** Loop Grid › Query ID "flashsite_upcoming": só itens próximos (settings.temporal), pela ordem do preset. */
+    public function queryUpcoming($query): void
+    {
+        $this->applyOrderAndWhen($query, TemporalResolver::UPCOMING);
+    }
+
+    /** Loop Grid › Query ID "flashsite_past": só itens passados, pela ordem de settings.order_past (ou order). */
+    public function queryPast($query): void
+    {
+        $this->applyOrderAndWhen($query, TemporalResolver::PAST);
+    }
+
+    private function applyOrderAndWhen($query, ?string $when): void
+    {
+        $preset = $this->presetForQuery($query);
+        if ($preset === null) {
+            return;
+        }
+        CollectionQuery::applyToQuery($query, $preset, $when, OrderResolver::rulesFor($preset, $when));
+    }
+
     /**
      * [flashsite_collection type="imovel" limit="6" featured="1" available="1" orderby="date|price|title" order="DESC"]
      *
@@ -170,6 +203,7 @@ final class CollectionsOutput
             'available' => '0',
             'orderby' => 'date',
             'order' => 'DESC',
+            'when' => '',
             'class' => '',
         ], is_array($atts) ? $atts : [], 'flashsite_collection');
 
@@ -185,7 +219,18 @@ final class CollectionsOutput
             'order' => strtoupper((string) $atts['order']) === 'ASC' ? 'ASC' : 'DESC',
             'no_found_rows' => true,
         ];
-        $orderby = sanitize_key((string) $atts['orderby']);
+        $rules = [];
+        $orderToken = (string) $atts['orderby'];
+        if (str_starts_with($orderToken, 'field:') || str_starts_with($orderToken, '@') || $orderToken === 'preset') {
+            // @since 3.4.0: orderby="field:<campo>", "@title", "@date", "@menu_order" ou "preset" (settings.order).
+            $when = TemporalResolver::normalizeWhen($atts['when']);
+            $rules = $orderToken === 'preset'
+                ? OrderResolver::rulesFor($preset, $when)
+                : OrderResolver::fromToken($preset, $orderToken, (string) $atts['order']);
+            $orderby = 'date';
+        } else {
+            $orderby = sanitize_key($orderToken);
+        }
         if ($orderby === 'price' && $preset->field('preco') !== null) {
             $args['meta_key'] = $preset->field('preco')->metaKey();
             $args['orderby'] = 'meta_value_num';
@@ -193,6 +238,7 @@ final class CollectionsOutput
             $args['orderby'] = in_array($orderby, ['date', 'title', 'menu_order', 'rand'], true) ? $orderby : 'date';
         }
 
+        $args = CollectionQuery::apply($args, $preset, TemporalResolver::normalizeWhen($atts['when']), $rules);
         $query = new \WP_Query();
         $query->parse_query($args);
         if ((string) $atts['featured'] === '1') {

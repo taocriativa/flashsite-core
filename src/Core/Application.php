@@ -128,7 +128,7 @@ final class Application
         $this->container->bind(OnboardingRepository::class, fn (Container $c) => new OnboardingRepository($c->make(OptionsStorage::class)));
         $this->container->bind(DependencyRegistry::class, fn () => DependencyRegistry::fromConfig(FLASHSITE_CORE_PATH . 'config/dependencies.php'));
         $this->container->bind(RoleManager::class, fn () => new RoleManager(FLASHSITE_CORE_PATH . 'config/capabilities.php'));
-        $this->container->bind(CollectionRegistry::class, fn (Container $c) => CollectionRegistry::fromDirectory(FLASHSITE_CORE_PATH . 'config/collections', $c->make(CollectionSettings::class)->market()));
+        $this->container->bind(CollectionRegistry::class, fn (Container $c) => CollectionRegistry::fromDirectories(FLASHSITE_CORE_PATH . 'config/collections', CollectionRegistry::externalDirectories(FLASHSITE_CORE_PATH . 'config/collections'), $c->make(CollectionSettings::class)->market()));
         $this->container->bind(ActivationRepository::class, fn (Container $c) => new ActivationRepository($c->make(OptionsStorage::class)));
         $this->container->bind(CollectionCapabilities::class, fn (Container $c) => new CollectionCapabilities($c->make(OptionsStorage::class)));
         $this->container->bind(CollectionSettings::class, fn (Container $c) => new CollectionSettings($c->make(OptionsStorage::class)));

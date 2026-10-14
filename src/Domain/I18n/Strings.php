@@ -73,6 +73,17 @@ final class Strings
         return $text;
     }
 
+    /**
+     * Pastas extra de pacotes (filtro "flashsite/i18n/pack_dirs"), cada uma com <idioma>.php.
+     *
+     * @return list<string>
+     */
+    private static function externalDirectories(): array
+    {
+        $dirs = function_exists('apply_filters') ? apply_filters('flashsite/i18n/pack_dirs', []) : [];
+        return array_values(array_filter(is_array($dirs) ? $dirs : [], static fn ($dir): bool => is_string($dir) && $dir !== '' && is_dir($dir)));
+    }
+
     /** @return array<string, string> */
     private static function phrases(string $language): array
     {
@@ -83,6 +94,17 @@ final class Strings
         $file = $directory . '/' . $language . '.php';
         $pack = is_readable($file) ? require $file : [];
         $phrases = is_array($pack) && isset($pack['phrases']) && is_array($pack['phrases']) ? $pack['phrases'] : [];
-        return self::$phrases[$language] = array_map('strval', $phrases);
+        // Pacotes de kits e extensões (@since 3.4.0): só acrescentam; em conflito o pacote do Core vence.
+        $external = [];
+        foreach (self::externalDirectories() as $extraDirectory) {
+            $extraFile = rtrim($extraDirectory, '/\\') . '/' . $language . '.php';
+            $extraPack = is_readable($extraFile) ? require $extraFile : [];
+            if (is_array($extraPack) && isset($extraPack['phrases']) && is_array($extraPack['phrases'])) {
+                $external = array_replace($external, array_map('strval', $extraPack['phrases']));
+            }
+        }
+        return self::$phrases[$language] = $external === []
+            ? array_map('strval', $phrases)
+            : array_replace($external, array_map('strval', $phrases));
     }
 }

@@ -33,7 +33,12 @@ final class MultilingualModule implements ModuleInterface
                     static $map = null;
                     if ($map === null) {
                         $map = [];
-                        foreach (CollectionRegistry::fromDirectory(FLASHSITE_CORE_PATH . 'config/collections', $settings->market())->all() as $key => $preset) {
+                        // Um único registro por requisição (o do container), com as mesmas pastas externas.
+                        $app = function_exists('flashsite_core') ? flashsite_core() : null;
+                        $registry = $app !== null
+                            ? $app->container()->make(CollectionRegistry::class)
+                            : CollectionRegistry::fromDirectories(FLASHSITE_CORE_PATH . 'config/collections', CollectionRegistry::externalDirectories(FLASHSITE_CORE_PATH . 'config/collections'), $settings->market());
+                        foreach ($registry->all() as $key => $preset) {
                             $map[(string) $key] = $preset->postType();
                         }
                     }

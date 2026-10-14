@@ -4,6 +4,9 @@ declare(strict_types=1);
 namespace FlashSite\Core\Modules\Collections\Output;
 
 use FlashSite\Core\Domain\Collections\CollectionPresetInterface;
+use FlashSite\Core\Domain\Collections\CollectionQuery;
+use FlashSite\Core\Domain\Collections\OrderResolver;
+use FlashSite\Core\Domain\Collections\TemporalResolver;
 use FlashSite\Core\Domain\Collections\TaxonomyDefinition;
 use FlashSite\Core\Modules\Collections\Output\Elementor\CollectionTagBase;
 use FlashSite\Core\Domain\I18n\Strings;
@@ -242,8 +245,25 @@ final class ModelPages
             if ($metaQuery !== []) {
                 $query->set('meta_query', $metaQuery);
             }
+            // settings.order e settings.temporal (@since 3.4.0): só mexem em presets que os declaram.
+            $when = $this->archiveWhen($preset);
+            CollectionQuery::applyToQuery($query, $preset, $when, OrderResolver::rulesFor($preset, $when));
             return;
         }
+    }
+
+    /**
+     * Janela temporal do arquivo: ?when=upcoming|past|all, senão temporal.archive_when do preset.
+     * Null quando o preset não tem settings.temporal.
+     */
+    public function archiveWhen(CollectionPresetInterface $preset): ?string
+    {
+        $config = TemporalResolver::config($preset);
+        if ($config === null) {
+            return null;
+        }
+        $requested = isset($_GET['when']) ? TemporalResolver::normalizeWhen(sanitize_key((string) wp_unslash($_GET['when']))) : null; // phpcs:ignore WordPress.Security.NonceVerification
+        return $requested ?? $config['archive_when'];
     }
 
     public function enqueueAssets(): void
@@ -427,6 +447,7 @@ final class ModelPages
         $this->groupNav = $navSetting === '' ? (bool) $preset->setting('archive_group_nav', false) : $navSetting === 'yes';
         printf('<section class="fs-collection-archive fs-collection-archive--%s" style="--fs-col-columns:%d">', esc_attr($preset->key()), $columns);
         $this->renderSearchSummary($preset);
+        $this->renderWhenNav($preset);
         $this->renderFilters($preset);
 
         $cardId = $this->pageId($preset, 'card');
@@ -455,6 +476,32 @@ final class ModelPages
         wp_reset_postdata();
 
         $this->renderModel($this->pageId($preset, 'archive_bottom'), 0);
+    }
+
+    /** Próximos · Passados · Todos (só em presets com settings.temporal). Contrato técnico: ?when=upcoming|past|all. */
+    private function renderWhenNav(CollectionPresetInterface $preset): void
+    {
+        if (TemporalResolver::config($preset) === null) {
+            return;
+        }
+        $current = $this->archiveWhen($preset);
+        $base = (string) get_post_type_archive_link($preset->postType());
+        $labels = [
+            TemporalResolver::UPCOMING => Strings::t('Próximos'),
+            TemporalResolver::PAST => Strings::t('Passados'),
+            TemporalResolver::ALL => Strings::t('Todos'),
+        ];
+        echo '<nav class="fs-collection-when" aria-label="' . esc_attr(Strings::t('Período')) . '">';
+        foreach ($labels as $when => $label) {
+            printf(
+                '<a class="fs-collection-when__link%s" href="%s"%s>%s</a>',
+                $when === $current ? ' is-active' : '',
+                esc_url(add_query_arg('when', $when, $base)),
+                $when === $current ? ' aria-current="true"' : '',
+                esc_html($label)
+            );
+        }
+        echo '</nav>';
     }
 
     /** Algum filtro ativo (?taxonomia=…) ou página de termo: nesse caso, grelha simples. */
@@ -513,11 +560,20 @@ final class ModelPages
             echo '<div class="fs-collection-grid">';
             foreach ($ids as $id) {
                 echo '<div class="fs-collection-grid__item">';
+                // O loop principal já terminou e deixou o post global no último item. Cada cartão passa a
+                // ter o seu item como post atual (como na grelha simples, onde the_post() faz isso), para a
+                // Dynamic Tag não confundir o último item do loop com o item do cartão.
+                $item = get_post($id);
+                if (is_object($item)) {
+                    $GLOBALS['post'] = $item;
+                    setup_postdata($item);
+                }
                 $this->renderModel($cardId, $id);
                 echo '</div>';
             }
             echo '</div></div>';
         }
+        wp_reset_postdata();
     }
 
     private function renderModel(int $pageId, int $contextPostId): void
@@ -557,6 +613,9 @@ final class ModelPages
             printf('<option value="">%s</option>', esc_html($this->text($preset, 'any')));
             $this->renderOptions($terms, 0, $current, $taxonomy->hierarchical, 0);
             echo '</select></label>';
+        }
+        if (isset($_GET['when']) && TemporalResolver::config($preset) !== null) { // phpcs:ignore WordPress.Security.NonceVerification
+            printf('<input type="hidden" name="when" value="%s">', esc_attr((string) $this->archiveWhen($preset)));
         }
         if (is_search()) {
             printf('<input type="hidden" name="s" value="%s">', esc_attr(get_search_query()));
