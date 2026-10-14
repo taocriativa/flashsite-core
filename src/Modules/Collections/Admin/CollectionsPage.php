@@ -72,13 +72,15 @@ final class CollectionsPage
         foreach ($this->registry->all() as $key => $preset) {
             $isActive = $this->activation->isActive((string) $key);
             printf(
-                '<tr><td><label style="display:inline-flex;gap:6px;align-items:center;font-weight:600"><input type="checkbox" name="active[]" value="%1$s" id="fs-col-%1$s"%2$s> %6$s</label></td><td><label for="fs-col-%1$s"><strong>%3$s</strong></label></td><td><code>/%4$s/</code></td><td>%5$d</td></tr>',
+                '<tr><td><label style="display:inline-flex;gap:6px;align-items:center;font-weight:600"><input type="checkbox" name="active[]" value="%1$s" id="fs-col-%1$s"%2$s> %6$s</label></td><td><label for="fs-col-%1$s"><strong>%3$s</strong></label>%7$s</td><td><code>/%4$s/</code>%8$s</td><td>%5$d</td></tr>',
                 esc_attr((string) $key),
                 $isActive ? ' checked' : '',
                 esc_html($preset->labels()['plural']),
                 esc_html($preset->slug()),
                 count($preset->fields()),
-                $isActive ? '<span style="color:#008a20">Ativa</span>' : '<span style="color:#8a8a8e">Desligada</span>'
+                $isActive ? '<span style="color:#008a20">Ativa</span>' : '<span style="color:#8a8a8e">Desligada</span>',
+                $this->registry->isExternal((string) $key) ? ' <span class="description">(extensão externa)</span>' : '',
+                $isActive ? '' : $this->slugWarning($preset->slug())
             );
         }
         echo '</tbody></table></div>';
@@ -127,6 +129,22 @@ final class CollectionsPage
             echo '</div></div>';
         }
         echo '</div>';
+    }
+
+    /**
+     * Aviso (nunca bloqueio) quando já existe uma página publicada com o endereço da coleção:
+     * ao ativar, o arquivo da coleção passa a responder nesse endereço.
+     */
+    private function slugWarning(string $slug): string
+    {
+        if (! function_exists('get_page_by_path')) {
+            return '';
+        }
+        $page = get_page_by_path($slug);
+        if (! $page instanceof \WP_Post || $page->post_status !== 'publish') {
+            return '';
+        }
+        return '<div class="notice notice-warning inline" style="margin:6px 0 0"><p>Existe uma página publicada utilizando este slug. A ativação desta Collection pode alterar qual conteúdo responde nesta URL.</p></div>';
     }
 
     public function handleSave(): void

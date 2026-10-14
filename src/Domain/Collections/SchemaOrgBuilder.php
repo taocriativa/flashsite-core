@@ -68,7 +68,8 @@ final class SchemaOrgBuilder
             $data['offers'] = $offer;
         }
 
-        return $data;
+        // settings.schema_map (@since 3.4.0): propriedades declaradas pelo preset. Sem schema_map, nada muda.
+        return SchemaMap::apply($preset, $item, $data);
     }
 
     /** @param array<string, list<array{slug: string, name: string}>> $terms */
