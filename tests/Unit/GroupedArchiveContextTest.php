@@ -18,9 +18,10 @@ if (! function_exists('have_posts')) {
     function get_post_type(int|object|null $post = null): string|false
     {
         $id = is_object($post) ? (int) $post->ID : (int) $post;
-        return $GLOBALS['fs_ctx']['types'][$id] ?? false;
+        // Cai para o armazém de posts dos testes das Abilities (tests/Support/WpPostStubs.php).
+        return $GLOBALS['fs_ctx']['types'][$id] ?? ($GLOBALS['flashsite_test_posts'][$id]->post_type ?? false);
     }
-    function get_post(int|object|null $post = null): ?object { $id = is_object($post) ? (int) $post->ID : (int) $post; return isset($GLOBALS['fs_ctx']['types'][$id]) ? (object) ['ID' => $id] : null; }
+    function get_post(int|object|null $post = null): ?object { $id = is_object($post) ? (int) $post->ID : (int) $post; return isset($GLOBALS['fs_ctx']['types'][$id]) ? (object) ['ID' => $id] : ($GLOBALS['flashsite_test_posts'][$id] ?? null); }
     function setup_postdata(object|int $post): bool { $GLOBALS['fs_ctx']['global'] = is_object($post) ? (int) $post->ID : (int) $post; return true; }
     function wp_reset_postdata(): void { $GLOBALS['fs_ctx']['global'] = $GLOBALS['fs_ctx']['main'] ?? 0; }
 }

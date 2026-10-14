@@ -9,6 +9,7 @@ use FlashSite\Core\Domain\Api\OutputResolver;
 use FlashSite\Core\Domain\Api\PublicSerializer;
 use FlashSite\Core\Domain\Business\BusinessData;
 use FlashSite\Core\Domain\Business\BusinessRepository;
+use FlashSite\Core\Domain\Business\BusinessUpdateService;
 use FlashSite\Core\Domain\Business\BusinessValidator;
 use FlashSite\Core\Domain\Collections\ActivationRepository;
 use FlashSite\Core\Domain\Collections\CollectionCapabilities;
@@ -24,6 +25,12 @@ use FlashSite\Core\Domain\Dependencies\DependencyRegistry;
 use FlashSite\Core\Domain\Safety\DataSafetyManager;
 use FlashSite\Core\Domain\Onboarding\OnboardingRepository;
 use FlashSite\Core\Infrastructure\Storage\OptionsStorage;
+use FlashSite\Core\Modules\Abilities\AbilitiesModule;
+use FlashSite\Core\Modules\Abilities\AbilityGate;
+use FlashSite\Core\Modules\Abilities\BusinessAbilities;
+use FlashSite\Core\Modules\Abilities\CollectionAbilities;
+use FlashSite\Core\Modules\Abilities\ItemAbilities;
+use FlashSite\Core\Modules\Abilities\SystemAbilities;
 use FlashSite\Core\Modules\AccessControl\AccessControlModule;
 use FlashSite\Core\Modules\AdminUX\AdminUXModule;
 use FlashSite\Core\Modules\Api\ApiAccessModule;
@@ -31,7 +38,9 @@ use FlashSite\Core\Modules\BusinessData\BusinessDataModule;
 use FlashSite\Core\Modules\Collections\Admin\CollectionsPage;
 use FlashSite\Core\Modules\Collections\Admin\ItemEditor;
 use FlashSite\Core\Modules\Collections\Admin\ListColumns;
+use FlashSite\Core\Modules\Collections\CollectionItemService;
 use FlashSite\Core\Modules\Collections\CollectionsModule;
+use FlashSite\Core\Modules\Collections\CollectionStateService;
 use FlashSite\Core\Modules\Collections\DemoKitImporter;
 use FlashSite\Core\Modules\Collections\ItemPersistence;
 use FlashSite\Core\Modules\Collections\Output\CollectionsOutput;
@@ -121,6 +130,7 @@ final class Application
         $this->container->bind(BusinessValidator::class, fn () => new BusinessValidator());
         $this->container->bind(DataSafetyManager::class, fn (Container $c) => new DataSafetyManager($c->make(OptionsStorage::class)));
         $this->container->bind(BusinessRepository::class, fn (Container $c) => new BusinessRepository($c->make(OptionsStorage::class), $c->make(DataSafetyManager::class)));
+        $this->container->bind(BusinessUpdateService::class, fn (Container $c) => new BusinessUpdateService($c->make(BusinessRepository::class), $c->make(BusinessValidator::class), $c->make(Logger::class)));
         $this->container->bind(BusinessData::class, fn (Container $c) => new BusinessData($c->make(BusinessRepository::class)));
         $this->container->bind(PublicSerializer::class, fn () => new PublicSerializer());
         $this->container->bind(OutputResolver::class, fn () => new OutputResolver());
@@ -149,6 +159,7 @@ final class Application
         $this->container->bind(ApiAccessModule::class, fn (Container $c) => new ApiAccessModule($c->make(BusinessData::class), $c->make(PublicSerializer::class), $c->make(OutputResolver::class), $c->make(MetaProvider::class), $c->make(BusinessRepository::class), $c->make(BusinessValidator::class), $c->make(Logger::class)));
         $this->container->bind(DependencyManagerModule::class, fn (Container $c) => new DependencyManagerModule($c->make(DependencyRegistry::class), $c->make(PluginChecker::class), $c->make(Notices::class), $c->make(Logger::class)));
         $this->container->bind(SetupWizardModule::class, fn (Container $c) => new SetupWizardModule($c->make(BusinessRepository::class), $c->make(BusinessValidator::class), $c->make(OnboardingRepository::class), $c->make(DependencyRegistry::class), $c->make(PluginChecker::class), $c->make(Assets::class), $c->make(Logger::class)));
+        $this->container->bind(CollectionStateService::class, fn (Container $c) => new CollectionStateService($c->make(CollectionRegistry::class), $c->make(ActivationRepository::class)));
         $this->container->bind(ItemPersistence::class, fn (Container $c) => new ItemPersistence($c->make(ItemSanitizer::class), $c->make(ItemValidator::class), $c->make(ItemReader::class), $c->make(CollectionSettings::class)));
         $this->container->bind(ItemEditor::class, fn (Container $c) => new ItemEditor($c->make(ItemPersistence::class), $c->make(ItemReader::class), $c->make(CollectionSettings::class)));
         $this->container->bind(ListColumns::class, fn (Container $c) => new ListColumns($c->make(ItemReader::class), $c->make(FieldFormatter::class)));
@@ -156,8 +167,16 @@ final class Application
         $this->container->bind(ModelPages::class, fn () => new ModelPages());
         $this->container->bind(PublicRestController::class, fn (Container $c) => new PublicRestController($c->make(CollectionPublicSerializer::class)));
         $this->container->bind(DemoKitImporter::class, fn (Container $c) => new DemoKitImporter($c->make(ItemPersistence::class), '', $c->make(CollectionSettings::class)));
-        $this->container->bind(CollectionsPage::class, fn (Container $c) => new CollectionsPage($c->make(CollectionRegistry::class), $c->make(ActivationRepository::class), $c->make(DemoKitImporter::class), $c->make(CollectionSettings::class)));
+        $this->container->bind(CollectionsPage::class, fn (Container $c) => new CollectionsPage($c->make(CollectionRegistry::class), $c->make(ActivationRepository::class), $c->make(DemoKitImporter::class), $c->make(CollectionSettings::class), $c->make(CollectionStateService::class)));
         $this->container->bind(CollectionsModule::class, fn (Container $c) => new CollectionsModule($c->make(CollectionRegistry::class), $c->make(ActivationRepository::class), $c->make(CollectionCapabilities::class), $c->make(ItemSanitizer::class), $c->make(OptionsStorage::class), $c->make(Logger::class), $c->make(ItemPersistence::class), $c->make(ItemEditor::class), $c->make(ListColumns::class), $c->make(CollectionsOutput::class), $c->make(PublicRestController::class), $c->make(CollectionsPage::class), $c->make(ModelPages::class)));
+        $this->container->bind(CollectionItemService::class, fn (Container $c) => new CollectionItemService($c->make(ItemPersistence::class), $c->make(ItemSanitizer::class), $c->make(ItemValidator::class), $c->make(ItemReader::class)));
+        $this->container->bind(AbilityGate::class, fn (Container $c) => new AbilityGate($c->make(CollectionRegistry::class)));
+        $this->container->bind(AbilitiesModule::class, fn (Container $c) => new AbilitiesModule([
+            new SystemAbilities($c->make(CollectionRegistry::class), $c->make(ActivationRepository::class), $c->make(CollectionSettings::class), $c->make(AbilityGate::class)),
+            new CollectionAbilities($c->make(CollectionRegistry::class), $c->make(ActivationRepository::class), $c->make(CollectionSettings::class), $c->make(CollectionStateService::class), $c->make(AbilityGate::class)),
+            new ItemAbilities($c->make(CollectionRegistry::class), $c->make(ActivationRepository::class), $c->make(CollectionItemService::class), $c->make(AbilityGate::class)),
+            new BusinessAbilities($c->make(BusinessData::class), $c->make(BusinessUpdateService::class), $c->make(AbilityGate::class)),
+        ], $c->make(Logger::class)));
         $this->container->bind(\FlashSite\Core\Modules\Contact\ContactModule::class, fn (Container $c) => new \FlashSite\Core\Modules\Contact\ContactModule($c->make(BusinessData::class)));
         $this->container->bind(\FlashSite\Core\Modules\Hardening\HardeningModule::class, fn () => new \FlashSite\Core\Modules\Hardening\HardeningModule());
         $this->container->bind(\FlashSite\Core\Modules\Markets\MarketsModule::class, fn () => new \FlashSite\Core\Modules\Markets\MarketsModule());

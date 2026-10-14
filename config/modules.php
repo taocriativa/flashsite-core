@@ -18,4 +18,5 @@ return [
     FlashSite\Core\Modules\SiteTexts\SiteTextsModule::class,
     FlashSite\Core\Modules\Fonts\FontsModule::class,
     FlashSite\Core\Modules\ClientPanel\ClientPanelModule::class,
+    FlashSite\Core\Modules\Abilities\AbilitiesModule::class,
 ];

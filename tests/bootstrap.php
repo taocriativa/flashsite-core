@@ -123,8 +123,12 @@ if (!function_exists('rest_ensure_response')) {
 }
 
 if (!function_exists('current_user_can')) {
-    function current_user_can(string $capability): bool
+    function current_user_can(string $capability, mixed ...$args): bool
     {
+        // Permissão por objeto: "edit_post:123" tem prioridade; sem ela vale a capability global.
+        if ($args !== [] && array_key_exists($capability . ':' . $args[0], $GLOBALS['flashsite_test_current_user_caps'])) {
+            return !empty($GLOBALS['flashsite_test_current_user_caps'][$capability . ':' . $args[0]]);
+        }
         return !empty($GLOBALS['flashsite_test_current_user_caps'][$capability]);
     }
 }
@@ -144,6 +148,10 @@ if (!class_exists('WP_Error')) {
             public string $message,
             public array $data = []
         ) {}
+
+        public function get_error_code(): string { return $this->code; }
+        public function get_error_message(): string { return $this->message; }
+        public function get_error_data(): mixed { return $this->data; }
     }
 }
 
@@ -266,8 +274,9 @@ if (!function_exists('sanitize_textarea_field')) {
 if (!function_exists('sanitize_email')) {
     function sanitize_email(string $email): string
     {
+        // Como o WordPress: endereço inválido vira "" (não é "limpo", é descartado).
         $email = trim($email);
-        return filter_var($email, FILTER_SANITIZE_EMAIL) ?: '';
+        return strlen($email) >= 6 && filter_var($email, FILTER_VALIDATE_EMAIL) !== false ? $email : '';
     }
 }
 
@@ -608,6 +617,10 @@ if (!function_exists('get_post_meta')) {
 if (!function_exists('update_post_meta')) {
     function update_post_meta(int $postId, string $key, mixed $value): bool
     {
+        // Como o WordPress: o filtro pode interceptar antes de gravar (rastreio da baixa de preço).
+        if (! empty($GLOBALS['flashsite_test_filters']['update_post_metadata'])) {
+            apply_filters('update_post_metadata', null, $postId, $key, $value);
+        }
         $GLOBALS['flashsite_test_post_meta'][$postId][$key] = $value;
         return true;
     }
@@ -642,7 +655,7 @@ if (!function_exists('delete_post_meta')) {
 if (!function_exists('is_wp_error')) {
     function is_wp_error(mixed $thing): bool
     {
-        return false;
+        return $thing instanceof WP_Error;
     }
 }
 
