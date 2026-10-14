@@ -1,12 +1,12 @@
 # Contrato das Collections · FlashSite Core 3.4
 
-Documento de referência para quem cria, estende ou promove Collections. Vale a partir da 3.4.0-beta.1. Itens marcados **(beta.2)** entram na segunda beta.
+Documento de referência para quem cria, estende ou promove Collections. Vale a partir da 3.4.0 (betas 1 e 2).
 
 ## 1. O que é uma Collection
 
 Um preset declarativo (um arquivo PHP que devolve um array) que o motor transforma em tipo de conteúdo: CPT `fs_<key>`, taxonomias, campos em post meta, ficha no painel, REST pública, Dynamic Tags, páginas modelo do Elementor, JSON-LD e suporte a Polylang. O motor é genérico: não existe código por preset. Tudo o que muda de um preset para outro está no arquivo.
 
-Presets oficiais: `imovel`, `plano`, `prato` (e, na beta.2, `servico`, `equipa`, `projeto`, `evento`). Ficam em `config/collections/`.
+Presets oficiais: `imovel`, `plano`, `prato` e, desde a 3.4.0-beta.2, `servico`, `equipa`, `projeto`, `evento` (Onda 1). Ficam em `config/collections/`. **Todos entram desativados**: o Administrador ativa em FlashSite › Coleções, e instalar a versão não muda nenhum site que não os ative.
 
 ## 2. Estrutura do preset
 
@@ -26,7 +26,7 @@ Chaves: `key`, `post_type`, `slug`, `labels`, `groups`, `taxonomies`, `fields`, 
 | `model_pages`, `archive_*` | páginas modelo e listagem |
 | **`order`, `order_past`** | ordenação por campo (3.4.0, seção 4) |
 | **`temporal`** | janela próximos/passados/todos (3.4.0, seção 5) |
-| **`schema_map` (beta.2)** | propriedades schema.org mapeadas a campos |
+| **`schema_map`** | propriedades schema.org mapeadas a campos (3.4.0, seção 6) |
 
 ### Convenções de nomes (contrato implícito)
 
@@ -130,7 +130,52 @@ Um `x_*` promovido a oficial **não** é migrado automaticamente. Não existe al
 
 **Cache de página:** listas "próximos" mudam à meia-noite. O Core não purga cache de terceiros nem agenda tarefas para isso (decisão da 3.4.0). Quem usa cache de página deve considerar um TTL curto nas páginas de eventos. Comportamento a validar nos ambientes Flash Site.
 
-## 6. Governança
+## 6. Primitiva `schema_map`
+
+Mapeia propriedades Schema.org para campos do preset, sem código por preset (nada de `if evento`). Opcional: sem `schema_map` o JSON-LD é exatamente o de sempre (verificado contra o 3.3.0 para `imovel`, `plano` e `prato`).
+
+```php
+'schema_map' => [
+    'jobTitle' => 'cargo',                                   // campo público de texto, data, url, e-mail, tel ou número
+    'eventStatus' => ['taxonomy' => 'estado', 'map' => [     // termo da taxonomia -> valor fixo
+        'cancelado' => 'https://schema.org/EventCancelled',
+    ]],
+],
+```
+
+- **Só valores simples** (texto, data AAAA-MM-DD, número) ou o valor fixo de um termo. Sem objetos aninhados, listas nem transformações. Quem precisar disso (por exemplo `location` como `Place`, `sameAs` com várias redes, `startDate` com hora) resolve no kit do job.
+- **Só campos públicos.** Campo privado, inexistente ou de tipo não suportado (galeria, lista, dinheiro, sim/não, imagem) é ignorado em silêncio.
+- Não substitui o que o Core já produz: `name`, `url`, `image`, `description`, `offers`, `datePosted` e `@…`.
+- Valor vazio ou data fora do formato não gera propriedade.
+- O `Offer` continua a vir do preço do preset (`settings.price`) e da disponibilidade (`schema_availability`).
+
+Limitações conhecidas desta versão: `Event.location` é texto simples (não `Place`); `startDate`/`endDate` levam só a data; a equipa não gera `sameAs` múltiplo.
+
+Consumidores atuais: `evento` (`startDate`, `endDate`, `location`, `eventStatus`), `equipa` (`jobTitle`, `knowsAbout`, `email`, `telephone`), `projeto` (`sameAs`). `servico` não precisa de mapa: `name`, `description`, `image` e `offers` já bastam.
+
+## 7. Onda 1 do catálogo (3.4.0-beta.2)
+
+Estruturas mínimas e genéricas. Campos específicos de um setor pertencem ao kit de setor, ao kit do job ou ao Business.
+
+| Preset | Slug (PT / BR) | Schema | Campos públicos | Privados | Taxonomias |
+|---|---|---|---|---|---|
+| `servico` | `servicos` | Service | resumo, para_quem, icone (imagem), destaque, etiqueta, como_funciona (lista), inclui (lista), duracao, botao_link, preco, preco_desde, preco_sob_consulta | notas_internas | categoria (livre) |
+| `equipa` | `equipa` / `equipe` | Person | cargo, registro_profissional, especialidade, resumo, destaque, email, telefone, linkedin, instagram, agenda_url | notas_internas | funcao (livre) |
+| `projeto` | `projetos` | CreativeWork | cliente, ano (texto), local, resumo, destaque, escopo, resultado, link, galeria, video_url | notas_internas | categoria (livre) |
+| `evento` | `eventos` | Event | resumo, destaque, data_inicio (obrigatório), hora_inicio, data_fim, hora_fim, local, cidade, mapa_url, preco, gratuito, ingressos_url, galeria | notas_internas | estado (fixa: confirmado, esgotado, adiado, cancelado), tipo (livre) |
+
+- `servico`, `equipa` e `projeto` usam ordem manual (`page-attributes`). `equipa`: a foto é a imagem de capa e a biografia é o editor. `projeto`: `cover_from => galeria`; `ano` é texto para não aparecer como "2.025".
+- `evento`: usa **exclusivamente** `settings.temporal` e `settings.order`/`order_past` da beta.1: próximos em ordem cronológica, passados do mais recente para o mais antigo, ambos declarados no preset. O arquivo mostra por defeito os próximos; `?when=past` e `?when=all` dão o histórico. Evento passado, adiado ou cancelado continua publicado. Regra: `data_fim >= data_inicio`. "Agenda" é um nome possível de secção ou página; o endereço do produto é `/eventos/`.
+- `evento` e preço: o campo `preco` gera o `Offer`; "entrada gratuita" é um campo sim/não que o modelo mostra como quiser (o Core não escreve "Gratuito").
+- Brasil: `equipa` passa a `/equipe/` e usa "Registro profissional", "Equipe" e "Contatos". As chaves dos campos e o post_type não mudam com o mercado.
+
+### Serviço × Plano
+
+- **Plano** (`plano`): pacote ou modalidade comercial, periodicidade, recorrência, preço estruturado. Continua como é.
+- **Serviço** (`servico`): atividade ou oferta profissional; preço opcional; funciona sem preço, sem periodicidade e sem regra de preço obrigatório.
+- Não se unificam, não se renomeiam e não se migram.
+
+## 8. Governança
 
 ### Core × Kit de setor × Kit do job × Business
 
@@ -169,9 +214,3 @@ Específico de um cliente ou profissão; venda de produto (WooCommerce); poucos 
 ### Ficha de custo (por preset novo)
 
 Antes de aprovar: traduções em 3 idiomas, itens de exemplo, fixture e testes, modelos Elementor de demonstração, documentação.
-
-## 7. Serviço × Plano **(beta.2)**
-
-- **Plano** (`plano`): pacote, modalidade comercial, recorrência, periodicidade, preço estruturado. Continua como é.
-- **Serviço** (`servico`): atividade ou oferta profissional; preço opcional; funciona sem preço.
-- Não se unificam, não se renomeiam e não se migram nesta versão.

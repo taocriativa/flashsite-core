@@ -43,6 +43,8 @@ $files = [
     __DIR__ . '/Unit/CollectionExtensibilityTest.php',
     __DIR__ . '/Unit/CollectionOrderTemporalTest.php',
     __DIR__ . '/Unit/GroupedArchiveContextTest.php',
+    __DIR__ . '/Integration/OndaUmPresetsTest.php',
+    __DIR__ . '/Unit/SchemaMapTest.php',
 ];
 
 foreach ($files as $file) {
@@ -89,6 +91,8 @@ $tests = [
     new CollectionExtensibilityTest(),
     new CollectionOrderTemporalTest(),
     new GroupedArchiveContextTest(),
+    new OndaUmPresetsTest(),
+    new SchemaMapTest(),
 ];
 
 $failures = [];

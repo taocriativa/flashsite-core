@@ -1,0 +1,52 @@
+{
+    "imovel:PT": {
+        "@context": "https://schema.org",
+        "@type": "RealEstateListing",
+        "name": "Título 801",
+        "url": "https://exemplo.test/item/801/",
+        "description": "Resumo de teste.",
+        "datePosted": "2026-10-01T10:00:00+00:00",
+        "offers": {
+            "@type": "Offer",
+            "price": "285000.00",
+            "priceCurrency": "EUR",
+            "availability": "https://schema.org/InStock"
+        }
+    },
+    "plano:PT": {
+        "@context": "https://schema.org",
+        "@type": "Service",
+        "name": "Título 802",
+        "url": "https://exemplo.test/item/802/",
+        "description": "Resumo de teste.",
+        "offers": {
+            "@type": "Offer",
+            "price": "149.00",
+            "priceCurrency": "EUR"
+        }
+    },
+    "prato:PT": {
+        "@context": "https://schema.org",
+        "@type": "MenuItem",
+        "name": "Título 803",
+        "url": "https://exemplo.test/item/803/",
+        "description": "Resumo de teste.",
+        "offers": {
+            "@type": "Offer",
+            "price": "16.50",
+            "priceCurrency": "EUR"
+        }
+    },
+    "plano:BR": {
+        "@context": "https://schema.org",
+        "@type": "Service",
+        "name": "Título 804",
+        "url": "https://exemplo.test/item/804/",
+        "description": "Resumo de teste.",
+        "offers": {
+            "@type": "Offer",
+            "price": "350.00",
+            "priceCurrency": "EUR"
+        }
+    }
+}
