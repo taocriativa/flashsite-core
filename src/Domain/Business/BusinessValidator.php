@@ -85,10 +85,12 @@ final class BusinessValidator
         if ($data['contact']['phone'] === '') {
             $errors['phone'] = 'O telefone principal é obrigatório.';
         }
-        if ($data['contact']['email_public'] !== '' && ! Validators::isEmail($data['contact']['email_public'])) {
+        // O valor enviado (raw) conta: sanitize_email() devolve "" para endereços inválidos, o que
+        // passaria por "campo vazio". Só um "" enviado de propósito limpa o campo.
+        if (self::rejectedEmail($input, 'email', $data['contact']['email_public']) || ($data['contact']['email_public'] !== '' && ! Validators::isEmail($data['contact']['email_public']))) {
             $errors['email'] = 'O email público informado é inválido.';
         }
-        if ($data['contact']['email_admin'] !== '' && ! Validators::isEmail($data['contact']['email_admin'])) {
+        if (self::rejectedEmail($input, 'email_admin', $data['contact']['email_admin']) || ($data['contact']['email_admin'] !== '' && ! Validators::isEmail($data['contact']['email_admin']))) {
             $errors['email_admin'] = 'O email administrativo informado é inválido.';
         }
 
@@ -232,5 +234,14 @@ final class BusinessValidator
             return '';
         }
         return function_exists('esc_url_raw') ? esc_url_raw($value) : $value;
+    }
+
+    /** @param array<string, mixed> $input */
+    private static function rejectedEmail(array $input, string $key, string $sanitized): bool
+    {
+        if (! array_key_exists($key, $input) || ! is_scalar($input[$key])) {
+            return false;
+        }
+        return trim((string) $input[$key]) !== '' && $sanitized === '';
     }
 }

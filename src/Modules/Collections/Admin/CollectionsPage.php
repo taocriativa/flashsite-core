@@ -9,6 +9,7 @@ use FlashSite\Core\Domain\Collections\CollectionRegistry;
 use FlashSite\Core\Domain\Collections\CollectionSettings;
 use FlashSite\Core\Domain\Collections\Currency;
 use FlashSite\Core\Domain\Collections\Market;
+use FlashSite\Core\Modules\Collections\CollectionStateService;
 use FlashSite\Core\Modules\Collections\DemoKitImporter;
 
 /**
@@ -27,6 +28,7 @@ final class CollectionsPage
         private ActivationRepository $activation,
         private DemoKitImporter $importer,
         private ?CollectionSettings $settings = null,
+        private ?CollectionStateService $state = null,
     ) {}
 
     public function register(): void
@@ -154,7 +156,8 @@ final class CollectionsPage
         }
         check_admin_referer(self::NONCE);
         $active = isset($_POST['active']) && is_array($_POST['active']) ? array_map('sanitize_key', wp_unslash($_POST['active'])) : [];
-        $this->activation->replace(array_values($active), $this->registry->keys());
+        $keys = array_values($active);
+        $this->state?->replace($keys) ?? $this->activation->replace($keys, $this->registry->keys());
         $currency = sanitize_text_field(wp_unslash((string) ($_POST['currency'] ?? '')));
         $market = sanitize_text_field(wp_unslash((string) ($_POST['market'] ?? '')));
         if ($this->settings !== null && Market::isValid($market)) {
@@ -172,7 +175,7 @@ final class CollectionsPage
             $perLanguage = isset($_POST['per_language']) && is_array($_POST['per_language']) ? array_map('sanitize_key', wp_unslash($_POST['per_language'])) : [];
             $this->settings->setPerLanguage(array_values(array_intersect($perLanguage, $this->registry->keys())));
         }
-        do_action('flashsite_collections_changed');
+        CollectionStateService::notifyChanged();
         $this->redirect($active === []
             ? 'Guardado. Nenhuma coleção ficou ativa: marque a caixa da coleção antes de guardar.'
             : 'Coleções guardadas. Os menus aparecem no painel a seguir.');

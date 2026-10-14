@@ -12,7 +12,13 @@ if (! class_exists('WP_Post')) {
     {
         public string $post_name = 'item-de-teste';
         public string $post_status = 'publish';
-        public function __construct(public int $ID) {}
+        // Campos usados também pelos testes das Abilities (tests/Support/WpPostStubs.php).
+        public string $post_type = 'post';
+        public string $post_title = '';
+        public string $post_content = '';
+        public string $post_modified_gmt = '2026-10-14 10:00:00';
+        public int $post_author = 1;
+        public function __construct(public int $ID = 0) {}
     }
 }
 foreach ([

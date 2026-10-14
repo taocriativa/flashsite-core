@@ -45,6 +45,11 @@ $files = [
     __DIR__ . '/Unit/GroupedArchiveContextTest.php',
     __DIR__ . '/Integration/OndaUmPresetsTest.php',
     __DIR__ . '/Unit/SchemaMapTest.php',
+    __DIR__ . '/Unit/AbilitiesRegistrationTest.php',
+    __DIR__ . '/Integration/AbilitiesCollectionsTest.php',
+    __DIR__ . '/Integration/AbilitiesItemsTest.php',
+    __DIR__ . '/Integration/AbilitiesBusinessTest.php',
+    __DIR__ . '/Integration/BusinessEmailValidationTest.php',
 ];
 
 foreach ($files as $file) {
@@ -93,6 +98,11 @@ $tests = [
     new GroupedArchiveContextTest(),
     new OndaUmPresetsTest(),
     new SchemaMapTest(),
+    new AbilitiesRegistrationTest(),
+    new AbilitiesCollectionsTest(),
+    new AbilitiesItemsTest(),
+    new AbilitiesBusinessTest(),
+    new BusinessEmailValidationTest(),
 ];
 
 $failures = [];
