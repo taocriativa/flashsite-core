@@ -16,6 +16,10 @@ use FlashSite\Core\Core\Contracts\ModuleInterface;
  *                                      (com sessão ou senha de aplicação continuam a funcionar)
  *   flashsite_core_hardening_xmlrpc    XML-RPC desligado (fica ligado se o Jetpack estiver ativo)
  *   flashsite_core_security_txt        /.well-known/security.txt (contacto: flashsite_core_security_contact)
+ *   flashsite_core_hidden_links        tira do HTML público os links ocultos (display:none ou
+ *                                      visibility:hidden) para os domínios de
+ *                                      flashsite_core_hidden_link_domains (padrão: full.services,
+ *                                      que o plugin FULL.Cliente injeta no rodapé de todas as páginas)
  *
  * Ex.: add_filter('flashsite_core_hardening_xmlrpc', '__return_false');
  *
@@ -47,6 +51,10 @@ final class HardeningModule implements ModuleInterface
         }
         if (apply_filters('flashsite_core_security_txt', true)) {
             add_action('parse_request', [$this, 'securityTxt'], 0);
+        }
+        if (apply_filters('flashsite_core_hidden_links', true)) {
+            // Último no template_redirect: o buffer apanha o HTML inteiro, incluindo o wp_footer.
+            add_action('template_redirect', [$this, 'startHiddenLinkCleanup'], PHP_INT_MAX);
         }
     }
 
@@ -117,6 +125,44 @@ final class HardeningModule implements ModuleInterface
     {
         unset($headers['X-Pingback']);
         return $headers;
+    }
+
+    public function startHiddenLinkCleanup(): void
+    {
+        if (is_admin() || wp_doing_ajax() || is_feed() || is_robots() || (defined('REST_REQUEST') && REST_REQUEST)) {
+            return;
+        }
+        $domains = (array) apply_filters('flashsite_core_hidden_link_domains', ['full.services']);
+        if ($domains === []) {
+            return;
+        }
+        ob_start(static fn (string $html): string => self::removeHiddenLinks($html, $domains));
+    }
+
+    /**
+     * Tira os <a> que apontam para um dos domínios E estão escondidos por estilo inline.
+     * Links visíveis para os mesmos domínios ficam intactos.
+     *
+     * @param array<int, string> $domains
+     */
+    public static function removeHiddenLinks(string $html, array $domains): string
+    {
+        $hosts = [];
+        foreach ($domains as $domain) {
+            $domain = strtolower(trim((string) $domain));
+            if ($domain !== '' && stripos($html, $domain) !== false) {
+                $hosts[] = preg_quote($domain, '#');
+            }
+        }
+        if ($hosts === []) {
+            return $html;
+        }
+        $pattern = '#<a\b'
+            . '(?=[^>]*\bhref\s*=\s*["\']?https?://(?:[a-z0-9-]+\.)*(?:' . implode('|', $hosts) . ')(?:[/:?\#"\'\s>]|$))'
+            . '(?=[^>]*\bstyle\s*=\s*["\'][^"\']*(?:display\s*:\s*none|visibility\s*:\s*hidden))'
+            . '[^>]*>.*?</a>\s*#is';
+        $clean = preg_replace($pattern, '', $html);
+        return is_string($clean) ? $clean : $html;
     }
 
     public function securityTxt($wp): void

@@ -50,6 +50,7 @@ $files = [
     __DIR__ . '/Integration/AbilitiesItemsTest.php',
     __DIR__ . '/Integration/AbilitiesBusinessTest.php',
     __DIR__ . '/Integration/BusinessEmailValidationTest.php',
+    __DIR__ . '/Unit/HardeningHiddenLinksTest.php',
 ];
 
 foreach ($files as $file) {
@@ -103,6 +104,7 @@ $tests = [
     new AbilitiesItemsTest(),
     new AbilitiesBusinessTest(),
     new BusinessEmailValidationTest(),
+    new HardeningHiddenLinksTest(),
 ];
 
 $failures = [];
