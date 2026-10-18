@@ -111,7 +111,7 @@ final class CollectionRegistry
                     $this->errors[$source] = sprintf('Preset oficial "%s": o prefixo "%s" é reservado a presets externos.', $key, self::EXTERNAL_PREFIX);
                     continue;
                 }
-                $this->add(CollectionPreset::fromArray(MarketLayer::apply($config, $this->market)), $origin, $source);
+                $this->add(CollectionPreset::fromArray(SeloLayer::apply(MarketLayer::apply($config, $this->market))), $origin, $source);
             } catch (Throwable $e) {
                 $this->errors[$source] = $e->getMessage();
             }
