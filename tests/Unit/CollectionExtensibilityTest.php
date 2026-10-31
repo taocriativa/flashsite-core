@@ -78,7 +78,7 @@ final class CollectionExtensibilityTest extends TestCase
                 $this->assertTrue($preset !== null, "Preset oficial $key presente.");
                 $this->assertSame(
                     $golden["$key:$market"],
-                    sha1((string) json_encode($preset->toArray(), JSON_UNESCAPED_UNICODE)),
+                    sha1((string) json_encode(self::withoutSelo($preset->toArray()), JSON_UNESCAPED_UNICODE)),
                     "$key ($market) tem de ser idêntico ao Core 3.3.0."
                 );
                 $this->assertSame(CollectionRegistry::ORIGIN_CORE, $registry->origin($key));
@@ -105,5 +105,21 @@ final class CollectionExtensibilityTest extends TestCase
 
         Strings::useDirectory(null);
         flashsite_reset_test_state();
+    }
+
+    /**
+     * O selo de destaque (3.6.0) entra em todos os presets por SeloLayer; o resto continua igual ao 3.3.0.
+     *
+     * @param array<string, mixed> $preset
+     * @return array<string, mixed>
+     */
+    private static function withoutSelo(array $preset): array
+    {
+        unset($preset['groups']['selo']);
+        $preset['fields'] = array_values(array_filter(
+            (array) $preset['fields'],
+            static fn ($f): bool => ! in_array($f['key'] ?? '', ['selo', 'selo_texto', 'selo_ate'], true)
+        ));
+        return $preset;
     }
 }

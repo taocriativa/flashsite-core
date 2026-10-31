@@ -129,6 +129,36 @@ final class FieldFormatter
     }
 
     /**
+     * Texto do selo de destaque (@since 3.6.0), ou '' quando não há selo ou ele já expirou.
+     * "Só até uma data" vira "Só até 30/10" e precisa da data; "Outro texto" usa o texto livre.
+     */
+    public function badge(CollectionPresetInterface $preset, int $postId): string
+    {
+        $field = $preset->field('selo');
+        if ($field === null) {
+            return '';
+        }
+        $kind = $this->reader->value($field, $postId);
+        if (! is_string($kind) || $kind === '') {
+            return '';
+        }
+        $untilField = $preset->field('selo_ate');
+        $until = $untilField !== null ? $this->reader->value($untilField, $postId) : '';
+        $until = is_string($until) && preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $until, $m) === 1 ? $until : '';
+        if ($until !== '' && $until < TemporalResolver::today()) {
+            return '';
+        }
+        if ($kind === SeloLayer::KIND_UNTIL) {
+            return $until === '' ? '' : Strings::t('Só até') . ' ' . $m[3] . '/' . $m[2];
+        }
+        if ($kind === SeloLayer::KIND_CUSTOM) {
+            $textField = $preset->field('selo_texto');
+            return $textField !== null ? trim((string) $this->reader->value($textField, $postId)) : '';
+        }
+        return isset($field->options[$kind]) ? Strings::t((string) $field->options[$kind]) : '';
+    }
+
+    /**
      * Preço anterior de uma baixa de preço (settings.price_drop, @since 3.1.0).
      * Só devolve valor quando o campo "show" está ligado, o item não está "sob consulta"
      * e o preço anterior é maior do que o atual. Subidas nunca aparecem.

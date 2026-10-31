@@ -77,6 +77,29 @@ class ItemPriceDropTag extends ItemFieldTag
     }
 }
 
+/**
+ * Selo de destaque (@since 3.6.0): "Esgotado", "Últimas unidades", "Só até 30/10"…
+ * Fica vazio sem selo (ou com o selo expirado); com a classe fs-esconde-vazio o bloco some.
+ */
+class ItemBadgeTag extends ItemFieldTag
+{
+    protected function slug(): string { return 'flashsite-item-badge'; }
+    protected function title(): string { return 'Item · Selo de destaque'; }
+    protected function fixedField(): ?string { return 'selo'; }
+
+    protected function register_controls(): void
+    {
+        $this->registerItemSourceControls();
+        $this->add_control('before', ['label' => 'Antes', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => '']);
+        $this->add_control('after', ['label' => 'Depois', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => '']);
+    }
+
+    protected function resolve(CollectionPresetInterface $preset, int $postId, FieldFormatter $formatter): string
+    {
+        return $formatter->badge($preset, $postId);
+    }
+}
+
 /** "92 m²" (área útil). */
 class ItemAreaTag extends ItemFieldTag
 {

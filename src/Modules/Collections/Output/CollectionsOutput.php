@@ -29,6 +29,7 @@ final class CollectionsOutput
         Elementor\ItemFieldTag::class,
         Elementor\ItemPriceTag::class,
         Elementor\ItemPriceDropTag::class,
+        Elementor\ItemBadgeTag::class,
         Elementor\ItemAreaTag::class,
         Elementor\ItemTermsTag::class,
         Elementor\ItemStatusTag::class,
