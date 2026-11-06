@@ -136,8 +136,14 @@ final class CreatorModeTest extends TestCase
         $this->assertSame(['b', 'c'], array_keys($wp_filter['admin_notices']->callbacks[10]));
         $this->assertSame([], $wp_filter['admin_notices']->callbacks[20]);
 
+        // Avisos de dependências do Core: o dono não vê; mcp-adapter é oculto.
+        $this->assertFalse($module->dependencyNotices(true));
+        $this->assertTrue(CreatorPolicy::slugMatches('mcp-adapter', CreatorPolicy::HIDDEN_PLUGINS));
+
         // O Criador vê tudo.
         $GLOBALS['flashsite_test_user_id'] = 1;
+        $this->assertTrue($module->dependencyNotices(true));
+        $this->assertFalse($module->dependencyNotices(false));
         $this->assertCount(8, $module->filterPlugins($plugins));
         $wp_filter['admin_notices'] = (object) ['callbacks' => [10 => ['a' => ['function' => [$full, 'notices']]]]];
         $module->stripNotices();

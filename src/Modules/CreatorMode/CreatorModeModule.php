@@ -19,7 +19,8 @@ use FlashSite\Core\Domain\Access\CreatorPolicy;
  * - plugins de base (CreatorPolicy::PROTECTED_PLUGINS) somem só da lista de plugins;
  * - não instala, não edita, não atualiza nem apaga plugins e temas, nem atualiza o WordPress;
  * - não edita, não exclui nem rebaixa o Criador, que também não aparece em Utilizadores;
- * - Painel do WordPress sem notícias e sem o painel de boas-vindas.
+ * - Painel do WordPress sem notícias e sem o painel de boas-vindas;
+ * - sem os avisos de dependências do próprio Core (plugins técnicos em falta).
  *
  * Filtros: flashsite_core_creator_hidden_plugins, flashsite_core_creator_protected_plugins,
  * flashsite_core_creator_blocked_caps, flashsite_core_creator_clean_dashboard.
@@ -53,6 +54,13 @@ final class CreatorModeModule implements ModuleInterface
         add_action('add_admin_bar_menus', [$this, 'stripAdminBar'], PHP_INT_MAX);
         add_action('pre_get_users', [$this, 'hideCreatorsFromUsers']);
         add_filter('site_transient_update_plugins', [$this, 'filterUpdates'], PHP_INT_MAX);
+        add_filter('flashsite_core_dependency_notices', [$this, 'dependencyNotices'], PHP_INT_MAX);
+    }
+
+    /** Avisos de dependências do Core ("WPS Hide Login não está instalado") só para o Criador. */
+    public function dependencyNotices(bool $show): bool
+    {
+        return $show && ! $this->restricted();
     }
 
     public function boot(): void {}

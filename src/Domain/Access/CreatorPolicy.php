@@ -12,7 +12,7 @@ namespace FlashSite\Core\Domain\Access;
 final class CreatorPolicy
 {
     /** Plugins técnicos: somem da lista de plugins, dos menus, dos avisos, do Painel e da barra. */
-    public const HIDDEN_PLUGINS = ['full-customer', 'litespeed-cache', 'code-snippets', 'wps-hide-login', 'simple-history', 'hostinger*'];
+    public const HIDDEN_PLUGINS = ['full-customer', 'litespeed-cache', 'code-snippets', 'wps-hide-login', 'simple-history', 'hostinger*', 'mcp-adapter'];
 
     /** Plugins de base: somem só da lista de plugins (não se desativam por engano); os menus ficam. */
     public const PROTECTED_PLUGINS = ['flashsite-*', '*-kit', 'elementor', 'elementor-pro'];
