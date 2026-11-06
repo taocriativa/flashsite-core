@@ -16,7 +16,9 @@ use FlashSite\Core\Domain\Access\CreatorPolicy;
  * Para quem não é Criador (o dono do site, mesmo administrador):
  * - plugins técnicos (CreatorPolicy::HIDDEN_PLUGINS) somem da lista de plugins, dos menus, dos avisos,
  *   do rodapé do painel, do Painel do WordPress e da barra superior; abrir a tela pela URL dá 403;
- * - plugins de base (CreatorPolicy::PROTECTED_PLUGINS) somem só da lista de plugins;
+ * - plugins de base (CreatorPolicy::PROTECTED_PLUGINS) aparecem na lista travados: sem Desativar, sem
+ *   Apagar, sem caixa de seleção, com a nota "Gerido pela Flash Site"; os outros plugins ficam livres
+ *   para ativar e desativar;
  * - não instala, não edita, não atualiza nem apaga plugins e temas, nem atualiza o WordPress;
  * - não edita, não exclui nem rebaixa o Criador, que também não aparece em Utilizadores;
  * - Painel do WordPress sem notícias e sem o painel de boas-vindas;
@@ -24,6 +26,7 @@ use FlashSite\Core\Domain\Access\CreatorPolicy;
  *
  * Filtros: flashsite_core_creator_hidden_plugins, flashsite_core_creator_protected_plugins,
  * flashsite_core_creator_blocked_caps, flashsite_core_creator_clean_dashboard.
+ * O site é do cliente: apagar a constante do wp-config.php desliga o modo e devolve tudo.
  * Não protege contra quem entra pela hospedagem, FTP ou base de dados (fora do WordPress).
  */
 final class CreatorModeModule implements ModuleInterface
@@ -55,6 +58,39 @@ final class CreatorModeModule implements ModuleInterface
         add_action('pre_get_users', [$this, 'hideCreatorsFromUsers']);
         add_filter('site_transient_update_plugins', [$this, 'filterUpdates'], PHP_INT_MAX);
         add_filter('flashsite_core_dependency_notices', [$this, 'dependencyNotices'], PHP_INT_MAX);
+        add_filter('plugin_action_links', [$this, 'lockProtectedLinks'], PHP_INT_MAX, 2);
+        add_filter('plugin_row_meta', [$this, 'protectedRowMeta'], PHP_INT_MAX, 2);
+        add_action('admin_head-plugins.php', [$this, 'hideProtectedCheckboxes']);
+    }
+
+    public function lockProtectedLinks(array $actions, string $file): array
+    {
+        return $this->restricted() ? CreatorPolicy::lockActionLinks($actions, $file, $this->protectedPlugins()) : $actions;
+    }
+
+    public function protectedRowMeta(array $meta, string $file): array
+    {
+        if ($this->restricted() && CreatorPolicy::slugMatches(CreatorPolicy::slugFromBasename($file), $this->protectedPlugins())) {
+            $meta[] = 'Gerido pela Flash Site';
+        }
+        return $meta;
+    }
+
+    /** Sem caixa de seleção nos protegidos (as ações em lote também são negadas pelo map_meta_cap). */
+    public function hideProtectedCheckboxes(): void
+    {
+        if (! $this->restricted() || ! function_exists('get_plugins')) {
+            return;
+        }
+        $selectors = [];
+        foreach (array_keys(get_plugins()) as $basename) {
+            if (CreatorPolicy::slugMatches(CreatorPolicy::slugFromBasename((string) $basename), $this->protectedPlugins())) {
+                $selectors[] = 'tr[data-plugin="' . esc_attr((string) $basename) . '"] .check-column input';
+            }
+        }
+        if ($selectors !== []) {
+            echo '<style id="flashsite-creator-lock">' . implode(',', $selectors) . '{display:none}</style>';
+        }
     }
 
     /** Avisos de dependências do Core ("WPS Hide Login não está instalado") só para o Criador. */
@@ -145,7 +181,7 @@ final class CreatorModeModule implements ModuleInterface
 
     public function filterPlugins(array $plugins): array
     {
-        return $this->restricted() ? CreatorPolicy::filterPluginList($plugins, $this->hidden(), $this->protectedPlugins()) : $plugins;
+        return $this->restricted() ? CreatorPolicy::filterPluginList($plugins, $this->hidden(), []) : $plugins;
     }
 
     /** Sem avisos de atualização dos plugins que o dono não vê. */
@@ -208,7 +244,7 @@ final class CreatorModeModule implements ModuleInterface
             return;
         }
         if (in_array($plugin_page, $this->blockedPages, true)) {
-            wp_die(esc_html__('Esta área é gerida pela Flash Site.', 'flashsite-core'), '', ['response' => 403]);
+            wp_die('Esta área é gerida pela Flash Site.', '', ['response' => 403]);
         }
     }
 

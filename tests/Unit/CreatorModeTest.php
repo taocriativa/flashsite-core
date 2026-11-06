@@ -119,7 +119,13 @@ final class CreatorModeTest extends TestCase
         $this->assertSame(['edit_users'], $module->mapMetaCap(['edit_users'], 'edit_user', 2, [2]));
         $this->assertSame(['install_plugins'], $module->mapMetaCap(['install_plugins'], 'install_plugins', 0, []), 'Cron e visitantes não são afetados.');
 
-        $this->assertSame(['woocommerce/woocommerce.php', 'cookie-law-info/cookie-law-info.php'], array_keys($module->filterPlugins($plugins)));
+        // beta.3: a lista do dono só perde os ocultos; os de base aparecem travados.
+        $this->assertSame(['flashsite-core/flashsite-core.php', 'claudiasousa-kit/claudiasousa-kit.php', 'elementor/elementor.php', 'woocommerce/woocommerce.php', 'cookie-law-info/cookie-law-info.php'], array_keys($module->filterPlugins($plugins)));
+        $links = ['deactivate' => 'D', 'delete' => 'X', 'settings' => 'S'];
+        $this->assertSame(['settings' => 'S'], $module->lockProtectedLinks($links, 'elementor/elementor.php'));
+        $this->assertSame($links, $module->lockProtectedLinks($links, 'woocommerce/woocommerce.php'));
+        $this->assertSame(['Versão 1', 'Gerido pela Flash Site'], $module->protectedRowMeta(['Versão 1'], 'flashsite-core/flashsite-core.php'));
+        $this->assertSame(['Versão 1'], $module->protectedRowMeta(['Versão 1'], 'woocommerce/woocommerce.php'));
         $updates = (object) ['response' => ['full-customer/full-customer.php' => 1, 'woocommerce/woocommerce.php' => 2]];
         $this->assertSame(['woocommerce/woocommerce.php'], array_keys($module->filterUpdates($updates)->response));
         $this->assertCount(2, $updates->response, 'O transient original não é alterado.');
@@ -144,6 +150,7 @@ final class CreatorModeTest extends TestCase
         $GLOBALS['flashsite_test_user_id'] = 1;
         $this->assertTrue($module->dependencyNotices(true));
         $this->assertFalse($module->dependencyNotices(false));
+        $this->assertSame($links, $module->lockProtectedLinks($links, 'elementor/elementor.php'), 'O Criador mantém Desativar.');
         $this->assertCount(8, $module->filterPlugins($plugins));
         $wp_filter['admin_notices'] = (object) ['callbacks' => [10 => ['a' => ['function' => [$full, 'notices']]]]];
         $module->stripNotices();

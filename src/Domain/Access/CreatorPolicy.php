@@ -14,7 +14,7 @@ final class CreatorPolicy
     /** Plugins técnicos: somem da lista de plugins, dos menus, dos avisos, do Painel e da barra. */
     public const HIDDEN_PLUGINS = ['full-customer', 'litespeed-cache', 'code-snippets', 'wps-hide-login', 'simple-history', 'hostinger*', 'mcp-adapter'];
 
-    /** Plugins de base: somem só da lista de plugins (não se desativam por engano); os menus ficam. */
+    /** Plugins de base: aparecem na lista travados (sem Desativar nem Apagar); os menus ficam. @since 3.7.0-beta.3 */
     public const PROTECTED_PLUGINS = ['flashsite-*', '*-kit', 'elementor', 'elementor-pro'];
 
     /** Capacidades que só o Criador tem: instalar, editar, atualizar e trocar código do site. */
@@ -89,6 +89,16 @@ final class CreatorPolicy
             static fn (string $basename): bool => ! self::slugMatches(self::slugFromBasename($basename), $patterns),
             ARRAY_FILTER_USE_KEY
         );
+    }
+
+    /** Links da linha de um plugin protegido sem Desativar e Apagar (os outros, como Definições, ficam). */
+    public static function lockActionLinks(array $actions, string $basename, array $protected): array
+    {
+        if (! self::slugMatches(self::slugFromBasename($basename), $protected)) {
+            return $actions;
+        }
+        unset($actions['deactivate'], $actions['delete']);
+        return $actions;
     }
 
     /**
