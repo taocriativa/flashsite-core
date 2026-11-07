@@ -64,6 +64,7 @@
     document.addEventListener('submit', function (e) {
         var form = e.target;
         if (!form || form.tagName !== 'FORM') { return; }
+        if (form.classList.contains('fs-form')) { return; } // o bloco Formulário Flash Site valida sozinho
         var bad = null;
         form.querySelectorAll('input').forEach(function (el) {
             if (!isPhone(el)) { return; }

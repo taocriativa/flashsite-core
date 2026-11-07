@@ -1,0 +1,24 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "flashsite/form-field",
+	"title": "Campo do formulário",
+	"category": "flashsite",
+	"icon": "edit",
+	"parent": [ "flashsite/form" ],
+	"textdomain": "flashsite-core",
+	"attributes": {
+		"label": { "type": "string", "default": "Campo" },
+		"name": { "type": "string", "default": "" },
+		"type": { "type": "string", "default": "text", "enum": [ "text", "email", "tel", "date", "time", "number", "select", "textarea" ] },
+		"required": { "type": "boolean", "default": false },
+		"placeholder": { "type": "string", "default": "" },
+		"options": { "type": "string", "default": "" },
+		"defaultValue": { "type": "string", "default": "" },
+		"width": { "type": "string", "default": "full", "enum": [ "full", "half" ] }
+	},
+	"supports": { "html": false, "reusable": false },
+	"usesContext": [ "flashsite/formId" ],
+	"editorScript": "flashsite-blocks-editor",
+	"render": "file:./render.php"
+}

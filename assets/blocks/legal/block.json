@@ -1,0 +1,19 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "flashsite/legal",
+	"title": "Informação legal (restauração)",
+	"category": "flashsite",
+	"icon": "media-text",
+	"description": "Portugal: preços com IVA, couvert e Livro de Reclamações. Brasil: texto exigido pela lei do seu estado ou município. Segue o mercado do site.",
+	"textdomain": "flashsite-core",
+	"attributes": {
+		"couvert": { "type": "string", "default": "" },
+		"textoBR": { "type": "string", "default": "" },
+		"livro": { "type": "boolean", "default": true }
+	},
+	"supports": { "html": false, "spacing": { "margin": true }, "typography": { "fontSize": true, "__experimentalFontFamily": true }, "color": { "text": true, "link": true } },
+	"editorScript": "flashsite-blocks-editor",
+	"editorStyle": "flashsite-blocks",
+	"render": "file:./render.php"
+}

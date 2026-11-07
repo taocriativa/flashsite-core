@@ -33,6 +33,8 @@ final class DependencyManagerModule implements ModuleInterface
             return;
         }
 
+        // Modo Criador (@since 3.7.0): o dono não vê avisos de plugins técnicos em falta.
+        $showNotices = (bool) apply_filters('flashsite_core_dependency_notices', true);
         $state = [];
         foreach ($this->registry->all() as $dependency) {
             $installed = $this->pluginChecker->isInstalled($dependency->getSlug());
@@ -48,6 +50,9 @@ final class DependencyManagerModule implements ModuleInterface
                 'meets_version' => $meetsVersion,
             ];
 
+            if (! $showNotices) {
+                continue;
+            }
             if (! $installed && $dependency->getLevel() !== 'optional') {
                 $this->notices->add('warning', sprintf('%s não está instalado.', $dependency->getLabel()));
             } elseif ($installed && ! $active && $dependency->getLevel() !== 'optional') {

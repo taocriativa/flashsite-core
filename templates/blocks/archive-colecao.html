@@ -1,0 +1,19 @@
+<!-- wp:template-part {"slug":"header","area":"header"} /-->
+
+<!-- wp:group {"tagName":"main","metadata":{"name":"Lista da coleção"},"style":{"spacing":{"padding":{"top":"var:preset|spacing|50","bottom":"var:preset|spacing|60"},"blockGap":"var:preset|spacing|40"}},"layout":{"type":"constrained","contentSize":"1080px"}} -->
+<main class="wp-block-group" style="padding-top:var(--wp--preset--spacing--50);padding-bottom:var(--wp--preset--spacing--60)">
+	<!-- wp:query-title {"type":"archive","showPrefix":false} /-->
+	<!-- wp:query {"queryId":1,"query":{"perPage":24,"pages":0,"offset":0,"postType":"post","order":"asc","orderBy":"menu_order","inherit":true}} -->
+	<div class="wp-block-query"><!-- wp:post-template {"style":{"spacing":{"blockGap":"var:preset|spacing|40"}},"layout":{"type":"grid","columnCount":3,"minimumColumnWidth":"16rem"}} -->
+		<!-- wp:post-featured-image {"isLink":true,"aspectRatio":"4/3","sizeSlug":"medium_large"} /-->
+		<!-- wp:post-title {"level":2,"isLink":true,"style":{"typography":{"fontSize":"1.5rem","lineHeight":"1.15"}}} /-->
+		<!-- wp:paragraph {"fontFamily":"mono","metadata":{"bindings":{"content":{"source":"flashsite/item","args":{"field":"price"}}}}} --><p class="has-mono-font-family">Preço</p><!-- /wp:paragraph -->
+		<!-- wp:paragraph {"textColor":"texto-suave","metadata":{"bindings":{"content":{"source":"flashsite/item","args":{"field":"resumo"}}}}} --><p class="has-texto-suave-color has-text-color">Resumo</p><!-- /wp:paragraph -->
+	<!-- /wp:post-template -->
+	<!-- wp:query-pagination --><!-- wp:query-pagination-previous /--><!-- wp:query-pagination-numbers /--><!-- wp:query-pagination-next /--><!-- /wp:query-pagination -->
+	</div>
+	<!-- /wp:query -->
+</main>
+<!-- /wp:group -->
+
+<!-- wp:template-part {"slug":"footer","area":"footer"} /-->

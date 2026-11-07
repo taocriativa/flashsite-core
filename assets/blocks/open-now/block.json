@@ -1,0 +1,15 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "flashsite/open-now",
+	"title": "Aberto agora",
+	"category": "flashsite",
+	"icon": "clock",
+	"description": "Mostra \"Aberto agora · fecha às 23h00\" ou \"Fechado · abre às 12h30\", a partir do horário dos Dados do Negócio. Calcula no navegador, por isso a página em cache nunca fica com a informação errada.",
+	"textdomain": "flashsite-core",
+	"attributes": {},
+	"supports": { "html": false, "spacing": { "margin": true }, "color": { "text": true }, "typography": { "fontSize": true, "__experimentalFontFamily": true } },
+	"editorScript": "flashsite-blocks-editor",
+	"editorStyle": "flashsite-blocks",
+	"render": "file:./render.php"
+}

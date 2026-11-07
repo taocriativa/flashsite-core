@@ -20,6 +20,8 @@ final class DependencyRegistry
         if (is_array($config)) {
             foreach ($config as $row) {
                 if (! is_array($row)) { continue; }
+                // Dependências só da stack Elementor não se pedem em sites com tema de blocos. @since 3.7.0-beta.7
+                if (($row['stack'] ?? '') === 'elementor' && self::isBlockSite()) { continue; }
                 $items[] = new DependencyDefinition(
                     (string) ($row['slug'] ?? ''),
                     (string) ($row['label'] ?? ''),
@@ -30,5 +32,10 @@ final class DependencyRegistry
         }
 
         return new self($items);
+    }
+
+    private static function isBlockSite(): bool
+    {
+        return function_exists('wp_is_block_theme') && wp_is_block_theme();
     }
 }

@@ -182,6 +182,7 @@ final class Application
         $this->container->bind(\FlashSite\Core\Modules\Markets\MarketsModule::class, fn () => new \FlashSite\Core\Modules\Markets\MarketsModule());
         $this->container->bind(\FlashSite\Core\Modules\SiteTexts\SiteTextsModule::class, fn (Container $c) => new \FlashSite\Core\Modules\SiteTexts\SiteTextsModule($c->make(\FlashSite\Core\Domain\SiteTexts\SiteTextsRegistry::class)));
         $this->container->bind(\FlashSite\Core\Modules\ClientPanel\ClientPanelModule::class, fn (Container $c) => new \FlashSite\Core\Modules\ClientPanel\ClientPanelModule($c->make(CollectionsModule::class), $c->make(\FlashSite\Core\Domain\SiteTexts\SiteTextsRegistry::class), $c->make(CollectionSettings::class)));
+        $this->container->bind(\FlashSite\Core\Modules\CreatorMode\CreatorModeModule::class, fn () => new \FlashSite\Core\Modules\CreatorMode\CreatorModeModule());
         $this->container->bind(OutputFoundationModule::class, fn (Container $c) => new OutputFoundationModule($c->make(BusinessData::class), $c->make(Logger::class)));
     }
 
