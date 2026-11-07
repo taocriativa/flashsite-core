@@ -112,4 +112,10 @@
 		},
 		save: function () { return null; }
 	});
+	wp.blocks.registerBlockType('flashsite/item-fields', {
+		edit: function (props) {
+			return el('div', be.useBlockProps(), el(SSR, { block: 'flashsite/item-fields', attributes: props.attributes, urlQueryArgs: { post_id: props.context && props.context.postId }, EmptyResponsePlaceholder: function () { return el('p', null, 'Ficha do item: aparece na página de cada item da coleção.'); } }));
+		},
+		save: function () { return null; }
+	});
 })(window.wp);

@@ -31,7 +31,9 @@ final class BlocksModule implements ModuleInterface
         add_filter('block_categories_all', [$this, 'addCategory']);
         add_filter('query_loop_block_query_vars', [$this, 'featuredOnly'], 10, 2);
         add_action('enqueue_block_editor_assets', [$this, 'editorAssets']);
+        add_action('init', [$this, 'registerCollectionTemplates'], 30);
         (new Effects())->register();
+        (new Requests())->register();
     }
 
     public function editorAssets(): void
@@ -193,10 +195,48 @@ final class BlocksModule implements ModuleInterface
         wp_register_script('flashsite-form-view', FLASHSITE_CORE_URL . 'assets/blocks/form/view.js', [], FLASHSITE_CORE_VERSION, ['strategy' => 'defer', 'in_footer' => true]);
         wp_register_style('flashsite-blocks', FLASHSITE_CORE_URL . 'assets/blocks/blocks.css', [], FLASHSITE_CORE_VERSION);
 
-        foreach (['form', 'form-field', 'hours', 'map'] as $name) {
+        foreach (['form', 'form-field', 'hours', 'map', 'item-fields'] as $name) {
             if (is_file($base . $name . '/block.json')) {
                 register_block_type($base . $name);
             }
+        }
+    }
+
+    /**
+     * Modelos de página do item e da lista para cada coleção ativa, só em temas de blocos
+     * (sites Elementor não são afetados). Um modelo com o mesmo nome no tema tem prioridade.
+     */
+    public function registerCollectionTemplates(): void
+    {
+        if (! function_exists('register_block_template') || ! function_exists('wp_is_block_theme') || ! wp_is_block_theme()) {
+            return;
+        }
+        $registry = self::service(CollectionRegistry::class);
+        if (! $registry instanceof CollectionRegistry) {
+            return;
+        }
+        $dir = FLASHSITE_CORE_PATH . 'templates/blocks/';
+        $single = (string) file_get_contents($dir . 'single-colecao.html');
+        $archive = (string) file_get_contents($dir . 'archive-colecao.html');
+        foreach ($registry->all() as $preset) {
+            $type = $preset->postType();
+            if (! post_type_exists($type)) {
+                continue;
+            }
+            $labels = $preset->labels();
+            $name = (string) ($labels['singular'] ?? $labels['singular_name'] ?? $type);
+            $plural = (string) ($labels['plural'] ?? $labels['name'] ?? $name);
+            register_block_template('flashsite-core//single-' . $type, [
+                'title' => 'Item da coleção · ' . $name,
+                'description' => 'Página de cada item (foto, preço, resumo, ficha e texto).',
+                'content' => strtr($single, ['{{arquivo}}' => esc_url((string) get_post_type_archive_link($type)), '{{plural}}' => esc_html($plural)]),
+                'post_types' => [$type],
+            ]);
+            register_block_template('flashsite-core//archive-' . $type, [
+                'title' => 'Lista da coleção · ' . $plural,
+                'description' => 'Página com todos os itens da coleção.',
+                'content' => $archive,
+            ]);
         }
     }
 

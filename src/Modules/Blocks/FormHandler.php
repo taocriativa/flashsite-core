@@ -76,12 +76,14 @@ final class FormHandler
         $to = $contact instanceof ContactModule ? $contact->recipientEmail() : (string) get_option('admin_email');
         $sent = wp_mail($to, '[' . $site . '] ' . $subject, $body);
 
+        if (post_type_exists(Requests::POST_TYPE)) {
+            Requests::store($postId, $formId, $subject, $lines, $sent);
+        }
+
         /** Ganchos para o CRM e outros registos. @since 3.6.0-blocks.1 */
         do_action('flashsite_form_submitted', $postId, $formId, $lines, $sent);
 
-        if (! $sent) {
-            return $this->error('Não foi possível enviar. Tente de novo.', 500);
-        }
+        // Se o e-mail falhar, o pedido já ficou guardado em FlashSite › Pedidos do site: o visitante não perde o envio.
 
         $whatsapp = '';
         if (! empty($attrs['whatsapp']) && $contact instanceof ContactModule) {

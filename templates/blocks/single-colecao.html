@@ -1,0 +1,23 @@
+<!-- wp:template-part {"slug":"header","area":"header"} /-->
+
+<!-- wp:group {"tagName":"main","metadata":{"name":"Item da coleção"},"style":{"spacing":{"padding":{"top":"var:preset|spacing|50","bottom":"var:preset|spacing|60"},"blockGap":"var:preset|spacing|40"}},"layout":{"type":"constrained","contentSize":"1080px"}} -->
+<main class="wp-block-group" style="padding-top:var(--wp--preset--spacing--50);padding-bottom:var(--wp--preset--spacing--60)">
+	<!-- wp:paragraph {"className":"is-style-mono fs-voltar"} --><p class="is-style-mono fs-voltar"><a href="{{arquivo}}">← {{plural}}</a></p><!-- /wp:paragraph -->
+	<!-- wp:columns {"verticalAlignment":"top","style":{"spacing":{"blockGap":{"left":"var:preset|spacing|50"}}}} -->
+	<div class="wp-block-columns are-vertically-aligned-top">
+		<!-- wp:column {"width":"55%"} --><div class="wp-block-column" style="flex-basis:55%"><!-- wp:post-featured-image {"aspectRatio":"4/3","sizeSlug":"large"} /--></div><!-- /wp:column -->
+		<!-- wp:column {"width":"45%","style":{"spacing":{"blockGap":"18px"}}} -->
+		<div class="wp-block-column" style="flex-basis:45%">
+			<!-- wp:post-title {"level":1,"style":{"typography":{"fontSize":"clamp(2.25rem, 4.5vw, 4rem)","lineHeight":"1"}}} /-->
+			<!-- wp:paragraph {"className":"fs-item-preco","style":{"typography":{"fontSize":"1.375rem"}},"fontFamily":"mono","metadata":{"bindings":{"content":{"source":"flashsite/item","args":{"field":"price"}}}}} --><p class="fs-item-preco has-mono-font-family" style="font-size:1.375rem">Preço</p><!-- /wp:paragraph -->
+			<!-- wp:paragraph {"className":"fs-item-resumo","fontSize":"destaque","metadata":{"bindings":{"content":{"source":"flashsite/item","args":{"field":"resumo"}}}}} --><p class="fs-item-resumo has-destaque-font-size">Resumo</p><!-- /wp:paragraph -->
+			<!-- wp:flashsite/item-fields /-->
+		</div>
+		<!-- /wp:column -->
+	</div>
+	<!-- /wp:columns -->
+	<!-- wp:post-content {"layout":{"type":"constrained","contentSize":"720px","justifyContent":"left"}} /-->
+</main>
+<!-- /wp:group -->
+
+<!-- wp:template-part {"slug":"footer","area":"footer"} /-->

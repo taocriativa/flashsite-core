@@ -24,3 +24,11 @@
 .fs-horario dd { margin: 0; }
 
 .fs-mapa iframe { display: block; width: 100%; height: var(--fs-mapa-altura, 360px); border: 0; }
+
+.fs-ficha { display: grid; gap: 1rem; }
+.fs-ficha__selos { display: flex; flex-wrap: wrap; gap: .5rem; list-style: none; margin: 0; padding: 0; }
+.fs-ficha__selos li { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; border: 1px solid currentColor; padding: .25rem .6rem; opacity: .85; }
+.fs-ficha__lista { margin: 0; display: grid; gap: .5rem; }
+.fs-ficha__lista > div { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px solid color-mix(in srgb, currentColor 18%, transparent); padding-bottom: .5rem; }
+.fs-ficha__lista dt { opacity: .7; }
+.fs-ficha__lista dd { margin: 0; text-align: right; }
