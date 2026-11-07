@@ -9,3 +9,9 @@ Novo módulo `Blocks` (src/Modules/Blocks), ponte do Core com o editor de blocos
 - Editor em JS simples (assets/blocks/editor.js), sem compilação.
 
 Testado no piloto (07/11/2026): ligações, Query Loop de fs_prato com preço e selos, horário, envio válido/inválido/rápido/form inexistente. Por testar: editor visual com sessão de administrador.
+
+Ajustes da Fase 3 (07/11/2026):
+- Query Loop com `"fsDestaques": true` no atributo query mostra só os itens em destaque (preset `featured_field`).
+- `flashsite/business` aceita campos já formatados (`full_address`, `hours`, …) pelo atalho próprio.
+- `fsc-forms-whatsapp.js`: a guarda de telefone ignora `form.fs-form` (o bloco valida sozinho).
+- Atenção ao publicar a partir do Google Drive: as pastas chegam com permissão 700 e o servidor devolve 404 aos ficheiros estáticos. Usar `rsync --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r`.

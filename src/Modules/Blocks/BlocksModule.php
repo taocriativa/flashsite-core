@@ -29,6 +29,29 @@ final class BlocksModule implements ModuleInterface
         add_action('rest_api_init', [$this, 'registerRoutes']);
         add_filter('render_block', [$this, 'dropEmptyBoundBlocks'], 10, 2);
         add_filter('block_categories_all', [$this, 'addCategory']);
+        add_filter('query_loop_block_query_vars', [$this, 'featuredOnly'], 10, 2);
+    }
+
+    /**
+     * Query Loop com `"fsDestaques": true` no atributo query: só itens marcados como destaque na
+     * coleção (ex.: "Sugestão do chef"). O campo vem do preset (`featured_field`, por omissão "destaque").
+     *
+     * @param array<string, mixed> $query
+     */
+    public function featuredOnly(array $query, $block): array
+    {
+        $context = is_object($block) && isset($block->context['query']) ? (array) $block->context['query'] : [];
+        if (empty($context['fsDestaques'])) {
+            return $query;
+        }
+        $registry = self::service(CollectionRegistry::class);
+        $preset = $registry instanceof CollectionRegistry ? $registry->byPostType((string) ($query['post_type'] ?? '')) : null;
+        if ($preset === null) {
+            return $query;
+        }
+        $featured = (string) ($preset->setting('featured_field', 'destaque') ?: 'destaque');
+        $query['meta_query'] = array_merge((array) ($query['meta_query'] ?? []), [['key' => 'fs_' . $featured, 'value' => '1']]);
+        return $query;
     }
 
     public function boot(): void {}
@@ -76,6 +99,10 @@ final class BlocksModule implements ModuleInterface
         $field = preg_replace('/[^a-z0-9_.]/i', '', (string) ($args['field'] ?? '')) ?? '';
         if ($field === '') {
             return null;
+        }
+        // Valores já formatados pelo Core (ex.: "full_address", "hours") usam o atalho próprio.
+        if (! str_contains($field, '.') && shortcode_exists('flashsite_' . $field)) {
+            return trim(do_shortcode('[flashsite_' . $field . ']'));
         }
         return trim(do_shortcode('[flashsite field="' . $field . '"]'));
     }
