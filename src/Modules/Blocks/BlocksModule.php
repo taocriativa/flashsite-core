@@ -30,6 +30,13 @@ final class BlocksModule implements ModuleInterface
         add_filter('render_block', [$this, 'dropEmptyBoundBlocks'], 10, 2);
         add_filter('block_categories_all', [$this, 'addCategory']);
         add_filter('query_loop_block_query_vars', [$this, 'featuredOnly'], 10, 2);
+        add_action('enqueue_block_editor_assets', [$this, 'editorAssets']);
+        (new Effects())->register();
+    }
+
+    public function editorAssets(): void
+    {
+        wp_enqueue_script('flashsite-efeitos-editor', FLASHSITE_CORE_URL . 'assets/blocks/efeitos/editor.js', ['wp-hooks', 'wp-compose', 'wp-element', 'wp-block-editor', 'wp-components'], FLASHSITE_CORE_VERSION, true);
     }
 
     /**
