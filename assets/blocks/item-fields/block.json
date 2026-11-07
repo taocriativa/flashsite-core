@@ -1,0 +1,18 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "flashsite/item-fields",
+	"title": "Ficha do item (coleção)",
+	"category": "flashsite",
+	"icon": "list-view",
+	"description": "Lista os campos públicos do item da coleção (ex.: alergénios, porção, área, quartos). Campos vazios não aparecem.",
+	"textdomain": "flashsite-core",
+	"attributes": {
+		"exclude": { "type": "string", "default": "resumo,destaque,etiqueta,preco,preco_sob_consulta" }
+	},
+	"usesContext": [ "postId", "postType" ],
+	"supports": { "html": false, "spacing": { "margin": true }, "typography": { "fontSize": true } },
+	"editorScript": "flashsite-blocks-editor",
+	"editorStyle": "flashsite-blocks",
+	"render": "file:./render.php"
+}

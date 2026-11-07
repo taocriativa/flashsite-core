@@ -1,0 +1,34 @@
+/* FlashSite Core · blocos. Visual neutro: herda cores e fontes do tema. */
+.fs-form__campos { display: flex; flex-wrap: wrap; gap: 1rem 1.25rem; }
+.fs-campo { display: flex; flex-direction: column; gap: .4rem; flex: 1 1 100%; min-width: 0; }
+.fs-campo--meio { flex: 1 1 calc(50% - .625rem); }
+.fs-campo__rotulo { font-size: .8125rem; }
+.fs-campo input, .fs-campo select, .fs-campo textarea {
+	font: inherit; color: inherit; background: transparent; width: 100%;
+	border: 0; border-bottom: 1px solid currentColor; border-radius: 0; padding: .55rem 0; min-height: 44px;
+}
+.fs-campo input:focus-visible, .fs-campo select:focus-visible, .fs-campo textarea:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.fs-campo[data-invalido] input, .fs-campo[data-invalido] select, .fs-campo[data-invalido] textarea { border-bottom-color: #c0392b; }
+.fs-campo__erro { font-size: .75rem; min-height: 1em; color: #c0392b; }
+.fs-form__isco { position: absolute !important; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.fs-form__enviar { margin-top: 1.5rem; }
+.fs-form__enviar .wp-block-button__link { width: 100%; cursor: pointer; }
+.fs-form[aria-busy="true"] .wp-block-button__link { opacity: .6; pointer-events: none; }
+.fs-form__estado:empty { display: none; }
+.fs-form__estado { margin-top: 1rem; font-size: .875rem; }
+@media (max-width: 600px) { .fs-campo--meio { flex-basis: 100%; } }
+
+.fs-horario { margin: 0; display: grid; gap: .2rem; }
+.fs-horario__linha { display: flex; gap: .75em; flex-wrap: wrap; }
+.fs-horario dt { font-weight: 600; }
+.fs-horario dd { margin: 0; }
+
+.fs-mapa iframe { display: block; width: 100%; height: var(--fs-mapa-altura, 360px); border: 0; }
+
+.fs-ficha { display: grid; gap: 1rem; }
+.fs-ficha__selos { display: flex; flex-wrap: wrap; gap: .5rem; list-style: none; margin: 0; padding: 0; }
+.fs-ficha__selos li { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; border: 1px solid currentColor; padding: .25rem .6rem; opacity: .85; }
+.fs-ficha__lista { margin: 0; display: grid; gap: .5rem; }
+.fs-ficha__lista > div { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px solid color-mix(in srgb, currentColor 18%, transparent); padding-bottom: .5rem; }
+.fs-ficha__lista dt { opacity: .7; }
+.fs-ficha__lista dd { margin: 0; text-align: right; }

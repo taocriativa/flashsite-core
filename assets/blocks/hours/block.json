@@ -1,0 +1,38 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "flashsite/hours",
+	"title": "Horário (Dados do Negócio)",
+	"category": "flashsite",
+	"icon": "clock",
+	"description": "Horário de funcionamento lido dos Dados do Negócio. Dias seguidos com o mesmo horário aparecem juntos (Ter a Sáb).",
+	"textdomain": "flashsite-core",
+	"attributes": {
+		"format": {
+			"type": "string",
+			"default": "curto",
+			"enum": [
+				"curto",
+				"longo"
+			]
+		}
+	},
+	"supports": {
+		"html": false,
+		"spacing": {
+			"margin": true,
+			"padding": true
+		},
+		"color": {
+			"text": true
+		},
+		"typography": {
+			"fontSize": true,
+			"lineHeight": true,
+			"__experimentalFontFamily": true
+		}
+	},
+	"editorScript": "flashsite-blocks-editor",
+	"render": "file:./render.php",
+	"editorStyle": "flashsite-blocks"
+}

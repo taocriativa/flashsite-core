@@ -1,0 +1,29 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "flashsite/map",
+	"title": "Mapa (Dados do Negócio)",
+	"category": "flashsite",
+	"icon": "location",
+	"description": "Mapa do Google definido nos Dados do Negócio. Sem mapa definido, não aparece.",
+	"textdomain": "flashsite-core",
+	"attributes": {
+		"height": {
+			"type": "number",
+			"default": 360
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": [
+			"wide",
+			"full"
+		],
+		"spacing": {
+			"margin": true
+		}
+	},
+	"editorScript": "flashsite-blocks-editor",
+	"render": "file:./render.php",
+	"editorStyle": "flashsite-blocks"
+}

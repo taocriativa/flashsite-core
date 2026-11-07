@@ -20,4 +20,5 @@ return [
     FlashSite\Core\Modules\ClientPanel\ClientPanelModule::class,
     FlashSite\Core\Modules\CreatorMode\CreatorModeModule::class,
     FlashSite\Core\Modules\Abilities\AbilitiesModule::class,
+    FlashSite\Core\Modules\Blocks\BlocksModule::class,
 ];
