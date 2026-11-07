@@ -1,6 +1,7 @@
 <?php
 /** @var array $attributes */
 defined('ABSPATH') || exit;
+wp_enqueue_style('flashsite-blocks'); // só nas páginas que usam blocos Flash Site
 $map = do_shortcode('[flashsite_maps]');
 if (trim($map) === '') {
 	return;

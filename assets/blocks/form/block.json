@@ -8,18 +8,59 @@
 	"description": "Formulário com envio pelo Core: e-mail para o destinatário dos Dados do Negócio e, se quiser, resumo no WhatsApp.",
 	"textdomain": "flashsite-core",
 	"attributes": {
-		"formId": { "type": "string", "default": "" },
-		"submitLabel": { "type": "string", "default": "Enviar" },
-		"successMessage": { "type": "string", "default": "Pedido recebido. Obrigado!" },
-		"errorMessage": { "type": "string", "default": "Não foi possível enviar. Tente de novo." },
-		"subject": { "type": "string", "default": "" },
-		"whatsapp": { "type": "boolean", "default": false },
-		"whatsappIntro": { "type": "string", "default": "" }
+		"formId": {
+			"type": "string",
+			"default": ""
+		},
+		"submitLabel": {
+			"type": "string",
+			"default": "Enviar"
+		},
+		"successMessage": {
+			"type": "string",
+			"default": "Pedido recebido. Obrigado!"
+		},
+		"errorMessage": {
+			"type": "string",
+			"default": "Não foi possível enviar. Tente de novo."
+		},
+		"subject": {
+			"type": "string",
+			"default": ""
+		},
+		"whatsapp": {
+			"type": "boolean",
+			"default": false
+		},
+		"whatsappIntro": {
+			"type": "string",
+			"default": ""
+		}
 	},
-	"supports": { "html": false, "align": [ "wide", "full" ], "spacing": { "padding": true, "margin": true, "blockGap": true }, "color": { "background": true, "text": true }, "typography": { "fontSize": true } },
-	"providesContext": { "flashsite/formId": "formId" },
+	"supports": {
+		"html": false,
+		"align": [
+			"wide",
+			"full"
+		],
+		"spacing": {
+			"padding": true,
+			"margin": true,
+			"blockGap": true
+		},
+		"color": {
+			"background": true,
+			"text": true
+		},
+		"typography": {
+			"fontSize": true
+		}
+	},
+	"providesContext": {
+		"flashsite/formId": "formId"
+	},
 	"editorScript": "flashsite-blocks-editor",
-	"style": "flashsite-blocks",
 	"viewScript": "flashsite-form-view",
-	"render": "file:./render.php"
+	"render": "file:./render.php",
+	"editorStyle": "flashsite-blocks"
 }

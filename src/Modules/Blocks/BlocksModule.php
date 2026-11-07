@@ -177,7 +177,8 @@ final class BlocksModule implements ModuleInterface
             if (! str_starts_with($source, 'flashsite/') || ! in_array($attribute, ['content', 'text'], true)) {
                 continue;
             }
-            if (trim(wp_strip_all_tags($content)) === '') {
+            $text = function_exists('wp_strip_all_tags') ? wp_strip_all_tags($content) : strip_tags($content);
+            if (trim($text) === '') {
                 return '';
             }
         }

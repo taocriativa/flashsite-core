@@ -1,6 +1,7 @@
 <?php
 /** @var array $attributes @var string $content @var WP_Block $block */
 defined('ABSPATH') || exit;
+wp_enqueue_style('flashsite-blocks'); // só nas páginas que usam blocos Flash Site
 $form_id = sanitize_key((string) ($attributes['formId'] ?? ''));
 $post_id = (int) get_the_ID();
 $wrapper = get_block_wrapper_attributes(['class' => 'fs-form']);

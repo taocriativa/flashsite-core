@@ -7,9 +7,23 @@
 	"icon": "location",
 	"description": "Mapa do Google definido nos Dados do Negócio. Sem mapa definido, não aparece.",
 	"textdomain": "flashsite-core",
-	"attributes": { "height": { "type": "number", "default": 360 } },
-	"supports": { "html": false, "align": [ "wide", "full" ], "spacing": { "margin": true } },
+	"attributes": {
+		"height": {
+			"type": "number",
+			"default": 360
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": [
+			"wide",
+			"full"
+		],
+		"spacing": {
+			"margin": true
+		}
+	},
 	"editorScript": "flashsite-blocks-editor",
-	"style": "flashsite-blocks",
-	"render": "file:./render.php"
+	"render": "file:./render.php",
+	"editorStyle": "flashsite-blocks"
 }

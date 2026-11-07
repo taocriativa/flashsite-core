@@ -1,6 +1,7 @@
 <?php
 /** @var array $attributes */
 defined('ABSPATH') || exit;
+wp_enqueue_style('flashsite-blocks'); // só nas páginas que usam blocos Flash Site
 use FlashSite\Core\Domain\Business\BusinessData;
 use FlashSite\Core\Modules\Blocks\BlocksModule;
 

@@ -148,7 +148,8 @@ final class FormHandler
     public static function fieldName(array $attrs): string
     {
         $name = sanitize_key((string) ($attrs['name'] ?? ''));
-        return $name !== '' ? $name : sanitize_key(remove_accents((string) ($attrs['label'] ?? 'campo')));
+        $label = (string) ($attrs['label'] ?? 'campo');
+        return $name !== '' ? $name : sanitize_key(function_exists('remove_accents') ? remove_accents($label) : $label);
     }
 
     /** @return list<string> */
