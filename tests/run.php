@@ -54,6 +54,7 @@ $files = [
     __DIR__ . '/Unit/HardeningHiddenLinksTest.php',
     __DIR__ . '/Unit/CreatorModeTest.php',
     __DIR__ . '/Unit/BlocksTest.php',
+    __DIR__ . '/Unit/OpeningHoursTest.php',
 ];
 
 foreach ($files as $file) {
@@ -111,6 +112,7 @@ $tests = [
     new HardeningHiddenLinksTest(),
     new CreatorModeTest(),
     new BlocksTest(),
+    new OpeningHoursTest(),
 ];
 
 $failures = [];

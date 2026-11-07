@@ -1,0 +1,17 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "flashsite/menu-filter",
+	"title": "Filtrar carta (dieta e alergénios)",
+	"category": "flashsite",
+	"icon": "filter",
+	"description": "Botões Vegetariano, Vegano, Sem glúten e uma lista \"Sem…\" com os 14 alergénios. Esconde, na página, os pratos que não servem. Inclui o aviso para confirmar com a equipa.",
+	"textdomain": "flashsite-core",
+	"attributes": {
+		"aviso": { "type": "string", "default": "Em caso de alergia, confirme sempre com a nossa equipa." }
+	},
+	"supports": { "html": false, "spacing": { "margin": true }, "typography": { "fontSize": true } },
+	"editorScript": "flashsite-blocks-editor",
+	"editorStyle": "flashsite-blocks",
+	"render": "file:./render.php"
+}

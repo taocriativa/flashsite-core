@@ -34,6 +34,8 @@ final class BlocksModule implements ModuleInterface
         add_action('init', [$this, 'registerCollectionTemplates'], 30);
         (new Effects())->register();
         (new Requests())->register();
+        (new MenuQr())->register();
+        add_filter('post_class', [$this, 'dietClasses'], 10, 3);
     }
 
     public function editorAssets(): void
@@ -195,7 +197,10 @@ final class BlocksModule implements ModuleInterface
         wp_register_script('flashsite-form-view', FLASHSITE_CORE_URL . 'assets/blocks/form/view.js', [], FLASHSITE_CORE_VERSION, ['strategy' => 'defer', 'in_footer' => true]);
         wp_register_style('flashsite-blocks', FLASHSITE_CORE_URL . 'assets/blocks/blocks.css', [], FLASHSITE_CORE_VERSION);
 
-        foreach (['form', 'form-field', 'hours', 'map', 'item-fields'] as $name) {
+        wp_register_script('flashsite-open-now', FLASHSITE_CORE_URL . 'assets/blocks/open-now/view.js', [], FLASHSITE_CORE_VERSION, ['strategy' => 'defer', 'in_footer' => true]);
+        wp_register_script('flashsite-menu-filter', FLASHSITE_CORE_URL . 'assets/blocks/menu-filter/view.js', [], FLASHSITE_CORE_VERSION, ['strategy' => 'defer', 'in_footer' => true]);
+
+        foreach (['form', 'form-field', 'hours', 'map', 'item-fields', 'open-now', 'menu-filter', 'legal'] as $name) {
             if (is_file($base . $name . '/block.json')) {
                 register_block_type($base . $name);
             }
@@ -238,6 +243,33 @@ final class BlocksModule implements ModuleInterface
                 'content' => $archive,
             ]);
         }
+    }
+
+    /**
+     * Classes de dieta e alergénios nos pratos (fs-dieta-vegetariano, fs-alerg-gluten…), usadas pelo
+     * bloco "Filtrar carta". Só para itens da coleção de pratos.
+     *
+     * @param list<string> $classes
+     * @return list<string>
+     */
+    public function dietClasses(array $classes, $class = '', $postId = 0): array
+    {
+        $postId = (int) $postId;
+        if ($postId <= 0 || get_post_type($postId) !== 'fs_prato' || ! function_exists('wp_is_block_theme') || ! wp_is_block_theme()) {
+            return $classes;
+        }
+        foreach (['vegetariano', 'vegano', 'sem_gluten'] as $diet) {
+            if ((string) get_post_meta($postId, 'fs_' . $diet, true) === '1') {
+                $classes[] = 'fs-dieta-' . $diet;
+            }
+        }
+        foreach ((array) get_post_meta($postId, 'fs_alergenios', true) as $allergen) {
+            $key = sanitize_key((string) $allergen);
+            if ($key !== '') {
+                $classes[] = 'fs-alerg-' . $key;
+            }
+        }
+        return $classes;
     }
 
     public function registerRoutes(): void

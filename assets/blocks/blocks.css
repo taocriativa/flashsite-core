@@ -32,3 +32,22 @@
 .fs-ficha__lista > div { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px solid color-mix(in srgb, currentColor 18%, transparent); padding-bottom: .5rem; }
 .fs-ficha__lista dt { opacity: .7; }
 .fs-ficha__lista dd { margin: 0; text-align: right; }
+
+/* Filtro da carta */
+.fs-filtro { display: grid; gap: .5rem; }
+.fs-filtro__linha { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.fs-filtro__chip, .fs-filtro__sem select { font: inherit; font-size: .8125rem; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: 999px; padding: .45rem .9rem; min-height: 40px; cursor: pointer; }
+.fs-filtro__chip[aria-pressed="true"] { background: var(--wp--preset--color--tinta, #222); color: var(--wp--preset--color--claro, #fff); border-color: var(--wp--preset--color--tinta, #222); }
+.fs-filtro__chip:focus-visible, .fs-filtro__sem select:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.fs-filtro__estado:empty { display: none; }
+.fs-filtro__estado, .fs-filtro__aviso { margin: 0; font-size: .8125rem; opacity: .8; }
+.wp-block-post[hidden] { display: none !important; }
+
+/* Aberto agora */
+.fs-aberto { display: inline-flex; align-items: center; gap: .5em; margin: 0; }
+.fs-aberto__ponto { width: .55em; height: .55em; border-radius: 50%; background: #b5462f; flex: none; }
+.fs-aberto.is-aberto .fs-aberto__ponto { background: #3f8f4e; }
+
+/* Informação legal */
+.fs-legal { display: flex; flex-wrap: wrap; gap: .4rem 1.25rem; align-items: center; margin: 0; }
+.fs-legal a { display: inline-flex; align-items: center; gap: .4em; }

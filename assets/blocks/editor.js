@@ -118,4 +118,26 @@
 		},
 		save: function () { return null; }
 	});
+	/* Blocos de restaurante: pré-visualização do servidor + definições simples. */
+	function ssrBlock(name, panel) {
+		wp.blocks.registerBlockType(name, {
+			edit: function (props) {
+				return el(wp.element.Fragment, null,
+					panel ? el(be.InspectorControls, null, panel(props)) : null,
+					el('div', be.useBlockProps(), el(SSR, { block: name, attributes: props.attributes, EmptyResponsePlaceholder: function () { return el('p', null, wp.blocks.getBlockType(name).title + ': sem dados para mostrar (confira os Dados do Negócio).'); } }))
+				);
+			},
+			save: function () { return null; }
+		});
+	}
+	ssrBlock('flashsite/open-now', function () { return el(c.PanelBody, { title: 'Aberto agora' }, el('p', null, 'Usa o horário dos Dados do Negócio. No editor aparece o estado no servidor; no site é calculado na hora de quem visita.')); });
+	ssrBlock('flashsite/menu-filter', function (props) { return el(c.PanelBody, { title: 'Filtro' }, el(c.TextareaControl, { label: 'Aviso', value: props.attributes.aviso, onChange: function (v) { props.setAttributes({ aviso: v }); } })); });
+	ssrBlock('flashsite/legal', function (props) {
+		var a = props.attributes, set = props.setAttributes;
+		return el(c.PanelBody, { title: 'Informação legal' },
+			el(c.TextControl, { label: 'Couvert (Portugal)', help: 'Ex.: "Couvert: pão, manteiga e azeitonas, 2,50 €. Só servido se pedir."', value: a.couvert, onChange: function (v) { set({ couvert: v }); } }),
+			el(c.ToggleControl, { label: 'Mostrar Livro de Reclamações (Portugal)', checked: !!a.livro, onChange: function (v) { set({ livro: v }); } }),
+			el(c.TextareaControl, { label: 'Texto legal (Brasil)', help: 'Só se a lei do seu estado ou município exigir.', value: a.textoBR, onChange: function (v) { set({ textoBR: v }); } })
+		);
+	});
 })(window.wp);
