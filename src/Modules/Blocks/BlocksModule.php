@@ -36,10 +36,12 @@ final class BlocksModule implements ModuleInterface
         (new Requests())->register();
         (new MenuQr())->register();
         add_filter('post_class', [$this, 'dietClasses'], 10, 3);
+        add_filter('block_editor_settings_all', [$this, 'lockForOwners']);
     }
 
     public function editorAssets(): void
     {
+        wp_add_inline_script('flashsite-blocks-editor', 'window.flashsiteBindings = ' . wp_json_encode($this->editorBindingData()) . ';', 'before');
         wp_enqueue_script('flashsite-efeitos-editor', FLASHSITE_CORE_URL . 'assets/blocks/efeitos/editor.js', ['wp-hooks', 'wp-compose', 'wp-element', 'wp-block-editor', 'wp-components'], FLASHSITE_CORE_VERSION, true);
     }
 
@@ -270,6 +272,57 @@ final class BlocksModule implements ModuleInterface
             }
         }
         return $classes;
+    }
+
+    /**
+     * Valores para o editor mostrar nas ligações (em vez do texto de exemplo). Só leitura:
+     * os dados mudam-se em FlashSite › Dados do Negócio e na coleção. Máximo 300 itens.
+     *
+     * @return array{business: array<string, string>, links: array<string, string>, items: array<int, array<string, string>>}
+     */
+    private function editorBindingData(): array
+    {
+        $business = [];
+        foreach (['contact.phone', 'full_address', 'hours', 'contact.email_public', 'contact.whatsapp.number', 'identity.business_name', 'identity.tagline', 'location.address', 'location.city_region', 'location.postal_code', 'location.country'] as $field) {
+            $business[$field] = wp_strip_all_tags((string) $this->businessValue(['field' => $field]));
+        }
+        $links = [];
+        foreach (['phone', 'whatsapp', 'email', 'maps'] as $link) {
+            $links[$link] = (string) $this->businessValue(['link' => $link]);
+        }
+        $items = [];
+        $registry = self::service(CollectionRegistry::class);
+        $formatter = self::service(FieldFormatter::class);
+        if ($registry instanceof CollectionRegistry && $formatter instanceof FieldFormatter) {
+            foreach ($registry->all() as $preset) {
+                if (! post_type_exists($preset->postType())) {
+                    continue;
+                }
+                $ids = get_posts(['post_type' => $preset->postType(), 'post_status' => 'publish', 'numberposts' => 300, 'fields' => 'ids', 'no_found_rows' => true]);
+                foreach ($ids as $id) {
+                    $row = ['title' => get_the_title((int) $id), 'price' => $formatter->price($preset, (int) $id)];
+                    foreach ($preset->publicFields() as $field) {
+                        $row[$field->key] = $formatter->field($preset, $field, (int) $id);
+                    }
+                    $items[(int) $id] = $row;
+                }
+            }
+        }
+        return ['business' => $business, 'links' => $links, 'items' => $items];
+    }
+
+    /**
+     * Quem não administra o site (o dono, o cliente) não pode destravar as secções: edita o conteúdo,
+     * nunca o layout. O administrador e o Criador continuam a poder.
+     *
+     * @param array<string, mixed> $settings
+     */
+    public function lockForOwners(array $settings): array
+    {
+        if (! current_user_can('manage_options')) {
+            $settings['canLockBlocks'] = false;
+        }
+        return $settings;
     }
 
     public function registerRoutes(): void

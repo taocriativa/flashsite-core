@@ -7,6 +7,61 @@
 	var c = wp.components;
 	var SSR = wp.serverSideRender;
 
+	/* ── Ligações: o editor mostra os valores reais (só leitura) ── */
+	var dados = window.flashsiteBindings || { business: {}, links: {}, items: {} };
+	var FONTES = [
+		{
+			name: 'flashsite/business',
+			label: 'Dados do Negócio',
+			getValues: function (o) {
+				var v = {};
+				Object.keys(o.bindings).forEach(function (attr) {
+					var a = o.bindings[attr].args || {};
+					v[attr] = a.link ? (dados.links[a.link] || '') : (dados.business[a.field] || ('[' + (a.field || 'campo') + ']'));
+				});
+				return v;
+			},
+			canUserEditValue: function () { return false; }
+		},
+		{
+			name: 'flashsite/item',
+			label: 'Item da coleção',
+			usesContext: ['postId', 'postType'],
+			getValues: function (o) {
+				var item = dados.items[(o.context || {}).postId] || null, v = {};
+				Object.keys(o.bindings).forEach(function (attr) {
+					var a = o.bindings[attr].args || {}, f = a.field || '';
+					if (!item) { v[attr] = '[' + f + ']'; return; }
+					var val = f.indexOf('terms:') === 0 ? '' : (item[f] || '');
+					if (a.label) val = val ? a.label : '';
+					v[attr] = val || '\u200b'; // vazio: no site o bloco some; no editor fica em branco
+				});
+				return v;
+			},
+			canUserEditValue: function () { return false; }
+		}
+	];
+	// O WordPress regista primeiro a fonte vinda do servidor (só com o nome): substituímos pela versão com valores.
+	function garanteFontes() {
+		if (!wp.blocks.registerBlockBindingsSource || !wp.blocks.getBlockBindingsSource) return true;
+		var pronto = true;
+		FONTES.forEach(function (f) {
+			var atual = wp.blocks.getBlockBindingsSource(f.name);
+			if (atual && atual.getValues) return;
+			if (atual && wp.blocks.unregisterBlockBindingsSource) wp.blocks.unregisterBlockBindingsSource(f.name);
+			try { wp.blocks.registerBlockBindingsSource(f); } catch (e) { pronto = false; }
+		});
+		return pronto;
+	}
+	garanteFontes();
+	if (wp.domReady) wp.domReady(garanteFontes);
+	var tentativas = 0, parar = wp.data.subscribe(function () {
+		tentativas++;
+		var s = wp.blocks.getBlockBindingsSource && wp.blocks.getBlockBindingsSource('flashsite/item');
+		if (s && !s.getValues) garanteFontes();
+		if ((s && s.getValues) || tentativas > 500) { parar(); }
+	});
+
 	/* ── Formulário ───────────────────────────────────────── */
 	wp.blocks.registerBlockType('flashsite/form', {
 		edit: function (props) {
